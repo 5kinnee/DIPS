@@ -1,0 +1,16 @@
+{
+  "name": "DIPS: Disc Ink Planning System",
+  "short_name": "DIPS",
+  "description": "Plan disc dye jobs with PRO Chemical & Dye colors and keep a log of what you dyed.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15181c",
+  "theme_color": "#15181c",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

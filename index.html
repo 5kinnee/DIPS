@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DIPS</title>
+<meta name="description" content="Disc Ink Planning System: plan and log disc dye jobs.">
+<meta name="theme-color" content="#15181c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{--bg:#e8eaed;--surface:#f6f7f8;--surface-2:#eef0f2;--ink:#15181c;--muted:#58606a;--line:#d2d6db;--ok:#1d7a40;--warn:#7a4a0c;--warn-bg:#fbe9d0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#141619;--surface:#1d2024;--surface-2:#25292e;--ink:#eceef0;--muted:#a0a7b0;--line:#343940;--ok:#6cce8f;--warn:#e7b566;--warn-bg:#3a2c16;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
+main{max-width:760px;margin:0 auto;padding-block:20px 48px;display:grid;gap:16px}
+h1{margin:0;font-size:28px}
+h2{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.ok{color:var(--ok);font-weight:700}
+.warnbox{background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px}
+button,.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}
+input[type=text],textarea{font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)}
+.entries{display:grid;gap:10px}
+.entry{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;background:var(--surface-2);border-radius:10px;padding:10px}
+.entry img{width:72px;height:72px;object-fit:cover;border-radius:50%;background:var(--line)}
+.entry small{color:var(--muted)}
+#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0));max-width:560px;margin:0 auto;background:var(--ink);color:var(--surface);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#updateBar button{background:var(--surface);color:var(--ink);border:0}
+[hidden]{display:none!important}
+code{font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <header class="row" style="justify-content:space-between">
+    <div><h1>DIPS</h1><p class="hint">Disc Ink Planning System, proof of concept. Version <code id="ver">…</code></p></div>
+  </header>
+
+  <section class="card">
+    <h2>1. Install</h2>
+    <p class="hint" id="installState">Checking…</p>
+    <button type="button" id="installBtn" class="primary" hidden>Install DIPS</button>
+    <p class="hint">iPhone: open in Safari, tap Share, then "Add to Home Screen". Android and desktop Chrome/Edge: use the Install button or the browser menu.</p>
+  </section>
+
+  <section class="card">
+    <h2>2. Your data</h2>
+    <p class="hint" id="persistState">Checking storage…</p>
+    <div id="folderBox">
+      <p class="hint" id="folderState"></p>
+      <div class="row"><button type="button" id="folderBtn" class="primary">Choose a data folder</button><button type="button" id="folderForget" hidden>Disconnect folder</button></div>
+    </div>
+    <p class="hint" id="noFolder" hidden>This browser can't save to a folder automatically. Use Backup below and keep the file somewhere safe.</p>
+    <div class="row"><button type="button" id="backupBtn">Backup to a file</button><label class="btn">Restore from a file<input type="file" id="restoreIn" accept=".json,application/json" hidden></label></div>
+    <p class="hint" id="backupState"></p>
+  </section>
+
+  <section class="card">
+    <h2>3. Add a test entry</h2>
+    <input type="text" id="note" placeholder="e.g. Floetrol cells, Royal + Neon Key Lime" maxlength="200">
+    <div class="row"><label class="btn">Add photo<input type="file" id="photoIn" accept="image/*" hidden></label><span class="hint" id="photoState">No photo</span></div>
+    <button type="button" id="saveBtn" class="primary">Save entry</button>
+    <p class="hint" id="saveState"></p>
+  </section>
+
+  <section class="card">
+    <h2>Entries</h2>
+    <div class="entries" id="list"><p class="hint">Nothing saved yet.</p></div>
+  </section>
+</main>
+<div id="updateBar" hidden><span>A new version of DIPS is ready.</span><button type="button" id="updateBtn">Reload</button></div>
+
+<script>
+const $=s=>document.querySelector(s);
+
+/* ---------- IndexedDB: entries, photos (Blobs), meta (folder handle, last backup) ---------- */
+const dbp=new Promise((res,rej)=>{
+  const r=indexedDB.open("dips",1);
+  r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("entries",{keyPath:"id"});d.createObjectStore("photos",{keyPath:"id"});d.createObjectStore("meta",{keyPath:"key"});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+});
+async function tx(store,mode,fn){const d=await dbp;return new Promise((res,rej)=>{const t=d.transaction(store,mode),s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
+const all=store=>tx(store,"readonly",s=>s.getAll());
+const get=(store,key)=>tx(store,"readonly",s=>s.get(key));
+const put=(store,val)=>tx(store,"readwrite",s=>s.put(val));
+const del=(store,key)=>tx(store,"readwrite",s=>s.delete(key));
+const getMeta=async k=>(await get("meta",k))?.value;
+const setMeta=(k,v)=>put("meta",{key:k,value:v});
+
+/* ---------- photos: shrink to 1600px JPEG before storing ---------- */
+async function shrink(file){
+  const img=await createImageBitmap(file).catch(()=>null);
+  if(!img)throw new Error("unreadable");
+  const scale=Math.min(1,1600/Math.max(img.width,img.height)),w=Math.round(img.width*scale),h=Math.round(img.height*scale);
+  const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+  return new Promise(res=>c.toBlob(res,"image/jpeg",.85));
+}
+let pendingPhoto=null;
+$("#photoIn").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;
+  $("#photoState").textContent="Shrinking…";
+  try{pendingPhoto=await shrink(f);$("#photoState").textContent=`Ready: ${Math.round(f.size/1024)} KB shrunk to ${Math.round(pendingPhoto.size/1024)} KB`;}
+  catch(_){pendingPhoto=null;$("#photoState").textContent="That photo couldn't be read. Try a JPG or PNG.";}
+});
+
+/* ---------- entries ---------- */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+$("#saveBtn").addEventListener("click",async()=>{
+  const note=$("#note").value.trim();
+  if(!note&&!pendingPhoto){$("#saveState").textContent="Type a note or add a photo first.";return;}
+  const id=uid();let photoId=null;
+  if(pendingPhoto){photoId="p-"+id;await put("photos",{id:photoId,blob:pendingPhoto});}
+  await put("entries",{id,note,photoId,createdAt:new Date().toISOString()});
+  $("#note").value="";pendingPhoto=null;$("#photoState").textContent="No photo";
+  $("#saveState").textContent="Saved in this browser.";
+  await renderList();await syncFolder();
+});
+const urls=[];
+async function renderList(){
+  urls.splice(0).forEach(u=>URL.revokeObjectURL(u));
+  const entries=(await all("entries")).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  if(!entries.length){$("#list").innerHTML=`<p class="hint">Nothing saved yet.</p>`;return;}
+  const rows=await Promise.all(entries.map(async e=>{
+    let src="";if(e.photoId){const p=await get("photos",e.photoId);if(p){src=URL.createObjectURL(p.blob);urls.push(src);}}
+    return`<div class="entry">${src?`<img src="${src}" alt="">`:`<img alt="">`}<div>${esc(e.note||"(no note)")}<br><small>${new Date(e.createdAt).toLocaleString()}</small></div><button type="button" data-del="${e.id}">Delete</button></div>`;
+  }));
+  $("#list").innerHTML=rows.join("");
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+$("#list").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-del]");if(!b)return;
+  const en=await get("entries",b.dataset.del);if(!en)return;
+  await del("entries",en.id);if(en.photoId)await del("photos",en.photoId);
+  await renderList();await syncFolder();
+});
+
+/* ---------- storage persistence ---------- */
+async function checkPersist(){
+  let msg="";
+  if(navigator.storage&&navigator.storage.persist){
+    const already=await navigator.storage.persisted();
+    const granted=already||await navigator.storage.persist();
+    msg=granted?`<span class="ok">Protected:</span> the browser won't clean up DIPS data on its own.`:"Not protected yet: the browser may clean up data if the device runs low on space. Installing DIPS and using it regularly usually fixes this.";
+  }else msg="This browser doesn't report storage protection.";
+  if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();msg+=` Using ${(e.usage/1048576).toFixed(1)} MB.`;}
+  $("#persistState").innerHTML=msg;
+}
+
+/* ---------- data folder (Chrome/Edge desktop: File System Access API) ---------- */
+const canFolder="showDirectoryPicker" in window;
+let folder=null;
+async function folderPermission(h,ask){
+  const opts={mode:"readwrite"};
+  if(await h.queryPermission(opts)==="granted")return true;
+  return ask?(await h.requestPermission(opts))==="granted":false;
+}
+async function initFolder(){
+  if(!canFolder){$("#folderBox").hidden=true;$("#noFolder").hidden=false;return;}
+  const h=await getMeta("folder");
+  if(!h){$("#folderState").textContent="No data folder yet. Pick one (for example Documents\\DIPS, or a OneDrive folder) and DIPS keeps a copy of everything there automatically.";return;}
+  folder=h;
+  if(await folderPermission(h,false)){$("#folderState").innerHTML=`<span class="ok">Saving to folder:</span> ${esc(h.name)}`;$("#folderBtn").textContent="Change folder";$("#folderForget").hidden=false;}
+  else{$("#folderState").textContent=`Folder "${h.name}" needs your OK again.`;$("#folderBtn").textContent="Reconnect folder";$("#folderForget").hidden=false;}
+}
+$("#folderBtn").addEventListener("click",async()=>{
+  try{
+    if(folder&&$("#folderBtn").textContent==="Reconnect folder"){if(await folderPermission(folder,true)){await importFromFolder();await syncFolder();}await initFolder();return;}
+    const h=await window.showDirectoryPicker({id:"dips-data",mode:"readwrite"});
+    folder=h;await setMeta("folder",h);
+    await importFromFolder();await syncFolder();await initFolder();
+  }catch(err){if(err&&err.name!=="AbortError")$("#folderState").textContent="Couldn't use that folder: "+(err.message||err);}
+});
+$("#folderForget").addEventListener("click",async()=>{await del("meta","folder");folder=null;$("#folderBtn").textContent="Choose a data folder";$("#folderForget").hidden=true;initFolder();});
+/* Write data.json plus photos/<id>.jpg. Photos already in the folder are not rewritten. */
+async function syncFolder(){
+  if(!folder||!(await folderPermission(folder,false)))return;
+  try{
+    const entries=await all("entries");
+    const f=await folder.getFileHandle("data.json",{create:true}),w=await f.createWritable();
+    await w.write(JSON.stringify({app:"DIPS",format:1,savedAt:new Date().toISOString(),entries},null,2));await w.close();
+    const pd=await folder.getDirectoryHandle("photos",{create:true});
+    for(const e of entries){
+      if(!e.photoId)continue;
+      const name=e.photoId+".jpg";
+      try{await pd.getFileHandle(name);continue;}catch(_){}
+      const p=await get("photos",e.photoId);if(!p)continue;
+      const fw=await(await pd.getFileHandle(name,{create:true})).createWritable();await fw.write(p.blob);await fw.close();
+    }
+    $("#folderState").innerHTML=`<span class="ok">Saving to folder:</span> ${esc(folder.name)} (last saved ${new Date().toLocaleTimeString()})`;
+  }catch(err){$("#folderState").textContent="Saving to the folder failed: "+(err.message||err);}
+}
+/* Bring back anything in the folder that this browser doesn't have (e.g. after clearing site data). */
+async function importFromFolder(){
+  let data;
+  try{const f=await(await folder.getFileHandle("data.json")).getFile();data=JSON.parse(await f.text());}catch(_){return;}
+  const have=new Set((await all("entries")).map(e=>e.id));let added=0;
+  let pd=null;try{pd=await folder.getDirectoryHandle("photos");}catch(_){}
+  for(const e of data.entries||[]){
+    if(have.has(e.id))continue;
+    if(e.photoId&&pd){try{const b=await(await pd.getFileHandle(e.photoId+".jpg")).getFile();await put("photos",{id:e.photoId,blob:b});}catch(_){}}
+    await put("entries",e);added++;
+  }
+  if(added)$("#saveState").textContent=`Restored ${added} entr${added===1?"y":"ies"} from the folder.`;
+  await renderList();
+}
+
+/* ---------- backup / restore file (every browser) ---------- */
+const toDataURL=b=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(b);});
+$("#backupBtn").addEventListener("click",async()=>{
+  const entries=await all("entries"),photos={};
+  for(const p of await all("photos"))photos[p.id]=await toDataURL(p.blob);
+  const blob=new Blob([JSON.stringify({app:"DIPS",format:1,savedAt:new Date().toISOString(),entries,photos})],{type:"application/json"});
+  const name=`DIPS-backup-${new Date().toISOString().slice(0,10)}.json`,file=new File([blob],name,{type:"application/json"});
+  try{
+    /* Phones: the share sheet ("Save to Files") is more reliable than a download in installed apps. */
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad/i.test(navigator.userAgent))await navigator.share({files:[file]});
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
+    await setMeta("lastBackup",new Date().toISOString());showBackup();
+  }catch(err){if(err&&err.name!=="AbortError")$("#backupState").textContent="Backup failed: "+(err.message||err);}
+});
+$("#restoreIn").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());if(data.app!=="DIPS")throw new Error("not a DIPS backup");
+    const have=new Set((await all("entries")).map(x=>x.id));let added=0;
+    for(const en of data.entries||[]){
+      if(have.has(en.id))continue;
+      if(en.photoId&&data.photos&&data.photos[en.photoId]){const b=await(await fetch(data.photos[en.photoId])).blob();await put("photos",{id:en.photoId,blob:b});}
+      await put("entries",en);added++;
+    }
+    $("#backupState").textContent=`Restored ${added} entr${added===1?"y":"ies"}. Entries you already had were kept.`;
+    await renderList();await syncFolder();
+  }catch(err){$("#backupState").textContent="That file couldn't be restored: "+(err.message||err);}
+  e.target.value="";
+});
+async function showBackup(){const t=await getMeta("lastBackup");$("#backupState").textContent=t?`Last backup: ${new Date(t).toLocaleString()}`:"No backup file made yet.";}
+
+/* ---------- install + updates ---------- */
+let installEvt=null;
+const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+$("#installState").textContent=standalone?"Running as an installed app.":"Running in a browser tab. Install it for its own icon, offline use, and safer storage.";
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;$("#installBtn").hidden=false;});
+$("#installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("#installBtn").hidden=true;});
+addEventListener("appinstalled",()=>{$("#installState").textContent="Installed. Open DIPS from its icon from now on.";});
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+    const ask=()=>{if(reg.active)reg.active.postMessage("VERSION");};
+    ask();navigator.serviceWorker.ready.then(ask);
+    /* A new version installed in the background: offer a reload instead of switching under the user. */
+    const offer=w=>{$("#updateBar").hidden=false;$("#updateBtn").onclick=()=>w.postMessage("SKIP_WAITING");};
+    if(reg.waiting&&navigator.serviceWorker.controller)offer(reg.waiting);
+    reg.addEventListener("updatefound",()=>{const w=reg.installing;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)offer(w);});});
+    setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
+  });
+  navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.version)$("#ver").textContent=e.data.version;});
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload();}});
+}else $("#ver").textContent="(no offline support in this browser)";
+
+renderList();checkPersist();initFolder();showBackup();
+</script>
+</body>
+</html>
