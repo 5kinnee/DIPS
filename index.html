@@ -34,6 +34,8 @@ input[type=text],textarea{font:inherit;width:100%;padding:8px 10px;border:1px so
 #updateBar button{background:var(--surface);color:var(--ink);border:0}
 [hidden]{display:none!important}
 code{font-size:13px}
+.steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:15px}
+#installState{margin:0;font-weight:700}
 </style>
 </head>
 <body>
@@ -44,9 +46,10 @@ code{font-size:13px}
 
   <section class="card">
     <h2>1. Install</h2>
-    <p class="hint" id="installState">Checking…</p>
+    <p id="installState">Checking…</p>
     <button type="button" id="installBtn" class="primary" hidden>Install DIPS</button>
-    <p class="hint">iPhone: open in Safari, tap Share, then "Add to Home Screen". Android and desktop Chrome/Edge: use the Install button or the browser menu.</p>
+    <ol class="steps" id="installSteps" hidden></ol>
+    <p class="hint" id="installWhy">Installing puts a DIPS icon on your phone or computer, lets it work without internet, and helps keep your notes safe.</p>
   </section>
 
   <section class="card">
@@ -242,12 +245,25 @@ $("#restoreIn").addEventListener("change",async e=>{
 async function showBackup(){const t=await getMeta("lastBackup");$("#backupState").textContent=t?`Last backup: ${new Date(t).toLocaleString()}`:"No backup file made yet.";}
 
 /* ---------- install + updates ---------- */
+/* Install help in plain words for the device in hand. Friends are not technical and never see GitHub. */
 let installEvt=null;
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-$("#installState").textContent=standalone?"Running as an installed app.":"Running in a browser tab. Install it for its own icon, offline use, and safer storage.";
-addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;$("#installBtn").hidden=false;});
-$("#installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("#installBtn").hidden=true;});
-addEventListener("appinstalled",()=>{$("#installState").textContent="Installed. Open DIPS from its icon from now on.";});
+const ua=navigator.userAgent,isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const isAndroid=/Android/.test(ua),isFirefox=/Firefox|FxiOS/.test(ua),isMacSafari=/Macintosh/.test(ua)&&/Safari/.test(ua)&&!/Chrome|Chromium|Edg/.test(ua)&&!isIOS;
+function showSteps(intro,steps){$("#installState").textContent=intro;const ol=$("#installSteps");ol.innerHTML=steps.map(s=>`<li>${s}</li>`).join("");ol.hidden=!steps.length;}
+function installHelp(){
+  if(standalone){showSteps("DIPS is installed. Open it from its icon from now on.",[]);$("#installWhy").hidden=true;return;}
+  if(installEvt){showSteps("You can install DIPS with one tap:",[]);$("#installBtn").hidden=false;return;}
+  if(isIOS)showSteps("To put DIPS on your home screen:",["Tap the <b>Share</b> button (a square with an arrow pointing up). On iPhone it's at the bottom of the screen.","Scroll down and tap <b>Add to Home Screen</b>.","Tap <b>Add</b>. Then open DIPS from its new icon."]);
+  else if(isFirefox)showSteps("Firefox can't install DIPS. You can still use it here, but for the full app:",[isAndroid?"Open this same page in <b>Chrome</b>.":"Open this same page in <b>Chrome</b> or <b>Edge</b>.","Then follow the install steps shown there."]);
+  else if(isAndroid)showSteps("To install DIPS:",["Tap the <b>⋮</b> menu (three dots, top right).","Tap <b>Install app</b> or <b>Add to Home screen</b>.","Open DIPS from its new icon."]);
+  else if(isMacSafari)showSteps("To add DIPS to your Dock:",["In the menu bar, click <b>File</b>.","Click <b>Add to Dock</b>.","Open DIPS from the Dock."]);
+  else showSteps("To install DIPS:",["Look at the right end of the address bar (where the web address is) for a small <b>install</b> icon, a screen with a down arrow, and click it.","Click <b>Install</b>.","Open DIPS from its new icon or the Start menu."]);
+}
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;installHelp();});
+$("#installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("#installBtn").hidden=true;installHelp();});
+addEventListener("appinstalled",()=>{showSteps("Installed. Open DIPS from its icon from now on.",[]);$("#installBtn").hidden=true;});
+installHelp();
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
