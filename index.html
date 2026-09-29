@@ -4,307 +4,2202 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DIPS</title>
-<meta name="description" content="Disc Ink Planning System: plan and log disc dye jobs.">
+<meta name="description" content="Disc Ink Planning System: plan disc dye jobs with PRO Chemical & Dye colors and keep a log of what you dyed.">
 <meta name="theme-color" content="#15181c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,700;125,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
-:root{--bg:#e8eaed;--surface:#f6f7f8;--surface-2:#eef0f2;--ink:#15181c;--muted:#58606a;--line:#d2d6db;--ok:#1d7a40;--warn:#7a4a0c;--warn-bg:#fbe9d0;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#141619;--surface:#1d2024;--surface-2:#25292e;--ink:#eceef0;--muted:#a0a7b0;--line:#343940;--ok:#6cce8f;--warn:#e7b566;--warn-bg:#3a2c16;color-scheme:dark}}
+:root{
+  --bg:#e8eaed; --surface:#f6f7f8; --surface-2:#eef0f2; --ink:#15181c; --muted:#58606a; --line:#d2d6db;
+  --focus:#1d5c8f; --warn-bg:#fbe9d0; --warn:#7a4a0c;
+  --pop:#1d7a40; --pop-bg:#dcefe2; --subtle:#80630f; --subtle-bg:#f3ead0; --mud:#7a4526; --mud-bg:#f1e1d6;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141619; --surface:#1d2024; --surface-2:#25292e; --ink:#eceef0; --muted:#a0a7b0; --line:#343940;
+    --focus:#7fb4e0; --warn-bg:#3a2c16; --warn:#e7b566;
+    --pop:#6cce8f; --pop-bg:#1c3326; --subtle:#dcb752; --subtle-bg:#3a3118; --mud:#d69a74; --mud-bg:#3a2a20;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141619; --surface:#1d2024; --surface-2:#25292e; --ink:#eceef0; --muted:#a0a7b0; --line:#343940;
+  --focus:#7fb4e0; --warn-bg:#3a2c16; --warn:#e7b566;
+  --pop:#6cce8f; --pop-bg:#1c3326; --subtle:#dcb752; --subtle-bg:#3a3118; --mud:#d69a74; --mud-bg:#3a2a20;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
-main{max-width:760px;margin:0 auto;padding-block:20px 48px;display:grid;gap:16px}
-h1{margin:0;font-size:28px}
-h2{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.06em}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.hint{color:var(--muted);font-size:13px;margin:0}
-.ok{color:var(--ok);font-weight:700}
-.warnbox{background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px}
-button,.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
-button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-button:disabled{opacity:.5;cursor:default}
-input[type=text],textarea{font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)}
-.entries{display:grid;gap:10px}
-.entry{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;background:var(--surface-2);border-radius:10px;padding:10px}
-.entry img{width:72px;height:72px;object-fit:cover;border-radius:50%;background:var(--line)}
-.entry small{color:var(--muted)}
-#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0));max-width:560px;margin:0 auto;background:var(--ink);color:var(--surface);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-#updateBar button{background:var(--surface);color:var(--ink);border:0}
-[hidden]{display:none!important}
-code{font-size:13px}
-.confirm{display:grid;gap:8px;background:var(--warn-bg);border-radius:10px;padding:12px}
-.confirm p{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding:0 16px}
+.wrap{max-width:1220px;margin:0 auto;padding-block:28px 56px;display:grid;gap:22px}
+header{display:grid;gap:6px}
+h1{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:66ch}
+h2{font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+h3{font-size:15px;margin:0}
+a{color:var(--focus)}
+.label{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;align-content:start}
+.setup{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:14px}
+@media (max-width:980px){.setup{grid-template-columns:1fr}}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.sw{appearance:none;border:0;padding:0;background:none;cursor:pointer;display:grid;gap:4px;justify-items:center;font:inherit;font-size:12px;color:var(--muted)}
+.sw i{display:block;width:100%;aspect-ratio:1;max-width:40px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),inset 0 -4px 6px rgba(0,0,0,.12)}
+.sw[aria-pressed="true"] i{outline:3px solid var(--ink);outline-offset:2px}
+.sw[aria-pressed="true"]{color:var(--ink);font-weight:700}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:2px;cursor:pointer}
+input[type=text],select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);max-width:100%}
+input[type=text].hexin{font-family:var(--mono);width:100px}
+select{min-width:0}
+.selects{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.selects label{display:grid;gap:4px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+details summary{cursor:pointer;font-weight:700;font-size:14px}
+.photo{display:grid;gap:8px;margin-top:10px}
+.photo canvas{width:100%;border-radius:6px;cursor:crosshair;display:block}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:fit-content;max-width:100%}
+.seg button{appearance:none;border:0;border-right:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:6px 11px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.rating{display:flex;gap:10px;align-items:flex-start}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.pill.pop,.pill.E{color:var(--pop);background:var(--pop-bg)}
+.pill.subtle,.pill.G{color:var(--subtle);background:var(--subtle-bg)}
+.pill.M,.pill.P,.pill.mud{color:var(--mud);background:var(--mud-bg)}
+.pill.none{color:var(--muted);background:var(--surface-2)}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--ink)}
+.recipe{background:var(--surface-2);border-radius:8px;padding:10px 12px;display:grid;gap:4px;font-size:14px}
+.recipe p{margin:0}
+.layout{display:grid;grid-template-columns:minmax(300px,370px) 1fr;gap:22px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:860px){.side{position:static}}
+.stage{display:grid;justify-items:center;gap:12px}
+#disc{width:100%;max-width:280px;aspect-ratio:1;display:block}
+.on{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 10px 3px 4px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
+.tag i{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:700;flex:none}
+.tag{padding-left:3px}
+.tag .tb{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:0 3px;line-height:1}
+.tag .tb:hover{color:var(--ink)}
+#onDisc .tag{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#onDisc .tag .grip{color:var(--muted);font-size:13px;margin-left:2px}
+#onDisc .tag.dragging{opacity:.45;cursor:grabbing}
+#onDisc .tag.dropbefore{box-shadow:-3px -3px 0 var(--ink)}
+#onDisc .tag.dropafter{box-shadow:3px 3px 0 var(--ink)}
+.dragghost{position:fixed;z-index:50;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.25);transform:rotate(-2deg)}
+.roles{text-align:center;background:var(--surface-2);border-radius:6px;padding:6px 10px;width:100%}
+.dye{position:relative}
+.dye .num{position:absolute;top:6px;left:6px;box-shadow:0 0 0 2px var(--surface)}
+.slider{display:grid;gap:4px;width:100%}
+.slider input{width:100%;accent-color:var(--ink)}
+.ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
+.touch{display:grid;gap:6px;width:100%;border-top:1px dashed var(--line);padding-top:10px}
+.trow{display:flex;gap:8px;flex-wrap:wrap}
+.tchip{display:flex;gap:8px;align-items:center;font-size:13px;line-height:1.3}
+.tchip i{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.tchip em{font-style:normal;font-size:12px;font-weight:700}
+.tchip em.ok{color:var(--pop)} .tchip em.bad{color:var(--mud)}
+.main{display:grid;gap:26px;min-width:0}
+.banner{border-left:4px solid var(--ink);background:var(--surface);padding:14px 16px;border-radius:0 8px 8px 0;margin:0;max-width:82ch}
+.banner.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.banner b{display:block;font-family:var(--display);font-stretch:125%;font-size:16px;margin-bottom:2px}
+.group{display:grid;gap:10px}
+.ghead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.gnote{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.dye{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px;display:grid;gap:7px;cursor:pointer;align-content:start}
+.dye:hover{border-color:var(--muted)}
+.dye[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.chipbox{display:grid;gap:3px;justify-items:center;min-width:0}
+.chip{width:100%;height:34px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.chipbox small{font-size:12px;color:var(--muted);text-align:center;line-height:1.25}
+.arrow{color:var(--muted);font-size:14px;padding-bottom:18px}
+.dname{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.dname strong{font-size:15px;line-height:1.25}
+.code{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.why{font-size:13.5px;color:var(--muted);margin:0}
+.picked{font-size:12px;font-weight:700}
+.empty{font-size:14px;color:var(--muted);margin:0;padding:8px 0}
+.combos{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.combo{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;align-content:start}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.strip.two{grid-template-columns:repeat(2,1fr)}
+.combo p{margin:0;font-size:13.5px;color:var(--muted)}
+.shelf{display:grid;gap:12px}
+.fam{display:grid;gap:6px}
+.jars{display:flex;flex-wrap:wrap;gap:6px}
+.jar{appearance:none;font:inherit;font-size:13px;display:inline-flex;gap:7px;align-items:center;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.jar i{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.jar[aria-pressed="true"]{color:var(--ink);font-weight:700;border-color:var(--ink);background:var(--surface-2)}
+.jar[aria-pressed="true"]::after{content:"✓";font-size:12px}
+.custom{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.custom input[type=text]{width:160px}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.info .panel p,.info .panel li{font-size:14px;color:var(--muted);margin:0}
+.info ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{appearance:none;border:0;background:none;font:inherit;font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;color:var(--muted);padding:8px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabpanel{display:grid;gap:22px}
+.notes{max-width:980px;gap:30px}
+.nhero{display:grid;gap:8px;max-width:72ch}
+.ntitle{font-size:clamp(20px,3vw,26px);letter-spacing:0;text-transform:none;line-height:1.15}
+.nhero p{margin:0;color:var(--muted);font-size:16px}
+.dotkey{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.dotkey span{display:inline-flex;align-items:center;gap:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px;flex:none}
+.dot.pc{background:var(--pop)}
+.dot.sc{background:var(--focus)}
+.dot.ai{background:transparent;box-shadow:inset 0 0 0 2px var(--warn)}
+.dotkey .dot{margin-right:0}
+.nsec{display:grid;gap:14px}
+.nhead{font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px}
+.rule{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 16px 14px;display:grid;gap:6px;align-content:start}
+.rule b{font-size:16px;line-height:1.25;padding-right:18px}
+.rule p{margin:0;font-size:14.5px;color:var(--muted)}
+.rule>.dot,.rule>.dots{position:absolute;top:18px;right:12px}
+.rule .dots .dot{margin:0 0 0 3px}
+.rule.safety{background:var(--warn-bg);border-color:transparent}
+.rule.safety p{color:var(--ink)}
+.jumprow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{appearance:none;font:inherit;font-size:14px;font-weight:700;padding:9px 15px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.jump button:hover{border-color:var(--muted)}
+.tcard,.nfold{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tcard summary,.nfold summary{list-style:none;cursor:pointer}
+.tcard summary::-webkit-details-marker,.nfold summary::-webkit-details-marker{display:none}
+.tcard summary{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:14px 16px}
+.tcard summary:hover,.nfold summary:hover{background:var(--surface-2)}
+.thumb{width:84px;height:84px;display:block}
+.tsum{display:grid;gap:2px;min-width:0;font-weight:400}
+.tname{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:18px;line-height:1.15}
+.looks{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.tlede{font-size:14.5px;color:var(--muted);margin-top:2px}
+.chev{width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 6px 6px 0}
+details[open]>summary .chev{transform:rotate(-135deg);margin:6px 6px 0 0}
+.tbody{padding:4px 18px 18px calc(84px + 32px);display:grid;gap:14px}
+@media (max-width:640px){.tcard summary{grid-template-columns:auto 1fr auto;gap:12px}.thumb{width:60px;height:60px}.tbody{padding:4px 16px 16px}.tlede{display:none}}
+.facts{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;margin:0;font-size:15px}
+.facts dt{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;padding-top:3px}
+.facts dd{margin:0;line-height:1.55}
+@media (max-width:520px){.facts{grid-template-columns:1fr;gap:2px}.facts dd{margin-bottom:10px}}
+.heads{margin:0;background:var(--warn-bg);border-radius:8px;padding:10px 12px;font-size:14px}
+.nfold summary{display:flex;justify-content:space-between;align-items:center;padding:16px 18px}
+.nfold[open]>summary{border-bottom:1px solid var(--line)}
+.nfold>:not(summary){margin:16px 18px}
+.mistakes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 22px}
+.mistakes b{font-size:15px}
+.mistakes p{margin:2px 0 0;font-size:14.5px;color:var(--muted)}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 22px;margin:0}
+.gloss dt{font-weight:700;font-size:15px}
+.gloss dd{margin:2px 0 0;color:var(--muted);font-size:14.5px}.jarwrap{display:inline-flex;align-items:center;gap:2px}
+.jarx{appearance:none;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:6px}
+.jarx:hover{color:var(--mud);background:var(--surface-2)}
+.fgrid .half{grid-column:span 2}
+@media (max-width:520px){.fgrid .half{grid-column:auto}}
+.mytechpick{display:grid;gap:4px}
+.mytechpick select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}
+.mytechpick select.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.recipe p.pre{white-space:pre-line}
+.techtools{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.techtags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.techtags span{font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.mytech{display:grid;gap:10px;margin-top:10px}
+.myhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.subhead{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:18px;margin:0}
+.mylist{display:grid;gap:12px}
+img.thumb{border-radius:50%;object-fit:cover;background:var(--surface-2)}
+.tform{padding:16px}
+.photorow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.photorow img{width:84px;height:84px;border-radius:50%;object-fit:cover}
+.tcard .tfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.facts dd.pre{white-space:pre-line}
+.logtoolswrap{display:grid;gap:10px}
+.logbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+.sortlbl{display:grid;gap:4px}
+.sortlbl select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.logbar #lfCount{flex:1;min-width:180px;align-self:center}
+.lfbadge{font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--warn);background:var(--warn-bg);border-radius:99px;padding:2px 8px;margin-left:6px}
+.lfbadge:empty{display:none}
+.logtools{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;align-items:end}
+.logtools label{display:grid;gap:4px;min-width:0}
+.logtools label.check{display:flex}
+.logtools .wide{grid-column:span 2}
+@media (max-width:420px){.logtools .wide{grid-column:auto}}
+.logtools input[type=search],.logtools input[type=date],.logtools select{width:100%;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}
+.logtools select.on,.logtools input.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.lfon{color:var(--ink);background:var(--warn-bg);border-radius:6px;padding:5px 10px;font-weight:700}
+.lfend{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sheet{display:grid;gap:10px}
+.sheet p{margin:0}
+.sheetpre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--surface-2);border-radius:8px;padding:12px 14px;overflow-x:auto;max-height:360px;overflow-y:auto;white-space:pre}
+.logtop{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.mixused{margin:0;font-size:14px}
+.mixused .label{margin-right:6px}
+.eform{display:grid;gap:14px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 16px;align-items:end}
+.fgrid label{display:grid;gap:4px;min-width:0}
+.fgrid label.check{display:flex}
+.fgrid .wide{grid-column:1/-1}
+.fgrid input[type=text],.fgrid input[type=date],.fgrid input[type=number],.fgrid select,.fgrid textarea{width:100%;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}
+.fgrid .row{flex-wrap:nowrap}
+.fgrid .row input[type=text]{flex:1}.chead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.btn.small{font-size:13px;padding:5px 10px}
+.basedon{margin:0;font-size:13.5px;color:var(--ink);background:var(--surface-2);border-radius:6px;padding:7px 10px;width:fit-content;max-width:100%}
+.mixmsg{margin:0;font-size:14px;color:var(--pop);font-weight:700}
+.recipe-line{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.primary:hover{opacity:.9}
+.btn.danger{color:var(--mud)}
+.logbox{display:grid;gap:6px;border-top:1px dashed var(--line);padding-top:14px}
+.stamp{text-align:center;border-top:1px dashed var(--line);padding-top:10px;width:100%}
+.mixer{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mixrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mixrow input[type=number]{width:56px;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}
+.mixrow select{max-width:190px}
+.plus{font-weight:700;color:var(--muted)}
+.mixout{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);flex:none}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 28px}
+.links h4{margin:0 0 8px;font-size:15px}
+.links ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.links li{display:grid;gap:1px}
+.links a{font-weight:700}
+.links span{font-size:14px;color:var(--muted)}
+.logpanel{max-width:1000px}
+.tally{display:flex;flex-wrap:wrap;gap:10px}
+.tally .t{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 16px;display:grid;gap:0;min-width:120px}
+.tally .t b{font-family:var(--display);font-stretch:125%;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
+.tally .t span{font-size:13px;color:var(--muted)}
+.loglist{display:grid;gap:14px}
+.entry{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px}
+.entry.fresh{box-shadow:0 0 0 2px var(--focus)}
+.ehead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:baseline}
+.ehead h3{font-family:var(--display);font-stretch:125%;font-size:17px}
+.emeta{font-size:13px;color:var(--muted)}
+.ebody{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+@media (max-width:720px){.ebody{grid-template-columns:1fr}}
+.ptable{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:6px 10px;align-items:center;font-size:13px}
+.ptable .h{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center}
+.ptable .n{font-weight:700;font-size:14px}
+.ptable .c{height:30px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.discrow{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.discrow i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.ephoto{display:grid;gap:8px;align-content:start}
+.ephoto img{width:100%;max-height:260px;object-fit:contain;border-radius:8px;background:var(--surface-2)}
+.efields{display:grid;grid-template-columns:minmax(0,180px) 1fr;gap:10px}
+@media (max-width:520px){.efields{grid-template-columns:1fr}}
+.efields label{display:grid;gap:4px}
+.efields textarea{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);min-height:38px;resize:vertical}
+.efoot{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.closer{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.dye,.btn,.jar{transition:border-color .15s,box-shadow .15s}}
+.h1sub{display:block;font-family:var(--body);font-stretch:100%;font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--muted);margin-top:4px}
+.nudge{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);border-radius:10px;padding:10px 14px;font-size:14px}
+.nudge span{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.nudgex{appearance:none;border:0;background:none;font:inherit;font-size:18px;font-weight:700;color:var(--muted);cursor:pointer;padding:0 4px}
+.datapanel{max-width:760px}
+.dsec{gap:10px}
+.dsec p{margin:0}
+.dstrong{font-weight:700}
+.okmsg{color:var(--pop);font-weight:700}
+.errmsg{color:var(--mud);font-weight:700}
+.safelist{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px}
 .steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:15px}
-#installState{margin:0;font-weight:700}
+.confirm{display:grid;gap:8px;background:var(--warn-bg);border-radius:10px;padding:12px}
+.confirm input[type=text]{width:100%}
+.dsec input[type=text]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--ink);color:var(--surface);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60}
+#updateBar button{appearance:none;font:inherit;font-weight:700;background:var(--surface);color:var(--ink);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
 </style>
 </head>
 <body>
-<main>
-  <header class="row" style="justify-content:space-between">
-    <div><h1>DIPS</h1><p class="hint">Disc Ink Planning System, proof of concept. Version <code id="ver">…</code></p></div>
+
+<div class="wrap">
+  <header>
+    <h1>DIPS <span class="h1sub">Disc Ink Planning System</span></h1>
+    <p class="lede">Set up your disc, plastic and technique. See which PRO Chemical &amp; Dye colors will pop, which will barely show, and which will turn to mud, before you open a jar.</p>
   </header>
 
-  <section class="card">
-    <h2>1. Install</h2>
-    <p id="installState">Checking…</p>
-    <button type="button" id="installBtn" class="primary" hidden>Install DIPS</button>
-    <ol class="steps" id="installSteps" hidden></ol>
-    <p class="hint" id="installWhy">Installing puts a DIPS icon on your phone or computer, lets it work without internet, and helps keep your notes safe.</p>
+  <div class="nudge" id="nudge" role="status" hidden></div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="tabbtn-planner" data-tab="planner" aria-selected="true">Planner</button>
+    <button type="button" role="tab" id="tabbtn-notes" data-tab="notes" aria-selected="false">Cliff Notes</button>
+    <button type="button" role="tab" id="tabbtn-log" data-tab="log" aria-selected="false">Test log</button>
+    <button type="button" role="tab" id="tabbtn-data" data-tab="data" aria-selected="false">Your data</button>
+  </nav>
+
+  <div id="tab-planner" role="tabpanel" aria-labelledby="tabbtn-planner" class="tabpanel">
+  <section class="setup" aria-label="Setup">
+    <div class="panel">
+      <span class="label">Disc color</span>
+      <div class="swatches" id="swatches"></div>
+      <div class="row">
+        <input type="color" id="basePick" aria-label="Exact disc color">
+        <input type="text" class="hexin" id="baseHex" aria-label="Disc color hex code" spellcheck="false">
+        <span class="hint" id="baseName"></span>
+      </div>
+      <details>
+        <summary>Match from a photo</summary>
+        <div class="photo">
+          <input type="file" id="photoIn" accept="image/*">
+          <canvas id="photoCv" hidden></canvas>
+          <p class="hint" id="photoHint">Photo the disc in daylight, upload it, then tap a clean, unstamped spot.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <span class="label">Plastic</span>
+      <div class="selects">
+        <label><span class="hint">Brand</span><select id="brand"></select></label>
+        <label><span class="hint">Plastic</span><select id="plastic"></select></label>
+      </div>
+      <div class="rating" id="rating"></div>
+      <label class="check"><input type="checkbox" id="transl"> Translucent plastic</label>
+      <p class="hint">Ratings come from the <a href="https://dyersguild.co/disc-dyeing-acceptability-chart/" target="_blank" rel="noopener">Disc Golf Dyers Guild chart</a>. How much a rating pales the preview is our estimate.</p>
+    </div>
+
+    <div class="panel">
+      <span class="label">Technique</span>
+      <div class="seg" id="techSeg" role="group" aria-label="Technique"></div>
+      <label class="mytechpick" id="myTechPickWrap" hidden><span class="hint">Or one of my techniques</span><select id="myTechPick"></select></label>
+      <div class="recipe" id="recipe"></div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>2. Your data</h2>
-    <p class="hint" id="persistState">Checking storage…</p>
-    <div id="folderBox">
-      <p class="hint" id="folderState"></p>
+  <div class="layout">
+    <aside class="side panel" aria-label="Preview">
+      <div class="stage">
+        <canvas id="disc" width="280" height="280" aria-label="Preview of the dyed disc"></canvas>
+        <div class="seg" id="patSeg" role="group" aria-label="Pattern"></div>
+        <div class="on" id="onDisc"></div>
+        <p class="hint roles" id="roles"></p>
+        <p class="hint" style="text-align:center">Tap dye cards to add up to 3 colors, in order. Drag a color to reorder it, or use ← and ×.</p>
+        <div class="touch" id="touchNow" hidden></div>
+        <p class="hint stamp"><b>Stamp tip:</b> put a light stamp over a dark part of the bed and a dark stamp over a light part.</p>
+      </div>
+      <div class="slider">
+        <label class="label" for="depth">Color depth <span id="depthVal" class="code"></span></label>
+        <input type="range" id="depth" min="30" max="100" value="80">
+        <div class="ends"><span>Short set, thin mix</span><span>Long set, strong mix</span></div>
+      </div>
+      <div style="display:grid;gap:6px">
+        <span class="label">Mixing math</span>
+        <div class="seg" id="blendSeg" role="group" aria-label="Mixing math">
+          <button type="button" data-blend="multiply" aria-pressed="true">Multiply</button>
+          <button type="button" data-blend="darken" aria-pressed="false">Darken</button>
+        </div>
+        <p class="hint">Not the mix strength (that's Color depth). This picks how the preview predicts dye combining with the disc color. Multiply treats dye like tinted glass, so results come out darker and muddier. Darken, the Dyers Guild chart's method, predicts brighter, cleaner results. Real dye likely lands between; your test discs will show which is closer.</p>
+      </div>
+      <div class="logbox">
+        <button type="button" class="btn primary" id="logBtn">Log this dye job</button>
+        <p class="hint" id="logBtnHint">Saves this setup and both predictions to the Test log, so you can compare them with the real disc.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="banner" id="banner"></div>
+
+      <div class="row">
+        <span class="label">Suggest from</span>
+        <div class="seg" id="poolSeg" role="group" aria-label="Which dyes to suggest">
+          <button type="button" data-pool="all" aria-pressed="true">All ProChem colors</button>
+          <button type="button" data-pool="owned" aria-pressed="false" id="poolOwned">Only my dyes</button>
+        </div>
+      </div>
+
+      <section class="group">
+        <div class="ghead"><h2>Combos that work</h2><span class="gnote">Real dyes to use together, in color order. "Where they touch" is the color you get where they bleed into each other, not another jar. Use Next to see more options of each type.</span></div>
+        <p class="basedon" id="basedOn"></p>
+        <div class="combos" id="combos"></div>
+      </section>
+
+      <section class="group">
+        <div class="ghead"><span class="pill pop">Will pop</span><span class="gnote">Clear change from the disc color, stays clean.</span></div>
+        <div class="grid" id="g-pop"></div>
+      </section>
+      <section class="group">
+        <div class="ghead"><span class="pill subtle">Subtle</span><span class="gnote">Close to the disc color. Fine for tone-on-tone, weak for contrast.</span></div>
+        <div class="grid" id="g-subtle"></div>
+      </section>
+      <section class="group">
+        <div class="ghead"><span class="pill mud">Goes muddy</span><span class="gnote">The disc and dye cancel out toward brown, grey or black.</span></div>
+        <div class="grid" id="g-mud"></div>
+      </section>
+
+      <section class="group">
+        <div class="ghead"><h2>My dye shelf</h2><span class="gnote" id="ownedCount"></span></div>
+        <p class="hint">Tap the jars you own, then choose "Only my dyes" above. Your shelf and custom dyes are saved on this device, and in your DIPS folder and backup files.</p>
+        <div class="shelf" id="shelf"></div>
+        <div class="mixer">
+          <span class="label">Mix two jars</span>
+          <div class="mixrow">
+            <input type="number" id="mixAp" min="1" max="10" value="2" aria-label="Parts of first dye">
+            <select id="mixA" aria-label="First dye"></select>
+            <span class="plus">+</span>
+            <input type="number" id="mixBp" min="1" max="10" value="1" aria-label="Parts of second dye">
+            <select id="mixB" aria-label="Second dye"></select>
+            <span class="plus">=</span>
+            <i class="mixout" id="mixOut"></i>
+            <button type="button" class="btn" id="mixAdd">Add mix as a dye</button>
+          </div>
+          <p class="mixmsg" id="mixMsg" role="status"></p>
+          <p class="hint">Parts are by volume of powder, e.g. 2 scoops + 1 scoop. The mixed color is estimated from the swatches, so mix a small test batch first. Community recipes: <a href="https://dyersguild.co/colorvault/" target="_blank" rel="noopener">Dyers Guild Color Vault</a>.</p>
+        </div>
+        <div class="custom">
+          <input type="color" id="cdColor" value="#c2185b" aria-label="Custom dye color">
+          <input type="text" id="cdName" placeholder="Name, e.g. Berry mix" aria-label="Custom dye name">
+          <button type="button" class="btn" id="cdAdd">Add custom dye</button>
+        </div>
+        <p class="hint">For another brand, match the color of the dye on a white test disc.</p>
+      </section>
+    </main>
+  </div>
+
+  <section class="info">
+    <div class="panel">
+      <h2>How the preview works</h2>
+      <p>Dye is see-through. It filters the plastic's color instead of covering it, so dye can only make a disc darker, and colors from opposite sides of the wheel cancel toward brown.</p>
+      <p>The ProChem colors were sampled from ProChem's own swatches, which were made on lotion or fabric, not plastic. Treat every preview as a guide: plastic, mix strength, set time, temperature and dye lot all change the real result. The finished disc also comes out paler than the dye bed looks.</p>
+    </div>
+    <div class="panel">
+      <h2>Safety</h2>
+      <ul>
+        <li>Wear a dust mask when handling dye powder, plus gloves and eye protection.</li>
+        <li>Acetone is highly flammable, dissolves stamps, and can soften plastic. Work with ventilation and away from flames.</li>
+        <li>ProChem says keep the disc at 120°F or below when using heat.</li>
+        <li>Don't pour Floetrol down the drain.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://prochemicalanddye.com/disc-golf-disc-dyes/" target="_blank" rel="noopener">PRO Chemical &amp; Dye: Disc Golf Disc Dyes</a></li>
+        <li><a href="https://prochemicalanddye.com/wp-content/uploads/2026/02/Disc-Dyeing-directions2-1.pdf" target="_blank" rel="noopener">ProChem disc dyeing directions (recipes)</a></li>
+        <li><a href="https://dyersguild.co/disc-dyeing-acceptability-chart/" target="_blank" rel="noopener">Dyers Guild plastic acceptability chart</a></li>
+        <li><a href="https://dyersguild.co/disc-dyeing-color-reference-chart/" target="_blank" rel="noopener">Dyers Guild color reference chart</a></li>
+        <li><a href="https://www.thedifferenceisdoingit.com/faqs/" target="_blank" rel="noopener">The Difference Is Doing It, a dyeing tutorial site: FAQ (glue recipe, set times)</a></li>
+        <li><a href="https://udisc.com/blog/post/how-to-dye-a-disc-golf-disc-easy-step-by-step-guide" target="_blank" rel="noopener">UDisc dyeing guide</a></li>
+      </ul>
+    </div>
+  </section>
+  </div>
+
+  <div id="tab-notes" role="tabpanel" aria-labelledby="tabbtn-notes" class="tabpanel notes" hidden>
+    <div class="nhero">
+      <h2 class="ntitle">New to disc dyeing? Start here.</h2>
+      <p>Everything you need for a first dye, one technique at a time. Each fact has a dot showing where it came from. When sources disagree, ProChem wins.</p>
+      <div class="dotkey">
+        <span><i class="dot pc"></i>ProChem's official directions</span>
+        <span><i class="dot sc"></i>Published guides (Dyers Guild, UDisc and other dyeing tutorial sites)</span>
+        <span><i class="dot ai"></i>AI chat, not confirmed. Test first.</span>
+      </div>
+    </div>
+
+    <section class="nsec">
+      <h3 class="nhead">The ground rules</h3>
+      <div class="rules">
+        <div class="rule"><b>Use premium plastic</b><p>Star, ESP, Neutron, Opto, Gold and similar. Baseline plastic like DX, Pro-D and Retro barely takes dye. Check yours in the Planner.</p><i class="dot sc" title="Published guides"></i></div>
+        <div class="rule"><b>Start with a white or light disc</b><p>Dye only darkens. On a red disc, nearly every dye reads as red or black.</p><i class="dot sc" title="Published guides"></i></div>
+        <div class="rule"><b>Expect it paler than the bed</b><p>The finished disc comes out lighter than the dye bed looks. A longer set gives deeper color.</p><i class="dot sc" title="Published guides"></i></div>
+        <div class="rule"><b>Test on a scrap disc first</b><p>Powder color varies from lot to lot, and every plastic takes dye differently. Record results in the Test log.</p><i class="dot pc" title="ProChem"></i></div>
+        <div class="rule safety"><b>Stay safe</b><p>Dust mask for dye powder, gloves, eye protection, ventilation. Acetone is flammable and dissolves stamps. Keep the disc at 120°F or below.</p><span class="dots"><i class="dot pc" title="ProChem"></i><i class="dot sc" title="Published guides"></i></span></div>
+      </div>
+    </section>
+
+    <section class="nsec">
+      <h3 class="nhead">Pick a technique</h3>
+      <div class="jumprow"><div class="jump" id="techJump">
+        <button type="button" data-jump="t-spin">Spin</button>
+        <button type="button" data-jump="t-floetrol">Floetrol bed</button>
+        <button type="button" data-jump="t-glue">Clear glue bed</button>
+        <button type="button" data-jump="t-cream">Shaving cream</button>
+        <button type="button" data-jump="t-hotdip">Hot dip</button>
+        <button type="button" data-jump="myTechSec">My techniques</button>
+      </div><button type="button" class="btn" id="expandAll">Open all</button></div>
+
+      <details class="tcard" id="t-spin">
+        <summary><canvas class="thumb" data-pattern="spin" width="140" height="140" aria-hidden="true"></canvas><span class="tsum"><span class="tname">Spin</span><span class="looks">Rings, lollipops, off-center swirls</span><span class="tlede">The easiest way to get clean rings. No bed and no waiting on a pattern to form.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="tbody">
+          <dl class="facts">
+            <dt>How</dt><dd><i class="dot sc"></i>Put the disc on a turntable or lazy Susan and brush or swab dye on while it spins.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i>½ tsp dye + 1 tsp hot water + 2 oz of 90%+ alcohol or lotion.</dd>
+            <dt>Heat</dt><dd>None needed.</dd>
+          </dl>
+        </div>
+      </details>
+
+      <details class="tcard" id="t-floetrol">
+        <summary><canvas class="thumb" data-pattern="cells" width="140" height="140" aria-hidden="true"></canvas><span class="tsum"><span class="tname">Floetrol bed</span><span class="looks">Cells, lacing, fluid bands</span><span class="tlede">Dye is mixed into Floetrol (a paint additive), poured into a tray, then <b>pulled</b> to open cells.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="tbody">
+          <dl class="facts">
+            <dt>How</dt><dd><i class="dot ai"></i>Pour a background color, pour oiled accent colors beside or over it, then lay plastic wrap or a card on top and drag it across. The oiled colors break through and open into cells.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i><b>Solid color:</b> ¼ tsp dye + 1-2 tsp hot water + 2 oz Floetrol. Dissolve the powder in the water first.<br><i class="dot pc"></i><b>Cell color:</b> the same, plus 3-4 drops of silicone oil added last. <i class="dot ai"></i>Stir only briefly, or you get tiny dots instead of big cells.</dd>
+            <dt>Heat</dt><dd><i class="dot sc"></i>A heat lamp speeds setting. <i class="dot pc"></i>Keep the disc at 120°F or below.</dd>
+            <dt>Set</dt><dd><i class="dot sc"></i>90 minutes to 4 hours under a heat lamp, 24-48 hours without.</dd>
+          </dl>
+          <p class="heads"><b>Heads up:</b> the AI chat says Floetrol <i>requires</i> 120-125°F heat. ProChem caps the disc at 120°F and UDisc says heat is optional, so stay at or under 120°F. Don't pour Floetrol down the drain.</p>
+        </div>
+      </details>
+
+      <details class="tcard" id="t-glue">
+        <summary><canvas class="thumb" data-pattern="river" width="140" height="140" aria-hidden="true"></canvas><span class="tsum"><span class="tname">Clear glue bed</span><span class="looks">Marble swirls, sharp lines</span><span class="tlede">A plain glue bed with dye <b>dropped</b> on top, then dragged into swirls. The most control over lines.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="tbody">
+          <dl class="facts">
+            <dt>How</dt><dd><i class="dot ai"></i>Pour clear school glue into a tray. Drip dye mixed in acetone onto it with a dropper; each drop spreads flat and the acetone flashes off. Drag with a toothpick or skewer to swirl.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i>½ tsp dye + 2 oz acetone, in a glass jar (acetone eats many plastic cups). <i class="dot ai"></i>Shake 30 seconds, let it settle 10 minutes, and draw from the top.<br><i class="dot sc"></i><b>Or, a community glue-bed recipe:</b> 3 oz clear glue + 1 oz Floetrol + ¼ tsp dye + a splash of acetone.</dd>
+            <dt>Neons</dt><dd><i class="dot ai"></i>½ tsp neon dye + 1.5 oz acetone + 0.5 oz 70%+ isopropyl alcohol. Unconfirmed; try it on a scrap disc.</dd>
+            <dt>Heat</dt><dd><i class="dot sc"></i>A little heat helps.</dd>
+            <dt>Set</dt><dd><i class="dot ai"></i>12-24 hours at room temperature.</dd>
+          </dl>
+          <p class="heads"><b>Heads up:</b> acetone dissolves stamps. Cover the stamp first.</p>
+        </div>
+      </details>
+
+      <details class="tcard" id="t-cream">
+        <summary><canvas class="thumb" data-pattern="starburst" width="140" height="140" aria-hidden="true"></canvas><span class="tsum"><span class="tname">Shaving cream / lotion</span><span class="looks">Starbursts, soft swirls, camo</span><span class="tlede">The cheapest way to start. Dye goes on or into a foam bed and the disc is pressed in.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="tbody">
+          <dl class="facts">
+            <dt>Starburst</dt><dd><i class="dot sc"></i>Sprinkle dry powder over a coned bed. <i class="dot ai"></i>Mist once with warm water from about 2 feet, then press the disc straight down so the cream spreads outward.</dd>
+            <dt>Swirl</dt><dd><i class="dot sc"></i>Drip dye on the bed, swirl it, and press the disc in.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i><b>Lotion paint:</b> ½ tsp dye + 1 tsp hot water + 2 oz lotion.<br><i class="dot ai"></i><b>Piping paste:</b> ¼ tsp dye + 1 tsp hot water + 2 oz shaving cream, piped from a zip bag. That's half ProChem's strength; use ProChem's ratio if it comes out weak.</dd>
+            <dt>Heat</dt><dd><i class="dot ai"></i>Avoid; heat can collapse the foam.</dd>
+            <dt>Set</dt><dd><i class="dot sc"></i>8-24 hours.</dd>
+          </dl>
+        </div>
+      </details>
+
+      <details class="tcard" id="t-hotdip">
+        <summary><canvas class="thumb" data-pattern="stencil" width="140" height="140" aria-hidden="true"></canvas><span class="tsum"><span class="tname">Hot dip</span><span class="looks">Solid color, stencil shapes, fades</span><span class="tlede">The disc floats face-down in heated dye water. Crisp edges with a vinyl stencil.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="tbody">
+          <dl class="facts">
+            <dt>How</dt><dd><i class="dot sc"></i>Stick on a stencil, float the disc face-down in the dye, then rinse. For a fade, dip part of the disc and pull it out slowly.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i>1 tsp dye + 16 oz water, heated.</dd>
+            <dt>Heat</dt><dd><i class="dot pc"></i>Keep the disc at 120°F or below. Some guides use hotter water; follow ProChem.</dd>
+            <dt>Set</dt><dd><i class="dot sc"></i>Minutes, not hours (5-10 is typical).</dd>
+          </dl>
+        </div>
+      </details>
+
+      <div class="mytech" id="myTechSec">
+        <div class="myhead"><h4 class="subhead">My techniques</h4><button type="button" class="btn primary small" id="myTechAdd">Add a technique</button></div>
+        <p class="hint" id="myTechStatus" role="status">Your own methods and mixes, shared with everyone who uses this page. To start from a built-in card, open it and use "Make my version."</p>
+        <div class="logtools techtools" id="techTools" role="search" aria-label="Search and filter my techniques">
+          <label class="wide"><span class="label">Search</span><input type="search" id="tfQ" placeholder="Name, mix, plastics, dyes, notes…"></label>
+          <label><span class="label">Sort</span><select id="tfSort"><option value="name">Name A-Z</option><option value="new">Newest first</option><option value="updated">Recently updated</option></select></label>
+          <label><span class="label">Base</span><select id="tfBase"></select></label>
+          <label><span class="label">Style</span><select id="tfPat"></select></label>
+          <label><span class="label">Tag</span><select id="tfTag"></select></label>
+          <div class="lfend"><span class="hint" id="tfCount"></span><button type="button" class="btn small" id="tfClear">Clear filters</button></div>
+        </div>
+        <div class="mylist" id="myTechList"></div>
+      </div>
+    </section>
+
+    <details class="nfold"><summary><span class="nhead">Common mistakes</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="mistakes">
+        <div><b>Opposite colors side by side</b><p>Red and green, blue and orange, yellow and purple turn brown where they touch. The Planner flags these.</p></div>
+        <div><b>Pressing too hard</b><p>Pushing the disc deep into the bed pools the dye and muddies it.</p></div>
+        <div><b>Reusing a bed</b><p>Colors blend together in a used bed and come out muddy.</p></div>
+        <div><b>Brown as the main color</b><p>Hard to find in the grass and it clashes with most colors.</p></div>
+        <div><b>Stamp over the wrong spot</b><p>Put a light stamp over a dark part of the bed and a dark stamp over a light part.</p></div>
+      </div>
+      <p class="hint"><i class="dot sc"></i>All from published guides.</p></details>
+
+    <details class="nfold"><summary><span class="nhead">Words you'll hear</span><span class="chev" aria-hidden="true"></span></summary>
+      <dl class="gloss">
+        <div><dt>Bed</dt><dd>The tray of Floetrol, glue or shaving cream the disc is pressed into.</dd></div>
+        <div><dt>Blank</dt><dd>An unstamped disc, often white, sold for dyeing.</dd></div>
+        <div><dt>Cells</dt><dd>Round pockets of color that open up in an oiled Floetrol bed.</dd></div>
+        <div><dt>Lacing</dt><dd>Fine web-like lines between colors, usually in Floetrol.</dd></div>
+        <div><dt>Swipe</dt><dd>Dragging plastic wrap or a card across a Floetrol bed to open cells.</dd></div>
+        <div><dt>Set time</dt><dd>How long the disc stays in the bed. Longer means deeper color.</dd></div>
+        <div><dt>Flight plate</dt><dd>The flat top of the disc, where most designs go.</dd></div>
+        <div><dt>Stencil</dt><dd>A vinyl mask stuck on the disc so dye can't reach that shape.</dd></div>
+      </dl></details>
+
+    <details class="nfold"><summary><span class="nhead">Learn more and where to buy</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="links">
+        <div><h4>Learn</h4><ul>
+          <li><a href="https://www.thedifferenceisdoingit.com/tutorial/" target="_blank" rel="noopener">The Difference Is Doing It</a><span>100+ video tutorials by technique: lollipop, nebula, brainvein, glue-mask spins.</span></li>
+          <li><a href="https://www.youtube.com/channel/UCTzLm2f2UG87EY0kmo_VZ9A/videos" target="_blank" rel="noopener">Disc Golf Dyers Guild on YouTube</a><span>Kit walkthroughs, workshops, and the Dyeing to Listen podcast.</span></li>
+          <li><a href="https://dyersguild.co/" target="_blank" rel="noopener">Disc Golf Dyers Guild</a><span>Plastic chart, color chart, glue bed pattern tutorials, and the Color Vault of mix recipes.</span></li>
+          <li><a href="https://udisc.com/blog/post/how-to-dye-a-disc-golf-disc-easy-step-by-step-guide" target="_blank" rel="noopener">UDisc beginner guide</a><span>Step-by-step Floetrol dye with photos.</span></li>
+        </ul></div>
+        <div><h4>Buy</h4><ul>
+          <li><a href="https://prochemicalanddye.com/disc-golf-disc-dyes/" target="_blank" rel="noopener">PRO Chemical &amp; Dye</a><span>The DGD disc dye line, jars and kits.</span></li>
+          <li><a href="https://www.marshallstreetdiscgolf.com/product-category/disc-categories/dyers-section" target="_blank" rel="noopener">Marshall Street dyer's section</a><span>ProChem dye plus white and unstamped blanks.</span></li>
+          <li><a href="http://www.sweethatdiscsupply.com/dye-catalog" target="_blank" rel="noopener">Sweet Hat! Disc Supply</a><span>100+ stock stencils.</span></li>
+          <li><a href="https://dyersguild.co/kits/" target="_blank" rel="noopener">Dyers Guild kits</a><span>Kits built around each technique.</span></li>
+        </ul></div>
+      </div>
+      <p class="hint">Links came from our research; we haven't bought from these shops.</p>
+    </details>
+  </div>
+
+  <div id="tab-log" role="tabpanel" aria-labelledby="tabbtn-log" class="tabpanel logpanel" hidden>
+    <div class="nhero">
+      <h2 class="ntitle">Test log</h2>
+      <p>Every dye job you log keeps its setup and what the preview predicted. After the disc sets, add a photo and pick which prediction came closer. After a few discs, the tally shows which mixing math to trust.</p>
+    </div>
+    <div class="logtop"><div class="tally" id="tally"></div><button type="button" class="btn" id="logAdd">Add entry manually</button></div>
+    <details class="nfold" id="sheetFold"><summary><span class="nhead">Printable dye sheet</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="sheet">
+        <p>Print this, fill it in at the bench, then type it in with "Add entry manually." The fields follow the entry form, top to bottom. Each sheet covers two discs.</p>
+        <label class="check"><input type="checkbox" id="sheetPrefill"> Pre-fill disc 1 from my Planner setup</label>
+        <div class="row"><button type="button" class="btn primary" id="sheetDl">Download sheet (.txt)</button><button type="button" class="btn" id="sheetPrint" hidden>Print</button><button type="button" class="btn" id="sheetCopy">Copy sheet text</button><span class="hint" id="sheetMsg" role="status"></span></div>
+        <p class="hint">On a computer, use Print. Or open the downloaded file in Notepad (or paste the copied text there) and print from Notepad.</p>
+        <pre class="sheetpre" id="sheetPre"></pre>
+      </div>
+    </details>
+    <div id="logTools" class="logtoolswrap">
+    <div class="logbar">
+      <label class="sortlbl"><span class="label">Sort</span><select id="lfSort">
+        <option value="new">Newest first</option><option value="old">Oldest first</option><option value="disc">Disc color</option><option value="plastic">Plastic</option><option value="tech">Technique</option></select></label>
+      <span class="hint" id="lfCount" role="status"></span>
+      <button type="button" class="btn small" id="lfClear">Clear filters</button>
+    </div>
+    <details class="nfold" id="lfFold"><summary><span class="nhead">Search and filters <span class="lfbadge" id="lfBadge"></span></span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="logtools" role="search" aria-label="Search and filter the log">
+      <label class="wide"><span class="label">Search</span><input type="search" id="lfQ" placeholder="Notes, dyes, jar codes, plastic, mix…"></label>
+      <label><span class="label">Plastic</span><select id="lfPlastic"></select></label>
+      <label><span class="label">Disc color</span><select id="lfDisc"></select></label>
+      <label><span class="label">Dye used</span><select id="lfDye"></select></label>
+      <label><span class="label">Dye color</span><select id="lfDyeFam"></select></label>
+      <label><span class="label">Technique</span><select id="lfTech"></select></label>
+      <label><span class="label">Closer prediction</span><select id="lfCloser"></select></label>
+      <label><span class="label">From</span><input type="date" id="lfFrom"></label>
+      <label><span class="label">To</span><input type="date" id="lfTo"></label>
+      <label class="check"><input type="checkbox" id="lfPhoto"> Has a photo</label>
+    </div>
+    </details>
+    </div>
+    <p class="hint" id="logStatus" role="status"></p>
+    <div class="loglist" id="logList"><p class="empty">Loading your log…</p></div>
+  </div>
+
+  <div id="tab-data" role="tabpanel" aria-labelledby="tabbtn-data" class="tabpanel datapanel" hidden>
+    <div class="nhero">
+      <h2 class="ntitle">Your data</h2>
+      <p>Everything you save in DIPS stays on this device. Nothing is sent anywhere. Here's how to install DIPS and keep your notes safe.</p>
+    </div>
+
+    <section class="panel dsec">
+      <h3 class="nhead">Install DIPS</h3>
+      <p class="dstrong" id="installState">Checking…</p>
+      <button type="button" class="btn primary" id="installBtn" hidden>Install DIPS</button>
+      <ol class="steps" id="installSteps" hidden></ol>
+      <p class="hint">Installing puts a DIPS icon on your phone or computer, lets it work without internet, and helps keep your notes safe.</p>
+    </section>
+
+    <section class="panel dsec" id="folderSec">
+      <h3 class="nhead">Keep a copy on this computer</h3>
+      <p id="folderState"></p>
       <div class="confirm" id="folderConfirm" hidden>
         <p id="folderConfirmText"></p>
-        <label class="hint" for="folderWhere">Where is it? Your browser only tells DIPS the folder's name, so jot down where you put it:</label>
-        <input type="text" id="folderWhere" maxlength="200" placeholder="e.g. OneDrive > Documents > DIPS">
-        <div class="row"><button type="button" id="folderYes" class="primary">Yes, save here</button><button type="button" id="folderNo">Pick again</button></div>
+        <label class="hint" for="folderWhere">Your browser only tells DIPS a folder's name, not where it is. Jot down where it lives so you can find it later:</label>
+        <input type="text" id="folderWhere" maxlength="200" placeholder="e.g. Documents > DIPS">
+        <div class="row"><button type="button" class="btn primary" id="folderYes">Yes, keep it there</button><button type="button" class="btn" id="folderNo">Pick again</button></div>
       </div>
-      <div class="row"><button type="button" id="folderBtn" class="primary">Choose a folder to save to</button><button type="button" id="folderForget" hidden>Stop saving to this folder</button></div>
-    </div>
-    <p class="hint" id="noFolder" hidden>This browser can't save to a folder automatically. Use Backup below and keep the file somewhere safe.</p>
-    <div class="row"><button type="button" id="backupBtn">Backup to a file</button><label class="btn">Restore from a file<input type="file" id="restoreIn" accept=".json,application/json" hidden></label></div>
-    <p class="hint" id="backupState"></p>
-  </section>
+      <div class="row"><button type="button" class="btn primary" id="folderBtn">Choose where to keep it</button><button type="button" class="btn" id="folderForget" hidden>Stop keeping a copy</button></div>
+    </section>
 
-  <section class="card">
-    <h2>3. Add a test entry</h2>
-    <input type="text" id="note" placeholder="e.g. Floetrol cells, Royal + Neon Key Lime" maxlength="200">
-    <div class="row"><label class="btn">Add photo<input type="file" id="photoIn" accept="image/*" hidden></label><span class="hint" id="photoState">No photo</span></div>
-    <button type="button" id="saveBtn" class="primary">Save entry</button>
-    <p class="hint" id="saveState"></p>
-  </section>
+    <section class="panel dsec">
+      <h3 class="nhead">Backup file</h3>
+      <p class="hint" id="backupIntro"></p>
+      <div class="row"><button type="button" class="btn primary" id="backupBtn">Save a backup file</button><label class="btn">Restore from a backup file<input type="file" id="restoreIn" accept=".json,application/json" hidden></label></div>
+      <p class="hint" id="backupState"></p>
+      <p class="hint">Restoring only adds what's missing. It never deletes anything you already have.</p>
+    </section>
 
-  <section class="card">
-    <h2>Entries</h2>
-    <div class="entries" id="list"><p class="hint">Nothing saved yet.</p></div>
-  </section>
-</main>
-<div id="updateBar" hidden><span>A new version of DIPS is ready.</span><button type="button" id="updateBtn">Reload</button></div>
+    <section class="panel dsec">
+      <h3 class="nhead">Your name</h3>
+      <p class="hint">Shown as "logged by" on your log entries and techniques, including in backup files you share with friends.</p>
+      <div class="row"><input type="text" id="myName" maxlength="40" placeholder="e.g. Sean" aria-label="Your name"><button type="button" class="btn" id="myNameSave">Save</button><span class="hint" id="myNameMsg" role="status"></span></div>
+    </section>
 
+    <section class="panel dsec">
+      <h3 class="nhead">How safe is my data?</h3>
+      <p id="persistState"></p>
+      <ul class="safelist">
+        <li>Clearing <b>"Cached images and files"</b> in your browser is safe.</li>
+        <li>Clearing <b>"Cookies and site data"</b> erases DIPS from this browser. Your DIPS folder or a backup file brings it back.</li>
+        <li>Uninstalling DIPS may erase its data too. Save a backup file first.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script src="local.js?v=0.1.0"></script>
 <script>
-const $=s=>document.querySelector(s);
+const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
-/* ---------- IndexedDB: entries, photos (Blobs), meta (folder handle, last backup) ---------- */
-const dbp=new Promise((res,rej)=>{
-  const r=indexedDB.open("dips",1);
-  r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("entries",{keyPath:"id"});d.createObjectStore("photos",{keyPath:"id"});d.createObjectStore("meta",{keyPath:"key"});};
-  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
-});
-async function tx(store,mode,fn){const d=await dbp;return new Promise((res,rej)=>{const t=d.transaction(store,mode),s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
-const all=store=>tx(store,"readonly",s=>s.getAll());
-const get=(store,key)=>tx(store,"readonly",s=>s.get(key));
-const put=(store,val)=>tx(store,"readwrite",s=>s.put(val));
-const del=(store,key)=>tx(store,"readwrite",s=>s.delete(key));
-const getMeta=async k=>(await get("meta",k))?.value;
-const setMeta=(k,v)=>put("meta",{key:k,value:v});
+/* PRO Chemical & Dye disc dye line. Hex values sampled from ProChem's website swatches (made on lotion/fabric). */
+const PROCHEM=`DGD101|Neon Lemon Zest|#defd02
+DGD109|Dandelion|#fded01
+DGD118|Bright Yellow|#ddde20
+DGD120|Sun Yellow|#f2f35a
+DGD125|Buttercup|#f9b61d
+DGD200|Deep Orange|#f67300
+DGD201|Neon Hot Orange|#e75001
+DGD205|Creamsicle|#fb7f03
+DGD225|Clear Orange|#ec9c3d
+DGD301|Fluorescent Pink|#f88da5
+DGD310|Cherry|#a50f18
+DGD333|Fuchsia|#ca7faa
+DGD337|Wineberry|#9a094c
+DGD350|Flame Scarlet|#fc3110
+DGD360|Pinkish Red|#d65e8e
+DGD363|Radical Red|#b72f5f
+DGD365|Fire Red|#fd4543
+DGD378|Blood Red|#6c0516
+DGD388|Neon Cerise Pink|#e544ab
+DGD400|Shark Blue|#6e7689
+DGD401|Caribbean|#03a4c1
+DGD403|Aqua|#22a98b
+DGD405|Sonic Blue|#00138b
+DGD408|Royal|#0531ce
+DGD409|Navy|#092459
+DGD411|Sky Blue|#2cc1f9
+DGD415|Pale Turquoise|#63b1be
+DGD457|Flag Blue|#0d2261
+DGD459|Bright Blue|#3360a4
+DGD488|Teal Blue|#04425b
+DGD500|Espresso Bean|#2a201e
+DGD501|Chocolate|#3d170a
+DGD510|Burnt Sienna|#8a260e
+DGD600|Dark Dungeon|#000000
+DGD606|Light Gray|#98a4a2
+DGD608|Onyx|#000000
+DGD650|Cool Black|#282723
+DGD700|Neon Key Lime|#01fe0f
+DGD707|Evergreen|#016241
+DGD713|Shamrock|#11793a
+DGD770|Meadow|#239603
+DGD771|Fern|#53873d
+DGD772|Aquatic Green|#005240
+DGD803|Concord|#3c0682
+DGD880|Iris|#3d3c68
+DGD881|Orchid|#663576
+DGD882|Pansy|#7f379a
+DGD885|Lilac|#522b57
+DGD888|Neon Royal Purple|#621187`;
+const FAMS={"1":"Yellows","2":"Oranges","3":"Reds & pinks","4":"Blues","5":"Browns","6":"Blacks & greys","7":"Greens","8":"Purples","c":"Custom dyes and mixes"};
+let customN=0,rmArm=null,pendingTech=null;
 
-/* ---------- photos: shrink to 1600px JPEG before storing ---------- */
-async function shrink(file){
-  const img=await createImageBitmap(file).catch(()=>null);
-  if(!img)throw new Error("unreadable");
-  const scale=Math.min(1,1600/Math.max(img.width,img.height)),w=Math.round(img.width*scale),h=Math.round(img.height*scale);
-  const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
-  return new Promise(res=>c.toBlob(res,"image/jpeg",.85));
-}
-let pendingPhoto=null;
-$("#photoIn").addEventListener("change",async e=>{
-  const f=e.target.files[0];if(!f)return;
-  $("#photoState").textContent="Shrinking…";
-  try{pendingPhoto=await shrink(f);$("#photoState").textContent=`Ready: ${Math.round(f.size/1024)} KB shrunk to ${Math.round(pendingPhoto.size/1024)} KB`;}
-  catch(_){pendingPhoto=null;$("#photoState").textContent="That photo couldn't be read. Try a JPG or PNG.";}
-});
+/* Disc Golf Dyers Guild acceptability chart (dyeability). E Excellent, G Good, M Moderate, P Poor, - not rated. */
+const PLASTICS=`ABC|Platinum|E
+ABC|Gold|E
+ABC|Bronze|P
+Above Ground Level|Treeline|E
+Above Ground Level|Alpine|E
+Above Ground Level|AGL Baseline|M
+Alfa Discs|Crystal Line|-
+Alfa Discs|Chrome Line|E
+Cheengz|Pro-Plaztic|-
+Cheengz|I-Plaztic|-
+Daredevil|High Perform|E
+Daredevil|Flex Perform|E
+Daredevil|Grip Perform|G
+DGA|Pro-Line|E
+DGA|Glow SP-Line|G
+DGA|SP-Line|G
+DGA|RDGA|G
+DGA|Signature-Line|P
+DGA|D-Line|P
+Discmania|S-Line / LUX|E
+Discmania|G-Line|E
+Discmania|Glow C-Line / Active Glow|G
+Discmania|C-Line / NEO / Active Premium|G
+Discmania|P-Line|G
+Discmania|EXO Hard|M
+Discmania|X-Line|M
+Discmania|EXO Soft|M
+Discmania|D-Line Glow|P
+Discmania|D-Line / Active Base|P
+Discraft|ESP|E
+Discraft|Z Lite|E
+Discraft|ESP / Z Flex|G
+Discraft|Titanium|G
+Discraft|ESP / Z Glo|G
+Discraft|Elite Z / Big Z|G
+Discraft|Elite X|G
+Discraft|Jawbreaker / Rubber|M
+Discraft|Jawbreaker|M
+Discraft|Pro-D Soft|M
+Discraft|Pro-D Glo|P
+Discraft|Pro-D|P
+Disctroyer|A-medium|-
+Disctroyer|A-soft|-
+Disctroyer|A-hard|-
+Divergent Discs|Max Grip|G
+Divergent Discs|Max Grip Glow|G
+Divergent Discs|StayPut|P
+Dynamic Discs|Fuzion / Fuzion X|E
+Dynamic Discs|Supreme|E
+Dynamic Discs|BioFuzion|E
+Dynamic Discs|Fluid|E
+Dynamic Discs|Hybrid|E
+Dynamic Discs|Moonshine|E
+Dynamic Discs|Lucid / Lucid X|E
+Dynamic Discs|Lucid Air|E
+Dynamic Discs|Classic|M
+Dynamic Discs|Classic Blend|M
+Dynamic Discs|Classic Supreme|P
+Dynamic Discs|Classic Soft|P
+Dynamic Discs|Prime|P
+Element Discs|Hydra|E
+Element Discs|Terra Firma|E
+Element Discs|Terra|M
+EV-7|OG Firm|-
+EV-7|OG Medium|-
+EV-7|OG Base|-
+Finish Line Discs|Forged Plastic|E
+Franklin Discs|RT|P
+Full Turn|Express|E
+Full Turn|Priority|G
+Full Turn|Ground|M
+Gateway|Platinum|E
+Gateway|OG|E
+Gateway|Evolution|E
+Gateway|HD|E
+Gateway|Diamond Glow|E
+Gateway|Diamond / Hemp|E
+Gateway|Pure White|G
+Gateway|Firm|M
+Gateway|Super Soft|M
+Gateway|Super Glow|P
+Gateway|Soft|P
+Guru Disc Golf|S-Plastic|-
+Guru Disc Golf|Safety Line|-
+Guru Disc Golf|C-Plastic|-
+Guru Disc Golf|D-Plastic|-
+Hero|Super Atom / Super Sonic|E
+Hero|Super Hero|E
+Hero|Hero Aero|M
+Hero|Sonic / Aero|P
+Hyzerbomb|Frontline|E
+Hyzerbomb|Frontline-X|G
+Hyzerbomb|Recon|G
+Hyzerbomb|Baseline Hard|M
+Hyzerbomb|Baseline|M
+Hyzerbomb|Baseline Soft|P
+Infinite Discs|S-Blend|E
+Infinite Discs|G-Blend|E
+Infinite Discs|C-Blend|E
+Infinite Discs|I-Blend|E
+Infinite Discs|X-Blend|M
+Infinite Discs|D-Blend|P
+Innova|Star / Shimmer|E
+Innova|StarLite|E
+Innova|Echo Star|E
+Innova|GStar|E
+Innova|Glow Champ|G
+Innova|Champion / Metal Flake|G
+Innova|Blizzard|G
+Innova|Pro|G
+Innova|XT / Driver Pro|M
+Innova|R-Pro / JK Pro|M
+Innova|DX Glow|P
+Innova|DX|P
+Kastaplast|K1|E
+Kastaplast|K2|E
+Kastaplast|K1 Glow|E
+Kastaplast|K1 Soft|G
+Kastaplast|K3|M
+Latitude 64|Gold Line / Royal Grand|E
+Latitude 64|Recycled|E
+Latitude 64|Frost Line|E
+Latitude 64|Hybrid|E
+Latitude 64|Moonshine|E
+Latitude 64|Opto / Opto X / Bite|E
+Latitude 64|Opto Air|E
+Latitude 64|Zero Hard|M
+Latitude 64|Zero Medium / Royal Sense|M
+Latitude 64|Zero Soft|P
+Latitude 64|Retro Line|P
+Legacy / Kaufinator|Icon|E
+Legacy / Kaufinator|Lefend|E
+Legacy / Kaufinator|Pinnacle|E
+Legacy / Kaufinator|Ultralight|E
+Legacy / Kaufinator|Protege|M
+Legacy / Kaufinator|Gravity|P
+Legacy / Kaufinator|Excel|P
+Lighting Discs|Pro Style|E
+Lighting Discs|Standard|M
+Løft|A-Solid|E
+Løft|Gamma|E
+Lone Star Disc|Alpha|E
+Lone Star Disc|Bravo Glow|E
+Lone Star Disc|Bravo|E
+Lone Star Disc|V2|P
+Millennium|Sirius|E
+Millennium|Quantum|E
+Millennium|Lunar|E
+Millennium|Zero-G|E
+Millennium|ET|G
+Millennium|Millennium Standard|M
+Millennium|Delta T|M
+Millennium|Supersoft|M
+Mint Discs|Apex|E
+Mint Discs|Sublime|E
+Mint Discs|Eternal|E
+Mint Discs|Nocturnal Glow|E
+Mint Discs|Royal|P
+Momentum Disc Golf|Prominent|-
+Momentum Disc Golf|Buddy|-
+MVP / Axiom / Streamline|Neutron|E
+MVP / Axiom / Streamline|Fission|E
+MVP / Axiom / Streamline|R2|E
+MVP / Axiom / Streamline|Plasma|E
+MVP / Axiom / Streamline|FX|E
+MVP / Axiom / Streamline|Eclipse|G
+MVP / Axiom / Streamline|Proton|G
+MVP / Axiom / Streamline|Electron|P
+MVP / Axiom / Streamline|Electron Soft|P
+Obsidian Discs|H9|E
+Obsidian Discs|H9 Transparent|E
+Obsidian Discs|G5|M
+Plastic Addicts|Top Line|E
+Plastic Addicts|Main Line|G
+Premiere Discs|Alpha|E
+Premiere Discs|Beta|G
+Premiere Discs|Echo|P
+Prodigy|400 / 750G|E
+Prodigy|400G Lite|E
+Prodigy|450|E
+Prodigy|750|E
+Prodigy|400 Glow|E
+Prodigy|400 / 400S / 500|E
+Prodigy|400S Light|E
+Prodigy|350G|M
+Prodigy|300S|M
+Prodigy|350Rx|M
+Prodigy|200|P
+Prodiscus|Ultrium|E
+Prodiscus|Shadow|E
+Prodiscus|Premium|E
+Prodiscus|Platinium|E
+Prodiscus|Basic Hard|M
+Prodiscus|Baseline|M
+Reptilian Discs|Armor|E
+Reptilian Discs|Fossil Flex|E
+Reptilian Discs|Amber|E
+Reptilian Discs|Fossil / Fossil Fuel|M
+Reptilian Discs|Prehistoric / Organic|M
+Reptilian Discs|Chalk RFF / Tar Pit|M
+RPM|Atomic|E
+RPM|Cosmic|E
+RPM|Magma|M
+RPM|Magma Soft|P
+RPM|Strata|P
+Storm|Category 3|E
+Storm|Category 1|E
+Storm|Category 3X|G
+Terminal Velocity Discs|Quartz|E
+Terminal Velocity Discs|Calcite|E
+Terminal Velocity Discs|Glass|G
+Terminal Velocity Discs|Granite|G
+Thought Space Athletics|Glow|G
+Trash Panda|Premium|E
+Trash Panda|Phone Case|E
+Trash Panda|Ice|G
+Trash Panda|Baseline|P
+Viking|Armor|E
+Viking|Storm|E
+Viking|Fire|G
+Westside Discs|Tournament|E
+Westside Discs|Muovi R|E
+Westside Discs|Elasto|E
+Westside Discs|Hybrid|E
+Westside Discs|Moonshine|E
+Westside Discs|VIP / VIP X|E
+Westside Discs|VIP Air|E
+Westside Discs|BT Hard|M
+Westside Discs|BT Medium|M
+Westside Discs|BT Soft|P
+Westside Discs|Origio|P
+Wham-O|UMAX Night Glow|P
+Wham-O|Fastback Super Flex|P
+Wild Discs|Lava|-
+Wild Discs|Ozone|-
+Wild Discs|Landslide|-
+Wing It Disc Golf|Premium|E
+Yikun|Phoenix Prem|E
+Yikun|Phoenix Air|E
+Yikun|Dragon|E
+Yikun|Phoenix Shine|E
+Yikun|Tortoise|G
+Yikun|Phoenix Stan|G
+Yikun|Tiger|M
+Other / not listed|Takes dye like Star or ESP|E
+Other / not listed|Takes dye like Champion|G
+Other / not listed|Takes dye like XT or R-Pro|M
+Other / not listed|Takes dye like DX or Pro-D|P`.split("\n").map(l=>{const[brand,name,r]=l.split("|");return{brand,name,r};});
+const RATING={
+  E:{label:"Excellent",f:1,text:"Takes dye very well."},
+  G:{label:"Good",f:.85,text:"Takes dye well. Expect slightly softer color than Excellent plastics."},
+  M:{label:"Moderate",f:.65,text:"Takes dye lightly or unevenly. Expect pale results."},
+  P:{label:"Poor",f:.35,text:"Barely takes dye and tends to fade or bleed. Use a premium plastic if you can."},
+  "-":{label:"Not rated",f:.85,text:"Not rated in the Guild chart yet. The preview assumes Good."}
+};
 
-/* ---------- entries ---------- */
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-$("#saveBtn").addEventListener("click",async()=>{
-  const note=$("#note").value.trim();
-  if(!note&&!pendingPhoto){$("#saveState").textContent="Type a note or add a photo first.";return;}
-  const id=uid();let photoId=null;
-  if(pendingPhoto){photoId="p-"+id;await put("photos",{id:photoId,blob:pendingPhoto});}
-  await put("entries",{id,note,photoId,createdAt:new Date().toISOString()});
-  $("#note").value="";pendingPhoto=null;$("#photoState").textContent="No photo";
-  $("#saveState").textContent="Saved in this browser.";
-  await renderList();await syncFolder();
-});
-const urls=[];
-async function renderList(){
-  urls.splice(0).forEach(u=>URL.revokeObjectURL(u));
-  const entries=(await all("entries")).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  if(!entries.length){$("#list").innerHTML=`<p class="hint">Nothing saved yet.</p>`;return;}
-  const rows=await Promise.all(entries.map(async e=>{
-    let src="";if(e.photoId){const p=await get("photos",e.photoId);if(p){src=URL.createObjectURL(p.blob);urls.push(src);}}
-    return`<div class="entry">${src?`<img src="${src}" alt="">`:`<img alt="">`}<div>${esc(e.note||"(no note)")}<br><small>${new Date(e.createdAt).toLocaleString()}</small></div><button type="button" data-del="${e.id}">Delete</button></div>`;
-  }));
-  $("#list").innerHTML=rows.join("");
-}
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-$("#list").addEventListener("click",async e=>{
-  const b=e.target.closest("[data-del]");if(!b)return;
-  const en=await get("entries",b.dataset.del);if(!en)return;
-  await del("entries",en.id);if(en.photoId)await del("photos",en.photoId);
-  await renderList();await syncFolder();
-});
-
-/* ---------- storage persistence ---------- */
-async function checkPersist(){
-  let msg="";
-  if(navigator.storage&&navigator.storage.persist){
-    const already=await navigator.storage.persisted();
-    const granted=already||await navigator.storage.persist();
-    msg=granted?`<span class="ok">Protected:</span> the browser won't clean up DIPS data on its own.`:"Not protected yet: the browser may clean up data if the device runs low on space. Installing DIPS and using it regularly usually fixes this.";
-  }else msg="This browser doesn't report storage protection.";
-  if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();msg+=` Using ${(e.usage/1048576).toFixed(1)} MB.`;}
-  $("#persistState").innerHTML=msg;
-}
-
-/* ---------- data folder (Chrome/Edge desktop: File System Access API) ---------- */
-const canFolder="showDirectoryPicker" in window;
-let folder=null;
-async function folderPermission(h,ask){
-  const opts={mode:"readwrite"};
-  if(await h.queryPermission(opts)==="granted")return true;
-  return ask?(await h.requestPermission(opts))==="granted":false;
-}
-/* Browsers only reveal a folder's name, never its full location (privacy), so the user's own note
-   about where it lives is kept and shown alongside the name. */
-const whereText=async()=>{const w=await getMeta("folderWhere");return w?` (${esc(w)})`:"";};
-async function initFolder(){
-  if(!canFolder){$("#folderBox").hidden=true;$("#noFolder").hidden=false;return;}
-  $("#folderConfirm").hidden=true;
-  const h=await getMeta("folder");
-  if(!h){folder=null;$("#folderState").textContent="Pick a folder on this computer, like Documents > DIPS or a OneDrive folder, and DIPS keeps a copy of everything there automatically. If your browser is ever cleared, pick the same folder again and your notes come back.";$("#folderBtn").textContent="Choose a folder to save to";$("#folderForget").hidden=true;return;}
-  folder=h;
-  if(await folderPermission(h,false)){$("#folderState").innerHTML=`<span class="ok">Saving a copy to the folder "${esc(h.name)}"</span>${await whereText()}.`;$("#folderBtn").textContent="Use a different folder";$("#folderForget").hidden=false;}
-  else{$("#folderState").innerHTML=`DIPS needs your OK again to keep saving to "${esc(h.name)}"${await whereText()}.`;$("#folderBtn").textContent="Allow saving again";$("#folderForget").hidden=false;}
-}
-/* A picked folder is only used after the user confirms its name: the Windows picker can hand back
-   a highlighted neighbor folder instead of the one they were in. */
-let pickedFolder=null;
-$("#folderBtn").addEventListener("click",async()=>{
-  try{
-    if(folder&&$("#folderBtn").textContent==="Allow saving again"){if(await folderPermission(folder,true)){await importFromFolder();await syncFolder();}await initFolder();return;}
-    pickedFolder=await window.showDirectoryPicker({id:"dips-data",mode:"readwrite",startIn:"documents"});
-    $("#folderConfirmText").innerHTML=`You picked the folder named <b>"${esc(pickedFolder.name)}"</b>. Is that the right one?`;
-    $("#folderWhere").value=(await getMeta("folderWhere"))||"";
-    $("#folderConfirm").hidden=false;
-  }catch(err){if(err&&err.name!=="AbortError")$("#folderState").textContent="That folder can't be used. Try a folder inside Documents. ("+(err.message||err)+")";}
-});
-$("#folderYes").addEventListener("click",async()=>{
-  if(!pickedFolder)return;
-  folder=pickedFolder;pickedFolder=null;
-  await setMeta("folder",folder);await setMeta("folderWhere",$("#folderWhere").value.trim());
-  $("#folderConfirm").hidden=true;
-  await importFromFolder();await syncFolder();await initFolder();
-});
-$("#folderNo").addEventListener("click",()=>{pickedFolder=null;$("#folderConfirm").hidden=true;$("#folderBtn").click();});
-$("#folderForget").addEventListener("click",async()=>{await del("meta","folder");initFolder();});
-/* Write data.json plus photos/<id>.jpg. Photos already in the folder are not rewritten. */
-async function syncFolder(){
-  if(!folder||!(await folderPermission(folder,false)))return;
-  try{
-    const entries=await all("entries");
-    const f=await folder.getFileHandle("data.json",{create:true}),w=await f.createWritable();
-    await w.write(JSON.stringify({app:"DIPS",format:1,savedAt:new Date().toISOString(),entries},null,2));await w.close();
-    const pd=await folder.getDirectoryHandle("photos",{create:true});
-    for(const e of entries){
-      if(!e.photoId)continue;
-      const name=e.photoId+".jpg";
-      try{await pd.getFileHandle(name);continue;}catch(_){}
-      const p=await get("photos",e.photoId);if(!p)continue;
-      const fw=await(await pd.getFileHandle(name,{create:true})).createWritable();await fw.write(p.blob);await fw.close();
-    }
-    $("#folderState").innerHTML=`<span class="ok">Saving a copy to the folder "${esc(folder.name)}"</span>${await whereText()}. Last saved ${new Date().toLocaleTimeString()}.`;
-  }catch(err){$("#folderState").textContent="Saving to the folder failed: "+(err.message||err);}
-}
-/* Bring back anything in the folder that this browser doesn't have (e.g. after clearing site data). */
-async function importFromFolder(){
-  let data;
-  try{const f=await(await folder.getFileHandle("data.json")).getFile();data=JSON.parse(await f.text());}catch(_){return;}
-  const have=new Set((await all("entries")).map(e=>e.id));let added=0;
-  let pd=null;try{pd=await folder.getDirectoryHandle("photos");}catch(_){}
-  for(const e of data.entries||[]){
-    if(have.has(e.id))continue;
-    if(e.photoId&&pd){try{const b=await(await pd.getFileHandle(e.photoId+".jpg")).getFile();await put("photos",{id:e.photoId,blob:b});}catch(_){}}
-    await put("entries",e);added++;
+const TECH={
+  spin:{label:"Spin",patterns:["spin","offcenter","lollipop"],
+    recipe:"½ tsp dye + 1 tsp hot water + 2 oz of 90%+ alcohol or lotion.",
+    note:"Brush or swab the mix onto the disc while it spins.",src:"ProChem disc directions"},
+  floetrol:{label:"Floetrol bed",patterns:["cells","swirl","river"],
+    recipe:"½ tsp dye + 1 tsp hot water + 4 oz Floetrol. Add 3-4 drops of silicone oil for cells.",
+    note:"The bed looks much brighter than the finished disc. A heat lamp speeds setting; keep the disc at 120°F or below.",src:"ProChem disc directions"},
+  glue:{label:"Glue bed",patterns:["swirl","river","starburst"],
+    recipe:"ProChem: ½ tsp dye + 2 oz acetone, worked into the bed. Community glue-bed recipe: 3 oz clear school glue + 1 oz Floetrol + ¼ tsp dye + a splash of acetone.",
+    note:"Works best with a little heat. Acetone helps the dye bite but can dissolve stamps.",src:"ProChem disc directions, community guides"},
+  cream:{label:"Shaving cream / lotion",patterns:["swirl","starburst","river"],
+    recipe:"ProChem lotion paint: ½ tsp dye + 1 tsp hot water + 2 oz lotion. ProChem gives no shaving cream recipe.",
+    note:"Drip or sprinkle dye on the bed, swirl it (or drag a skewer outward for a starburst), press the disc in, and let it set 8-24 hours. Longer set gives deeper color.",src:"ProChem disc directions, community guides"},
+  hotdip:{label:"Hot dip",patterns:["full","doubledip","dipfade","stencil"],
+    recipe:"1 tsp dye + 16 oz water, heated.",
+    note:"ProChem says keep the disc at 120°F or below. Some guides use hotter water; this tool follows ProChem.",src:"ProChem disc directions"}
+};
+/* One lookup for built-in techniques and the user's own ("my:<id>", from the shared techniques collection).
+   A user technique borrows its base's patterns and combo type; its own preview style comes first. */
+function techInfo(key){
+  if(TECH[key]){const T=TECH[key];return{key,label:T.label,patterns:T.patterns,recipe:T.recipe,note:T.note,src:T.src,base:key,custom:false};}
+  if(typeof key==="string"&&key.startsWith("my:")&&typeof myTechDocs!=="undefined"){
+    const s=myTechDocs.find(x=>x.id===key.slice(3));if(!s)return null;
+    const t=s.data(),base=TECH[t.base]?t.base:null;
+    const patterns=[...new Set([PATS[t.pattern]?t.pattern:null,...(base?TECH[base].patterns:Object.keys(PATS))].filter(Boolean))];
+    return{key,label:t.name||"My technique",patterns,recipe:t.mix||"No mix recorded for this technique yet.",
+      note:[t.heat&&`Heat: ${t.heat}`,t.setTime&&`Set: ${t.setTime}`].filter(Boolean).join(" · ")||t.description||"",src:"your technique",base,custom:true};
   }
-  if(added)$("#saveState").textContent=`Restored ${added} entr${added===1?"y":"ies"} from the folder.`;
-  await renderList();
+  return null;
 }
+const techOr=key=>techInfo(key)||techInfo("floetrol");
+const techLabelOf=d=>TECH[d.tech]?.label||techInfo(d.tech)?.label||d.techName||"Dye job";
+const PATS={spin:"Spin rings",offcenter:"Off-center spin",lollipop:"Lollipop",cells:"Cells",swirl:"Swirl",river:"River / marble",starburst:"Starburst",full:"Full dip",doubledip:"Double dip",dipfade:"Dip fade",stencil:"Stencil"};
 
-/* ---------- backup / restore file (every browser) ---------- */
-const toDataURL=b=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(b);});
-$("#backupBtn").addEventListener("click",async()=>{
-  const entries=await all("entries"),photos={};
-  for(const p of await all("photos"))photos[p.id]=await toDataURL(p.blob);
-  const blob=new Blob([JSON.stringify({app:"DIPS",format:1,savedAt:new Date().toISOString(),entries,photos})],{type:"application/json"});
-  const name=`DIPS-backup-${new Date().toISOString().slice(0,10)}.json`,file=new File([blob],name,{type:"application/json"});
-  try{
-    /* Phones: the share sheet ("Save to Files") is more reliable than a download in installed apps. */
-    if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad/i.test(navigator.userAgent))await navigator.share({files:[file]});
-    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
-    await setMeta("lastBackup",new Date().toISOString());showBackup();
-  }catch(err){if(err&&err.name!=="AbortError")$("#backupState").textContent="Backup failed: "+(err.message||err);}
-});
-$("#restoreIn").addEventListener("change",async e=>{
-  const f=e.target.files[0];if(!f)return;
-  try{
-    const data=JSON.parse(await f.text());if(data.app!=="DIPS")throw new Error("not a DIPS backup");
-    const have=new Set((await all("entries")).map(x=>x.id));let added=0;
-    for(const en of data.entries||[]){
-      if(have.has(en.id))continue;
-      if(en.photoId&&data.photos&&data.photos[en.photoId]){const b=await(await fetch(data.photos[en.photoId])).blob();await put("photos",{id:en.photoId,blob:b});}
-      await put("entries",en);added++;
+const $=s=>document.querySelector(s);
+function loadOwned(){try{return JSON.parse(localStorage.getItem("discdye.owned")||"[]");}catch(e){return[];}}
+function saveOwned(){try{localStorage.setItem("discdye.owned",JSON.stringify([...state.owned]));}catch(e){}}
+
+const state={base:"#f2dc3c",baseName:"Yellow",depth:.8,blend:"multiply",tech:"floetrol",pattern:"cells",
+  brand:"Innova",plastic:"Star / Shimmer",translucent:false,pool:"all",sel:[],owned:new Set(loadOwned()),
+  dyes:PROCHEM.split("\n").map(l=>{const[code,name,hex]=l.split("|");return{id:code,code,name,hex,rgb:hex2rgb(hex),fam:code[3]};}),
+  results:[],byId:{},combos:[]};
+
+/* ---------- color math ---------- */
+function hex2rgb(h){h=h.replace("#","");if(h.length===3)h=h.split("").map(c=>c+c).join("");const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255];}
+function rgb2hex(c){return"#"+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("");}
+const blendRgb=(a,b)=>state.blend==="darken"?a.map((v,i)=>Math.min(v,b[i])):a.map((v,i)=>v*b[i]/255);
+const soakRgb=(d,s)=>d.map(v=>255-(255-v)*s);
+function lab(rgb){
+  const [r,g,b]=rgb.map(c=>{c/=255;return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);});
+  const X=(.4124*r+.3576*g+.1805*b)/.95047,Y=.2126*r+.7152*g+.0722*b,Z=(.0193*r+.1192*g+.9505*b)/1.08883;
+  const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
+  const fx=f(X),fy=f(Y),fz=f(Z),A=500*(fx-fy),B=200*(fy-fz);
+  return{L:116*fy-16,a:A,b:B,C:Math.hypot(A,B)};
+}
+const dE=(p,q)=>Math.hypot(p.L-q.L,p.a-q.a,p.b-q.b);
+function hue(rgb){
+  const [r,g,b]=rgb.map(v=>v/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+  if(!d)return 0;let h;
+  if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;
+  return(h*60+360)%360;
+}
+const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d;};
+function hueName(h){
+  if(h<12)return"red";if(h<40)return"orange";if(h<62)return"yellow";if(h<85)return"lime";
+  if(h<150)return"green";if(h<185)return"teal";if(h<200)return"turquoise";if(h<250)return"blue";
+  if(h<280)return"purple";if(h<320)return"magenta";if(h<345)return"pink";return"red";
+}
+function nameColor(rgb){
+  const {L,C}=lab(rgb),h=hue(rgb);
+  if(C<9)return L>88?"white":L>65?"light grey":L>35?"grey":L>18?"charcoal":"black";
+  if(L<16)return"near black";
+  if(C<20&&L<62)return(h<90||h>=330)?"muddy brown":(h>=180&&h<280)?"slate grey":"drab "+hueName(h);
+  if((h>=12&&h<50&&L<52)||((h<12||h>=345)&&L<32&&C<45))return L<28?"dark brown":"brown";
+  if(h>=50&&h<90&&L<48)return"olive";
+  let n=hueName(h);
+  if(n==="red"&&L>68)n="pink";
+  if(L<32)return"deep "+n;
+  if(L>84&&n!=="yellow")return"light "+n;
+  return n;
+}
+const isMud=rgb=>{const l=lab(rgb);return l.L<16||(l.C<20&&l.L<62)||/brown|olive/.test(nameColor(rgb));};
+
+/* ---------- analysis ---------- */
+const curPlastic=()=>PLASTICS.find(p=>p.brand===state.brand&&p.name===state.plastic)||PLASTICS[0];
+const strength=()=>state.depth*RATING[curPlastic().r].f*(state.translucent?.7:1);
+function baseLabel(){return state.baseName?state.baseName.toLowerCase():nameColor(hex2rgb(state.base));}
+function classify(dye){
+  const base=hex2rgb(state.base),eff=soakRgb(dye.rgb,strength()),res=blendRgb(base,eff);
+  const lb=lab(base),lr=lab(res),ld=lab(dye.rgb),d=dE(lb,lr);
+  const darkDye=ld.C<25&&ld.L<45,baseLight=lb.L>80&&lb.C<15;
+  const bn=baseLabel(),rn=nameColor(res),dn=dye.name;
+  let cat,why;
+  if(!darkDye&&lr.L<16){cat="mud";why="Goes nearly black. Disc and dye together block almost all light.";}
+  else if(!darkDye&&lb.C>22&&((ld.C>30&&lr.C<20&&lr.L<72)||(hueDist(hue(base),hue(dye.rgb))>110&&/brown|olive/.test(rn)))){
+    cat="mud";
+    why=hueDist(hue(base),hue(dye.rgb))>110?`${dn} sits across the color wheel from ${bn}, so they cancel out to ${rn}.`:`The mix lands on ${rn}, a dull shade.`;
+  }
+  else if(!darkDye&&/brown|olive/.test(rn)&&!/brown|olive/.test(nameColor(dye.rgb))){cat="mud";why=`Turns ${rn} on this disc, which reads as muddy.`;}
+  else if(d<14){
+    cat="subtle";
+    why=darkDye?"Barely darker than the disc. Not enough contrast to read."
+      :(lb.C>22&&hueDist(hue(base),hue(dye.rgb))<35)?"Same color family as the disc, so it only deepens it. Good for tone-on-tone."
+      :`Lands close to the disc color (${rn}), so it barely shows.`;
+  }
+  else{
+    cat="pop";
+    if(darkDye)why=`Strong dark contrast (${rn}). Great for outlines and rim rings.`;
+    else if(baseLight)why=`Shows true on a light disc: ${rn}.`;
+    else why=hueDist(hue(res),hue(eff))>25?`Turns ${rn} on this disc. What you pour is not what you get.`:`Stays clean: ${rn}.`;
+  }
+  return{dye,eff,res,cat,why,darkDye,score:cat==="mud"?-1:d+lr.C*.4};
+}
+const touchRgb=(a,b)=>blendRgb(a.res,b.eff);
+/* Combo types, each with up to 8 ranked options. The technique's own type comes first. */
+function buildCombos(pool){
+  const pops=pool.filter(r=>r.cat==="pop"&&!r.darkDye).sort((a,b)=>b.score-a.score);
+  const darks=pool.filter(r=>r.cat==="pop"&&r.darkDye).sort((a,b)=>lab(a.res).L-lab(b.res).L);
+  const H=r=>hue(r.res),L=r=>lab(r.res).L,hd=(a,b)=>hueDist(H(a),H(b));
+  const ok=(a,b)=>!isMud(touchRgb(a,b)),distinct=(a,b)=>dE(lab(a.res),lab(b.res))>=12;
+  const sum=s=>s.reduce((t,r)=>t+r.score,0);
+  const uniq=sets=>{const seen=new Set();return sets.filter(s=>{const k=s.map(r=>r.dye.id).sort().join("|");if(seen.has(k))return false;seen.add(k);return true;});};
+  const top=pops.slice(0,16),types=[];
+  const nb=[];
+  for(const a of top)for(const b of top){
+    if(b===a||!distinct(a,b)||hd(a,b)<20||hd(a,b)>70||!ok(a,b))continue;
+    const c=top.find(x=>x!==a&&x!==b&&distinct(x,a)&&distinct(x,b)&&hd(b,x)>=20&&hd(b,x)<=70&&hd(a,x)>=35&&ok(b,x));
+    nb.push(c?[a,b,c]:[a,b]);
+  }
+  const neighbors=uniq(nb).sort((x,y)=>y.length-x.length||sum(y)-sum(x));
+  const ct=[];
+  for(let i=0;i<top.length;i++)for(let j=i+1;j<top.length;j++)if(hd(top[i],top[j])>=100&&distinct(top[i],top[j]))ct.push([top[i],top[j]]);
+  ct.sort((x,y)=>(hd(y[0],y[1])+sum(y)*.3)-(hd(x[0],x[1])+sum(x)*.3));
+  const bd=[];
+  for(const lead of top.slice(0,8)){
+    const mate=top.find(x=>x!==lead&&distinct(x,lead)&&hd(lead,x)>=20&&hd(lead,x)<=60&&ok(lead,x));
+    darks.slice(0,3).forEach(d=>bd.push(mate?[lead,mate,d]:[lead,d]));
+  }
+  const tb=techOr(state.tech).base;
+  if(tb==="floetrol"){
+    const bgs=uniq(darks.concat(pops.filter(r=>L(r)<45)).map(r=>[r])).map(s=>s[0]),brights=pops.filter(r=>L(r)>=55).slice(0,10),cells=[];
+    for(const bg of bgs.slice(0,6))for(let i=0;i<brights.length;i++)for(let j=i+1;j<brights.length;j++){
+      const a=brights[i],b=brights[j];
+      if(a!==bg&&b!==bg&&distinct(a,b)&&L(a)-L(bg)>=20&&L(b)-L(bg)>=20)cells.push([bg,a,b]);
     }
-    $("#backupState").textContent=`Restored ${added} entr${added===1?"y":"ies"}. Entries you already had were kept.`;
-    await renderList();await syncFolder();
-  }catch(err){$("#backupState").textContent="That file couldn't be restored: "+(err.message||err);}
-  e.target.value="";
-});
-async function showBackup(){const t=await getMeta("lastBackup");$("#backupState").textContent=t?`Last backup: ${new Date(t).toLocaleString()}`:"No backup file made yet.";}
-
-/* ---------- install + updates ---------- */
-/* Install help in plain words for the device in hand. Friends are not technical and never see GitHub. */
-let installEvt=null;
-const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-const ua=navigator.userAgent,isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-const isAndroid=/Android/.test(ua),isFirefox=/Firefox|FxiOS/.test(ua),isMacSafari=/Macintosh/.test(ua)&&/Safari/.test(ua)&&!/Chrome|Chromium|Edg/.test(ua)&&!isIOS;
-function showSteps(intro,steps){$("#installState").textContent=intro;const ol=$("#installSteps");ol.innerHTML=steps.map(s=>`<li>${s}</li>`).join("");ol.hidden=!steps.length;}
-function installHelp(){
-  if(standalone){showSteps("DIPS is installed. Open it from its icon from now on.",[]);$("#installWhy").hidden=true;return;}
-  if(installEvt){showSteps("You can install DIPS with one tap:",[]);$("#installBtn").hidden=false;return;}
-  if(isIOS)showSteps("To put DIPS on your home screen:",["Tap the <b>Share</b> button (a square with an arrow pointing up). On iPhone it's at the bottom of the screen.","Scroll down and tap <b>Add to Home Screen</b>.","Tap <b>Add</b>. Then open DIPS from its new icon."]);
-  else if(isFirefox)showSteps("Firefox can't install DIPS. You can still use it here, but for the full app:",[isAndroid?"Open this same page in <b>Chrome</b>.":"Open this same page in <b>Chrome</b> or <b>Edge</b>.","Then follow the install steps shown there."]);
-  else if(isAndroid)showSteps("To install DIPS:",["Tap the <b>⋮</b> menu (three dots, top right).","Tap <b>Install app</b> or <b>Add to Home screen</b>.","Open DIPS from its new icon."]);
-  else if(isMacSafari)showSteps("To add DIPS to your Dock:",["In the menu bar, click <b>File</b>.","Click <b>Add to Dock</b>.","Open DIPS from the Dock."]);
-  else showSteps("To install DIPS:",["Look at the right end of the address bar (where the web address is) for a small <b>install</b> icon, a screen with a down arrow, and click it.","Click <b>Install</b>.","Open DIPS from its new icon or the Start menu."]);
+    const clean=s=>(ok(s[0],s[1])?1:0)+(ok(s[0],s[2])?1:0);
+    cells.sort((x,y)=>clean(y)-clean(x)||sum(y)-sum(x));
+    types.push({key:"cells",title:"Background + cells",options:uniq(cells),blurb:()=>"Color 1 is a darker background. Colors 2 and 3 are brighter cell colors that stand out against it."});
+  }else if(tb==="spin"){
+    types.push({key:"rainbow",title:"Rainbow progression",options:neighbors.filter(s=>s.length===3&&hd(s[0],s[2])>=50),blurb:()=>"Three colors stepping around the color wheel, in ring order, so neighboring rings blend cleanly."});
+  }else if(tb==="hotdip"){
+    const sr=[];for(const lead of top.slice(0,8))darks.slice(0,2).forEach(d=>sr.push([lead,d]));
+    types.push({key:"solidrim",title:"Solid + rim",options:uniq(sr),blurb:o=>`Color 1 is the dip. Use ${o[1].dye.name} for a dark rim or a second, partial dip.`});
+  }else{
+    const ld=[];
+    for(const a of top){
+      const fam=pool.filter(r=>r!==a&&r.cat!=="mud"&&!r.darkDye&&lab(r.res).C>=20&&hueDist(H(r),H(a))<30);
+      const b=fam.find(r=>L(a)-L(r)>=12&&L(a)-L(r)<=30&&ok(a,r)),c=b&&fam.find(r=>r!==b&&L(b)-L(r)>=12&&ok(b,r));
+      if(b&&c)ld.push([a,b,c]);
+    }
+    types.push({key:"lightdark",title:"Light to dark",options:uniq(ld),blurb:()=>"One color family from light to dark. Swirls and marbling read as depth instead of mud."});
+  }
+  types.push({key:"neighbors",title:"Neighbors",options:neighbors,blurb:()=>"Close together on the color wheel, so where they bleed into each other they stay clean."});
+  types.push({key:"contrast",title:"High contrast",options:ct,blurb:o=>isMud(touchRgb(o[0],o[1]))?"Big contrast. Leave a gap between them, because where they touch they go muddy.":"Big contrast, and even where they touch it stays usable."});
+  types.push({key:"bolddark",title:"Bold + dark accent",options:uniq(bd),blurb:o=>`Use ${o[o.length-1].dye.name} for crisp lines, the rim, or the outer ring.`});
+  types.forEach(t=>t.options=t.options.slice(0,8));
+  return types.filter(t=>t.options.length);
 }
-addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;installHelp();});
-$("#installBtn").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("#installBtn").hidden=true;installHelp();});
-addEventListener("appinstalled",()=>{showSteps("Installed. Open DIPS from its icon from now on.",[]);$("#installBtn").hidden=true;});
-installHelp();
 
+/* ---------- rendering ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function chipBox(hex,caption){return`<span class="chipbox"><span class="chip" style="background:${hex}"></span><small>${caption}</small></span>`;}
+function touchHtml(list){
+  const pairs=[];for(let i=0;i+1<list.length;i++)pairs.push([list[i],list[i+1]]);
+  if(!pairs.length)return"";
+  return`<span class="label">Where they touch</span><div class="trow">${pairs.map(([a,b])=>{
+    const t=touchRgb(a,b),m=isMud(t);
+    return`<span class="tchip"><i style="background:${rgb2hex(t)}"></i><span>${esc(a.dye.name)} + ${esc(b.dye.name)}<br><em class="${m?"bad":"ok"}">${m?"muddy":"clean"}: ${nameColor(t)}</em></span></span>`;
+  }).join("")}</div>`;
+}
+function poolResults(){return state.pool==="owned"?state.results.filter(r=>state.owned.has(r.dye.id)):state.results;}
+function renderCards(){
+  const pool=poolResults();
+  ["pop","subtle","mud"].forEach(cat=>{
+    const list=pool.filter(r=>r.cat===cat).sort((a,b)=>b.score-a.score),el=$("#g-"+cat);
+    el.innerHTML=list.length?list.map(r=>{const k=state.sel.indexOf(r.dye.id);return`<button type="button" class="dye" data-dye="${esc(r.dye.id)}" aria-pressed="${k>=0}">
+        ${k>=0?`<span class="num" aria-hidden="true">${k+1}</span>`:""}
+        <span class="pair">${chipBox(rgb2hex(r.eff),"In the jar")}<span class="arrow" aria-hidden="true">→</span>${chipBox(rgb2hex(r.res),"On your disc")}</span>
+        <span class="dname"><strong>${esc(r.dye.name)}</strong><span class="code">${esc(r.dye.code)}</span></span>
+        ${k>=0?`<span class="picked">Color ${k+1} on the disc ✓</span>`:""}
+        <p class="why">${esc(r.why)}</p></button>`;}).join("")
+      :`<p class="empty">${state.pool==="owned"&&!state.owned.size?"Your shelf is empty. Tap the jars you own in My dye shelf below.":"None for this disc."}</p>`;
+  });
+}
+const comboIdx={};
+function comboOption(t){const i=Math.min(comboIdx[t.key]||0,t.options.length-1);return[i,t.options[i]];}
+function renderCombos(){
+  const p=curPlastic(),n=poolResults().length,bn=baseLabel();
+  $("#basedOn").textContent=`Based on: ${bn[0].toUpperCase()+bn.slice(1)} disc, ${p.brand} ${p.name}${state.translucent?" (translucent)":""}, ${state.pool==="owned"?`your ${n} dyes`:`all ${n} colors`}, ${techOr(state.tech).label}, ${state.blend==="darken"?"Darken":"Multiply"} math, ${Math.round(state.depth*100)}% depth.`;
+  const el=$("#combos");
+  if(!state.combos.length){el.innerHTML=`<p class="empty">No clean combos with these dyes on this disc. A lighter disc or more dyes on your shelf opens up more options.</p>`;return;}
+  el.innerHTML=state.combos.map(t=>{
+    const[i,o]=comboOption(t);
+    return`<div class="combo">
+    <div class="chead"><h3>${t.title}</h3>${t.options.length>1?`<button type="button" class="btn small" data-next="${t.key}" aria-label="Next ${t.title} option">Next (${i+1} of ${t.options.length})</button>`:""}</div>
+    <div class="strip${o.length===2?" two":""}">${o.map((r,k)=>chipBox(rgb2hex(r.res),`${k+1}. ${esc(r.dye.name)}<br>${esc(r.dye.code)}`)).join("")}</div>
+    <p>${esc(t.blurb(o))}</p>
+    <div class="touch">${touchHtml(o)}</div>
+    <button type="button" class="btn" data-combo="${t.key}">Show on disc</button></div>`;
+  }).join("");
+}
+function renderBanner(){
+  const l=lab(hex2rgb(state.base)),bn=baseLabel(),cap=bn[0].toUpperCase()+bn.slice(1),p=curPlastic(),el=$("#banner");
+  let t,b,warn=false;
+  if(p.r==="P"){warn=true;t=`${p.name} barely takes dye`;b="The Dyers Guild rates this plastic Poor: expect pale color that fades or bleeds. The preview is paled to match. A premium plastic will give far better results.";}
+  else if(l.L<35){warn=true;t="Dark disc";b="Dye only darkens plastic, so almost nothing will show. A lighter disc gives you far more options.";}
+  else if(l.C<15&&l.L>80){t="Light disc";b="Nearly every dye shows true, so pick for style. Watch the spots where two colors touch.";}
+  else if(l.C<15){t=`${cap} disc`;b="Dye only darkens, and grey plastic dulls every color a bit. Stronger, darker dyes read best.";}
+  else{t=`${cap} disc`;b=`Dye only darkens, and it adds to the ${bn} already in the plastic. Dyes near ${bn} on the color wheel stay clean; dyes across from it go muddy.`;}
+  if(!warn&&p.r==="M")b+=` ${p.name} is rated Moderate, so expect lighter color than the jar suggests.`;
+  el.className="banner"+(warn?" warn":"");
+  el.innerHTML=`<b>${esc(t)}</b>${esc(b)}`;
+}
+function renderOnDisc(){
+  const sel=state.sel.map(id=>state.byId[id]).filter(Boolean);
+  $("#onDisc").innerHTML=sel.length?sel.map((r,i)=>`<span class="tag" data-idx="${i}" title="Drag to change the color order"><span class="grip" aria-hidden="true">⠿</span><span class="num">${i+1}</span><i style="background:${rgb2hex(r.res)}"></i>${esc(r.dye.name)}${i?`<button type="button" class="tb" data-left="${i}" aria-label="Move ${esc(r.dye.name)} to color ${i}">←</button>`:""}<button type="button" class="tb" data-remove="${i}" aria-label="Remove ${esc(r.dye.name)}">×</button></span>`).join(""):`<span class="hint">No dye yet</span>`;
+  const t=$("#touchNow");t.innerHTML=touchHtml(sel);t.hidden=sel.length<2;
+  renderRoles();
+}
+const ROLES={
+  spin:"Color 1 is the center ring. Rings then repeat 1, 2, 3 outward.",
+  offcenter:"Color 1 is the center ring, set off-center. Rings repeat 1, 2, 3 outward.",
+  lollipop:"Thin, even rings repeating 1, 2, 3 from the center out.",
+  starburst:"Color 1 is the center. Spokes cycle 1, 2, 3 around the disc.",
+  cells:"Color 1 is the background. Colors 2 and 3 fill the cells, and cell outlines cycle through all colors.",
+  swirl:"Spiral arms alternate 1, 2, 3.",
+  river:"Bands alternate 1, 2, 3 across the disc.",
+  full:"Uses color 1 only.",
+  doubledip:"Color 1 is the bottom dip, color 2 the top dip (they overlap in the middle), color 3 the rim.",
+  dipfade:"Color 1 at the bottom edge, fading through 2 and 3 to undyed at the top.",
+  stencil:"Color 1 fills around the star stencil. Color 2 is the rim ring."
+};
+function renderRoles(){$("#roles").textContent=`${PATS[state.pattern]}: ${ROLES[state.pattern]}`;}
+function renderPlastic(){
+  const p=curPlastic(),R=RATING[p.r];
+  $("#rating").innerHTML=`<span class="pill ${p.r==="-"?"none":p.r}">${R.label}</span><span class="hint">${esc(R.text)}${state.translucent?" Translucent plastic takes dye less readily, so the preview is paler, but it bleeds and fades least.":""}</span>`;
+}
+function renderTech(){
+  /* A selected user technique that was deleted falls back to the default. */
+  if(!techInfo(state.tech)){state.tech="floetrol";state.pattern="cells";}
+  const T=techOr(state.tech);
+  if(!T.patterns.includes(state.pattern))state.pattern=T.patterns[0];
+  $("#techSeg").innerHTML=Object.entries(TECH).map(([k,v])=>`<button type="button" data-tech="${k}" aria-pressed="${k===state.tech}">${v.label}</button>`).join("");
+  const mine=typeof myTechDocs!=="undefined"?myTechDocs.map(s=>({id:s.id,name:s.data().name||"Untitled"})).sort((a,b)=>a.name.localeCompare(b.name)):[];
+  $("#myTechPickWrap").hidden=!mine.length;
+  $("#myTechPick").innerHTML=opt("","Choose one…",!T.custom)+mine.map(m=>opt("my:"+m.id,m.name,state.tech==="my:"+m.id)).join("");
+  $("#myTechPick").classList.toggle("on",T.custom);
+  $("#patSeg").innerHTML=T.patterns.map(p=>`<button type="button" data-pat="${p}" aria-pressed="${p===state.pattern}">${PATS[p]}</button>`).join("");
+  $("#recipe").innerHTML=`<span class="label">${T.custom?`Mix (${esc(T.label)}, your technique)`:`Mix (${esc(T.src)})`}</span><p class="pre">${esc(T.recipe)}</p>${T.note?`<p class="hint">${esc(T.note)}</p>`:""}`;
+}
+function renderShelf(){
+  const groups={};state.dyes.forEach(d=>(groups[d.fam]=groups[d.fam]||[]).push(d));
+  $("#shelf").innerHTML=Object.keys(FAMS).filter(f=>groups[f]).map(f=>`<div class="fam"><span class="label">${FAMS[f]}</span><div class="jars">${groups[f].map(d=>
+    `<span class="jarwrap"><button type="button" class="jar" data-jar="${esc(d.id)}" aria-pressed="${state.owned.has(d.id)}"${d.recipe?` title="${esc(recipeText(d.recipe))}"`:""}><i style="background:${d.hex}"></i>${esc(d.name)}</button>${d.fam==="c"?`<button type="button" class="jarx" data-rmjar="${esc(d.id)}" aria-label="Remove ${esc(d.name)}">${rmArm===d.id?"Remove?":"×"}</button>`:""}</span>`).join("")}</div></div>`).join("");
+  $("#ownedCount").textContent=`${state.owned.size} of ${state.dyes.length} on your shelf`;
+  $("#poolOwned").textContent=`Only my dyes (${state.owned.size})`;
+}
+
+/* ---------- disc drawing ---------- */
+function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+function drawPattern(ctx,cols,W,c,r,pattern){
+  const n=cols.length,TAU=Math.PI*2,rnd=seeded(11);
+  const rings=(cx,cy,max)=>{let rad=r*.06,i=0;
+    while(rad<max){const w=r*(.035+rnd()*.07),ph=rnd()*TAU;ctx.beginPath();
+      for(let a=0;a<=TAU+.001;a+=.04){const rr=rad+Math.sin(a*3+ph)*w*.3+Math.sin(a*7+ph*2)*w*.12;const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;a===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+      ctx.closePath();ctx.lineWidth=w;ctx.strokeStyle=cols[i%n];ctx.stroke();rad+=w*(.7+rnd()*.9);i++;}};
+  const wave=(off,down)=>{ctx.beginPath();ctx.moveTo(0,down?W:0);for(let x=0;x<=W;x+=4)ctx.lineTo(x,c+off+Math.sin(x/W*TAU*1.5)*r*.05);ctx.lineTo(W,down?W:0);ctx.closePath();};
+  switch(pattern){
+    case"spin":rings(c,c,r*1.04);break;
+    case"offcenter":rings(c+r*.3,c-r*.2,r*1.7);break;
+    case"lollipop":for(let i=0,rad=r*.05;rad<r*1.05;i++,rad+=r*.075){ctx.beginPath();ctx.arc(c,c,rad,0,TAU);ctx.lineWidth=r*.065;ctx.strokeStyle=cols[i%n];ctx.stroke();}break;
+    case"starburst":{
+      const N=20;
+      for(let k=0;k<N;k++){const a=k/N*TAU+rnd()*.12,d=.07+rnd()*.05,len=r*(.85+rnd()*.3);
+        ctx.beginPath();ctx.moveTo(c,c);ctx.lineTo(c+Math.cos(a-d)*len,c+Math.sin(a-d)*len);ctx.lineTo(c+Math.cos(a+d)*len,c+Math.sin(a+d)*len);ctx.closePath();
+        ctx.fillStyle=cols[k%n];ctx.fill();}
+      ctx.beginPath();ctx.arc(c,c,r*.14,0,TAU);ctx.fillStyle=cols[0];ctx.fill();break;}
+    case"cells":{
+      const cells=[];
+      for(let t=0;t<600&&cells.length<46;t++){const rr=r*(.035+rnd()*.13),a=rnd()*TAU,dd=Math.sqrt(rnd())*r*.98,x=c+Math.cos(a)*dd,y=c+Math.sin(a)*dd;
+        if(cells.every(q=>Math.hypot(q.x-x,q.y-y)>q.r+rr+2))cells.push({x,y,r:rr});}
+      ctx.beginPath();ctx.rect(0,0,W,W);cells.forEach(q=>{ctx.moveTo(q.x+q.r,q.y);ctx.arc(q.x,q.y,q.r,0,TAU);});ctx.fillStyle=cols[0];ctx.fill("evenodd");
+      cells.forEach((q,i)=>{ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,TAU);if(n>1){ctx.fillStyle=cols[1+i%(n-1)];ctx.fill();}ctx.lineWidth=2.5;ctx.strokeStyle=cols[(i+1)%n];ctx.stroke();});
+      break;}
+    case"swirl":{
+      const arms=Math.max(2,n*2);ctx.lineCap="round";
+      for(let j=0;j<arms;j++){const off=j/arms*TAU;ctx.beginPath();
+        for(let th=0;th<=3.2*Math.PI;th+=.05){const rad=r*1.08*th/(3.2*Math.PI),x=c+Math.cos(th+off)*rad,y=c+Math.sin(th+off)*rad;th===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.lineWidth=r*.12;ctx.strokeStyle=cols[j%n];ctx.stroke();}
+      break;}
+    case"river":{
+      ctx.save();ctx.translate(c,c);ctx.rotate(-.45);ctx.translate(-c,-c);
+      for(let i=-4;i<14;i++){const y0=i*r*.19;ctx.beginPath();
+        for(let x=-W*.5;x<=W*1.5;x+=5){const y=y0+Math.sin(x/W*Math.PI*2.4+i*.8)*r*.13+Math.sin(x/W*Math.PI*6+i)*r*.03;x===-W*.5?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.lineWidth=r*(.06+rnd()*.08);ctx.strokeStyle=cols[((i%n)+n)%n];ctx.stroke();}
+      ctx.restore();break;}
+    case"full":ctx.fillStyle=cols[0];ctx.fillRect(0,0,W,W);break;
+    case"doubledip":
+      wave(-r*.12,true);ctx.fillStyle=cols[0];ctx.fill();
+      if(cols[1]){wave(r*.12,false);ctx.fillStyle=cols[1];ctx.fill();}
+      if(cols[2]){ctx.beginPath();ctx.arc(c,c,r*.95,0,TAU);ctx.lineWidth=r*.1;ctx.strokeStyle=cols[2];ctx.stroke();}
+      break;
+    case"dipfade":{
+      const g=ctx.createLinearGradient(0,c+r,0,c-r);g.addColorStop(0,cols[0]);
+      if(n===2)g.addColorStop(.45,cols[1]);
+      if(n===3){g.addColorStop(.35,cols[1]);g.addColorStop(.65,cols[2]);}
+      g.addColorStop(1,"#ffffff");ctx.fillStyle=g;ctx.fillRect(0,0,W,W);break;}
+    case"stencil":{
+      ctx.beginPath();ctx.rect(0,0,W,W);
+      for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr=k%2?r*.2:r*.46,x=c+Math.cos(a)*rr,y=c+Math.sin(a)*rr;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+      ctx.closePath();ctx.fillStyle=cols[0];ctx.fill("evenodd");
+      if(cols[1]){ctx.beginPath();ctx.arc(c,c,r*.96,0,TAU);ctx.lineWidth=r*.08;ctx.strokeStyle=cols[1];ctx.stroke();}
+      break;}
+  }
+}
+function drawDisc(){
+  const cols=state.sel.map(id=>state.byId[id]).filter(Boolean).map(x=>rgb2hex(x.eff));
+  drawDiscOn($("#disc"),280,state.base,cols,state.pattern,state.blend);
+}
+function drawDiscOn(cv,fallbackW,base,cols,pattern,blend){
+  const ctx=cv.getContext("2d"),dpr=window.devicePixelRatio||1,W=cv.clientWidth||fallbackW;
+  cv.width=W*dpr;cv.height=W*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const c=W/2,r=W/2-Math.max(3,W*.03),TAU=Math.PI*2;
+  ctx.clearRect(0,0,W,W);
+  ctx.beginPath();ctx.arc(c,c+Math.max(2,W*.014),r,0,TAU);ctx.fillStyle="rgba(0,0,0,.10)";ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.clip();
+  ctx.fillStyle=base;ctx.fillRect(0,0,W,W);
+  if(cols.length){ctx.globalCompositeOperation=blend;drawPattern(ctx,cols,W,c,r,pattern);ctx.globalCompositeOperation="source-over";}
+  let g=ctx.createRadialGradient(c,c,r*.78,c,c,r);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.22)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,W);
+  ctx.beginPath();ctx.arc(c,c,r*.83,0,TAU);ctx.lineWidth=1.5;ctx.strokeStyle="rgba(0,0,0,.12)";ctx.stroke();
+  ctx.beginPath();ctx.arc(c,c,r*.83+2,0,TAU);ctx.strokeStyle="rgba(255,255,255,.18)";ctx.stroke();
+  g=ctx.createRadialGradient(c-r*.35,c-r*.45,0,c-r*.35,c-r*.45,r*.95);g.addColorStop(0,"rgba(255,255,255,.28)");g.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,W);
+  ctx.restore();
+  ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.lineWidth=1;ctx.strokeStyle="rgba(0,0,0,.3)";ctx.stroke();
+}
+
+function render(){
+  state.results=state.dyes.map(classify);
+  state.byId={};state.results.forEach(r=>state.byId[r.dye.id]=r);
+  state.sel=state.sel.filter(id=>state.byId[id]);
+  state.combos=buildCombos(poolResults());
+  renderBanner();renderPlastic();renderCombos();renderCards();renderOnDisc();renderShelf();drawDisc();
+  $("#depthVal").textContent=Math.round(state.depth*100)+"%";
+  saveSetup();
+}
+
+/* ---------- remembered setup + custom dyes (this browser only) ---------- */
+function saveSetup(){try{localStorage.setItem("discdye.setup",JSON.stringify({base:state.base,baseName:state.baseName,brand:state.brand,plastic:state.plastic,translucent:state.translucent,tech:state.tech,pattern:state.pattern,blend:state.blend,depth:state.depth,pool:state.pool,sel:state.sel}));}catch(e){}}
+function loadSetup(){try{return JSON.parse(localStorage.getItem("discdye.setup")||"null");}catch(e){return null;}}
+function saveCustom(){try{localStorage.setItem("discdye.custom",JSON.stringify(state.dyes.filter(d=>d.fam==="c").map(d=>({id:d.id,code:d.code,name:d.name,hex:d.hex,recipe:d.recipe||null}))));}catch(e){}}
+const cleanRecipe=r=>Array.isArray(r)?r.filter(p=>p&&typeof p.name==="string").map(p=>({id:String(p.id||""),code:String(p.code||""),name:p.name,parts:Math.max(1,Math.min(10,+p.parts||1))})).slice(0,2):null;
+function loadCustom(){
+  let list=[];try{list=JSON.parse(localStorage.getItem("discdye.custom")||"[]");}catch(e){}
+  list.forEach(d=>{if(/^#[0-9a-f]{6}$/i.test(d.hex)&&!state.dyes.some(x=>x.id===d.id))state.dyes.push({id:d.id,code:d.code||"Custom",name:String(d.name),hex:d.hex,rgb:hex2rgb(d.hex),fam:"c",recipe:cleanRecipe(d.recipe)});});
+  customN=Math.max(0,...state.dyes.map(d=>+(/^custom-(\d+)$/.exec(d.id)||[0,0])[1]));
+}
+function addCustomDye(name,hex,code,recipe){
+  const id="custom-"+(++customN);
+  state.dyes.push({id,code,name,hex,rgb:hex2rgb(hex),fam:"c",recipe:cleanRecipe(recipe)});state.owned.add(id);saveOwned();saveCustom();fillMixers();
+  return id;
+}
+const recipeText=r=>r&&r.length?r.map(p=>`${p.parts} ${p.name}${p.code?" ("+p.code+")":""}`).join(" + "):"";
+function addToDisc(id){state.sel=state.sel.filter(x=>x!==id);state.sel.push(id);if(state.sel.length>3)state.sel.shift();return state.sel.indexOf(id)+1;}
+/* Apply a saved or logged setup: only values this page recognises are taken. */
+function applySetup(s){
+  if(!s)return;
+  if(PLASTICS.some(p=>p.brand===s.brand&&p.name===s.plastic)){state.brand=s.brand;state.plastic=s.plastic;}
+  if(typeof s.translucent==="boolean")state.translucent=s.translucent;
+  const ti=techInfo(s.tech);
+  if(ti){state.tech=s.tech;state.pattern=ti.patterns.includes(s.pattern)?s.pattern:ti.patterns[0];}
+  /* User techniques load a moment after the page; remember the choice and apply it when they arrive. */
+  else if(typeof s.tech==="string"&&s.tech.startsWith("my:"))pendingTech={tech:s.tech,pattern:s.pattern};
+  if(s.blend==="multiply"||s.blend==="darken")state.blend=s.blend;
+  if(typeof s.depth==="number"&&s.depth>=.3&&s.depth<=1)state.depth=s.depth;
+  if(s.pool==="all"||s.pool==="owned")state.pool=s.pool;
+  if(Array.isArray(s.sel))state.sel=s.sel.filter(id=>state.dyes.some(d=>d.id===id)).slice(0,3);
+  $("#brand").value=state.brand;fillPlastics();$("#transl").checked=state.translucent;$("#depth").value=Math.round(state.depth*100);
+  document.querySelectorAll("#blendSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.blend===state.blend)));
+  document.querySelectorAll("#poolSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.pool===state.pool)));
+  renderTech();renderRoles();
+  const hex=/^#[0-9a-f]{6}$/i.test(s.base||"")?s.base:state.base;
+  const preset=DISCS.find(([,h])=>h===hex.toLowerCase());
+  setBase(hex,s.baseName&&preset?preset[0]:null);
+}
+
+/* ---------- mix two jars ---------- */
+/* Estimate: weighted geometric mean of each channel, the usual stand-in for subtractive (pigment) mixing. */
+function mixRgb(a,pa,b,pb){return a.map((v,i)=>{const x=Math.max(v/255,.02),y=Math.max(b[i]/255,.02);return 255*Math.exp((pa*Math.log(x)+pb*Math.log(y))/(pa+pb));});}
+function fillMixers(){
+  ["#mixA","#mixB"].forEach((sel,k)=>{const el=$(sel),cur=el.value||(k?"DGD408":"DGD401");
+    el.innerHTML=state.dyes.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}${d.fam==="c"?"":" ("+d.code+")"}</option>`).join("");
+    el.value=state.dyes.some(d=>d.id===cur)?cur:state.dyes[0].id;});
+  updateMix();
+}
+function mixParts(){const p=v=>Math.min(10,Math.max(1,Math.round(+v)||1));return[p($("#mixAp").value),p($("#mixBp").value)];}
+function currentMix(){
+  const A=state.dyes.find(d=>d.id===$("#mixA").value),B=state.dyes.find(d=>d.id===$("#mixB").value),[pa,pb]=mixParts();
+  return{A,B,pa,pb,hex:rgb2hex(mixRgb(A.rgb,pa,B.rgb,pb))};
+}
+function updateMix(){const m=currentMix();$("#mixOut").style.background=m.hex;$("#mixOut").title=`Estimated mix ${m.hex}`;}
+["#mixA","#mixB","#mixAp","#mixBp"].forEach(s=>$(s).addEventListener("input",updateMix));
+$("#mixAdd").addEventListener("click",()=>{
+  const m=currentMix(),msg=$("#mixMsg");
+  if(m.A.id===m.B.id){msg.textContent="Pick two different dyes to mix.";return;}
+  const name=`${m.pa} ${m.A.name} + ${m.pb} ${m.B.name}`;
+  const id=addCustomDye(name,m.hex,"Mix",[{id:m.A.id,code:m.A.fam==="c"?"":m.A.code,name:m.A.name,parts:m.pa},{id:m.B.id,code:m.B.fam==="c"?"":m.B.code,name:m.B.name,parts:m.pb}]);
+  const n=addToDisc(id);render();
+  msg.textContent=`Added "${name}" to your shelf under Custom dyes and mixes, and put it on the disc as color ${n}. Logging this job saves the recipe.`;
+});
+
+/* ---------- inputs ---------- */
+function setBase(hex,name){
+  state.base=hex.toLowerCase();state.baseName=name||null;
+  $("#basePick").value=state.base;$("#baseHex").value=state.base;
+  $("#baseName").textContent=name?"":`Reads as ${nameColor(hex2rgb(state.base))}`;
+  document.querySelectorAll(".sw").forEach(b=>b.setAttribute("aria-pressed",String(!!name&&b.dataset.hex===state.base)));
+  render();
+}
+$("#swatches").innerHTML=DISCS.map(([n,h])=>`<button type="button" class="sw" data-hex="${h}" aria-pressed="false"><i style="background:${h}"></i>${n}</button>`).join("");
+$("#swatches").addEventListener("click",e=>{const b=e.target.closest(".sw");if(b)setBase(b.dataset.hex,b.textContent.trim());});
+$("#basePick").addEventListener("input",e=>setBase(e.target.value));
+$("#baseHex").addEventListener("change",e=>{const v=e.target.value.trim();if(/^#?[0-9a-f]{6}$/i.test(v))setBase(v[0]==="#"?v:"#"+v);else e.target.value=state.base;});
+
+let photoImg=null;
+$("#photoIn").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{photoImg=img;drawPhoto();};img.src=URL.createObjectURL(f);});
+function drawPhoto(mark){
+  const cv=$("#photoCv"),ctx=cv.getContext("2d"),w=Math.min(photoImg.naturalWidth,700);
+  cv.width=w;cv.height=Math.round(photoImg.naturalHeight*w/photoImg.naturalWidth);
+  ctx.drawImage(photoImg,0,0,cv.width,cv.height);cv.hidden=false;
+  if(mark){ctx.beginPath();ctx.arc(mark[0],mark[1],9,0,Math.PI*2);ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.stroke();ctx.lineWidth=1.5;ctx.strokeStyle="#000";ctx.stroke();}
+}
+$("#photoCv").addEventListener("click",e=>{
+  const cv=e.currentTarget,rect=cv.getBoundingClientRect();
+  const x=Math.round((e.clientX-rect.left)*cv.width/rect.width),y=Math.round((e.clientY-rect.top)*cv.height/rect.height);
+  drawPhoto();
+  const d=cv.getContext("2d").getImageData(Math.max(0,x-3),Math.max(0,y-3),7,7).data;
+  const s=[0,0,0];let n=0;for(let i=0;i<d.length;i+=4){s[0]+=d[i];s[1]+=d[i+1];s[2]+=d[i+2];n++;}
+  drawPhoto([x,y]);setBase(rgb2hex(s.map(v=>v/n)));
+  $("#photoHint").textContent="Sampled. Tap another spot to resample. Shadows and glare throw the color off, so pick an evenly lit area.";
+});
+
+const brands=[...new Set(PLASTICS.map(p=>p.brand))];
+function fillPlastics(){$("#plastic").innerHTML=PLASTICS.filter(p=>p.brand===state.brand).map(p=>`<option value="${esc(p.name)}"${p.name===state.plastic?" selected":""}>${esc(p.name)} (${RATING[p.r].label})</option>`).join("");}
+$("#brand").innerHTML=brands.map(b=>`<option${b===state.brand?" selected":""}>${esc(b)}</option>`).join("");
+$("#brand").addEventListener("change",e=>{state.brand=e.target.value;state.plastic=PLASTICS.find(p=>p.brand===state.brand).name;fillPlastics();render();});
+$("#plastic").addEventListener("change",e=>{state.plastic=e.target.value;render();});
+$("#transl").addEventListener("change",e=>{state.translucent=e.target.checked;render();});
+
+function pickTech(key){pendingTech=null;state.tech=key;state.pattern=techOr(key).patterns[0];renderTech();renderRoles();render();}
+$("#techSeg").addEventListener("click",e=>{const b=e.target.closest("[data-tech]");if(b)pickTech(b.dataset.tech);});
+$("#myTechPick").addEventListener("change",e=>{if(e.target.value)pickTech(e.target.value);});
+$("#patSeg").addEventListener("click",e=>{const b=e.target.closest("[data-pat]");if(!b)return;state.pattern=b.dataset.pat;renderTech();renderRoles();render();});
+/* Drag a color tag to reorder colors 1-3. Pointer events, so it works with a mouse and a finger alike. */
+let drag=null;
+$("#onDisc").addEventListener("pointerdown",e=>{
+  const tag=e.target.closest(".tag");if(!tag||e.target.closest("button")||e.button>0)return;
+  e.preventDefault();
+  drag={from:+tag.dataset.idx,to:null,tag,x:e.clientX,y:e.clientY,ghost:null,moved:false};
+  tag.setPointerCapture(e.pointerId);
+});
+$("#onDisc").addEventListener("pointermove",e=>{
+  if(!drag)return;
+  if(!drag.moved){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<5)return;
+    drag.moved=true;drag.tag.classList.add("dragging");
+    drag.ghost=drag.tag.cloneNode(true);drag.ghost.classList.remove("dragging");drag.ghost.classList.add("dragghost");document.body.appendChild(drag.ghost);}
+  const r=drag.tag.getBoundingClientRect();
+  drag.ghost.style.left=(e.clientX-r.width/2)+"px";drag.ghost.style.top=(e.clientY-r.height/2)+"px";
+  document.querySelectorAll("#onDisc .tag").forEach(t=>t.classList.remove("dropbefore","dropafter"));
+  const tags=[...document.querySelectorAll("#onDisc .tag")];
+  let best=null,bd=Infinity;
+  tags.forEach(t=>{const b=t.getBoundingClientRect(),d=Math.hypot(e.clientX-(b.left+b.width/2),e.clientY-(b.top+b.height/2));if(d<bd){bd=d;best=t;}});
+  if(best&&best!==drag.tag){
+    /* Tags wrap onto rows: outside the tag's own row, above/below decides; within it, left/right does. */
+    const i=+best.dataset.idx,b=best.getBoundingClientRect(),cy=b.top+b.height/2;
+    const after=Math.abs(e.clientY-cy)>b.height/2?e.clientY>cy:e.clientX>b.left+b.width/2;
+    best.classList.add(after?"dropafter":"dropbefore");
+    let to=after?i+1:i;if(to>drag.from)to--;drag.to=to;
+  }else drag.to=null;
+});
+function endDrag(apply){
+  if(!drag)return;
+  const d=drag;drag=null;
+  if(d.ghost)d.ghost.remove();
+  document.querySelectorAll("#onDisc .tag").forEach(t=>t.classList.remove("dragging","dropbefore","dropafter"));
+  if(apply&&d.moved&&d.to!==null&&d.to!==d.from){const [id]=state.sel.splice(d.from,1);state.sel.splice(d.to,0,id);render();}
+}
+$("#onDisc").addEventListener("pointerup",()=>endDrag(true));
+$("#onDisc").addEventListener("pointercancel",()=>endDrag(false));
+$("#onDisc").addEventListener("click",e=>{
+  const l=e.target.closest("[data-left]"),x=e.target.closest("[data-remove]");
+  if(l){const i=+l.dataset.left;[state.sel[i-1],state.sel[i]]=[state.sel[i],state.sel[i-1]];render();}
+  else if(x){state.sel.splice(+x.dataset.remove,1);render();}
+});
+$("#blendSeg").addEventListener("click",e=>{const b=e.target.closest("[data-blend]");if(!b)return;state.blend=b.dataset.blend;
+  document.querySelectorAll("#blendSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));render();});
+$("#poolSeg").addEventListener("click",e=>{const b=e.target.closest("[data-pool]");if(!b)return;state.pool=b.dataset.pool;
+  document.querySelectorAll("#poolSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));render();});
+$("#depth").addEventListener("input",e=>{state.depth=e.target.value/100;render();});
+
+function toggleDye(id){const i=state.sel.indexOf(id);if(i>=0)state.sel.splice(i,1);else{state.sel.push(id);if(state.sel.length>3)state.sel.shift();}render();}
+document.querySelector(".main").addEventListener("click",e=>{
+  const d=e.target.closest(".dye");if(d){toggleDye(d.dataset.dye);return;}
+  const nx=e.target.closest("[data-next]");if(nx){const t=state.combos.find(x=>x.key===nx.dataset.next);if(t){comboIdx[t.key]=(comboOption(t)[0]+1)%t.options.length;renderCombos();}return;}
+  const c=e.target.closest("[data-combo]");if(c){const t=state.combos.find(x=>x.key===c.dataset.combo);if(t){state.sel=comboOption(t)[1].map(r=>r.dye.id);render();}return;}
+  const rm=e.target.closest("[data-rmjar]");
+  if(rm){const id=rm.dataset.rmjar;
+    if(rmArm!==id){rmArm=id;renderShelf();return;}
+    rmArm=null;state.dyes=state.dyes.filter(d=>d.id!==id);state.owned.delete(id);state.sel=state.sel.filter(x=>x!==id);
+    saveOwned();saveCustom();fillMixers();render();return;}
+  const j=e.target.closest(".jar");if(j){const id=j.dataset.jar;state.owned.has(id)?state.owned.delete(id):state.owned.add(id);saveOwned();render();}
+});
+$("#cdAdd").addEventListener("click",()=>{
+  const hex=$("#cdColor").value,name=$("#cdName").value.trim()||"Custom "+hex;
+  $("#cdName").value="";addToDisc(addCustomDye(name,hex,"Custom"));render();
+});
+window.addEventListener("resize",drawDisc);
+
+function showTab(t){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
+  ["planner","notes","log","data"].forEach(k=>$("#tab-"+k).hidden=k!==t);
+  if(t==="planner")drawDisc();else if(t==="notes")drawThumbs();else if(t==="log")renderLog();else if(window.dipsData)window.dipsData.render();
+}
+
+/* ---------- test log (shared: db + assets + user capabilities) ---------- */
+let db=null,assets=null,userCap=null,logDocs=[],freshId=null,pendingLogRender=false,delArm=null,logReady=false,editId=null,editDraft=null;
+function setLogStatus(t){$("#logStatus").textContent=t||"";}
+function noLog(){
+  logReady=true;
+  $("#logList").innerHTML=`<p class="empty">This browser can't save DIPS data. Try Chrome, Edge or Safari. The Planner and Cliff Notes still work.</p>`;
+  $("#tally").innerHTML="";$("#logBtn").disabled=true;$("#logAdd").disabled=true;$("#logBtnHint").textContent="Logging isn't available in this view.";
+  initTechniques();
+}
+async function initLog(){
+  const c=window.claude;
+  if(!c||typeof c.use!=="function"){noLog();return;}
+  try{db=await c.use("db");}catch(e){db=null;}
+  if(!db){noLog();return;}
+  try{userCap=await c.use("user");}catch(e){userCap=null;}
+  try{assets=await c.use("assets");}catch(e){assets=null;}
+  initTechniques();
+  db.collection("tests").orderBy("createdAt","desc").limit(300).onSnapshot(
+    s=>{logDocs=s.docs;logReady=true;renderLog();},
+    ()=>setLogStatus("The log stopped updating. Reload the page to reconnect."));
+}
+/* Predictions are always computed from the entry's own fields, so an edited entry stays consistent. */
+function predictHexes(baseHex,s,dyeHexes,mode){
+  const base=hex2rgb(baseHex);
+  return dyeHexes.map(h=>{const eff=soakRgb(hex2rgb(h),s);return rgb2hex(mode==="darken"?base.map((v,i)=>Math.min(v,eff[i])):base.map((v,i)=>v*eff[i]/255));});
+}
+const strengthFor=(depth,r,transl)=>depth*(RATING[r]||RATING["-"]).f*(transl?.7:1);
+const dyeRecord=d=>({id:d.id,code:d.code,name:d.name,hex:d.hex,recipe:d.recipe||null});
+function withPredictions(e){
+  const s=strengthFor(e.depth,e.plastic.rating,e.plastic.translucent),hx=e.dyes.map(d=>d.hex);
+  e.predicted={multiply:predictHexes(e.disc.hex,s,hx,"multiply"),darken:predictHexes(e.disc.hex,s,hx,"darken")};
+  return e;
+}
+function entryFromPlanner(){
+  const p=curPlastic();
+  return{date:new Date().toISOString().slice(0,10),disc:{hex:state.base,name:baseLabel()},
+    plastic:{brand:p.brand,name:p.name,rating:p.r,translucent:state.translucent},
+    tech:state.tech,pattern:state.pattern,depth:state.depth,
+    dyes:state.sel.map(id=>state.dyes.find(d=>d.id===id)).filter(Boolean).map(dyeRecord),
+    techName:techOr(state.tech).label,
+    mix:techOr(state.tech).custom?(techOr(state.tech).recipe.startsWith("No mix recorded")?"":techOr(state.tech).recipe):TECH[state.tech].recipe.replace(/\s*ProChem gives no [^.]*\./,""),
+    setTime:"",notes:"",closer:"",photo:null};
+}
+async function addEntry(e){
+  let by=null;try{by=userCap?await userCap.id():null;}catch(_){}
+  return db.collection("tests").add(withPredictions({...e,createdAt:new Date().toISOString(),by}));
+}
+function saveErr(err){
+  return err&&err.code==="invalid_argument"?"Couldn't save that. Try again."
+    :err&&err.code==="quota_exceeded"?"The log is full. Delete old entries to make room.":"Couldn't save. Try again in a moment.";
+}
+$("#logBtn").addEventListener("click",async e=>{
+  const btn=e.currentTarget,hint=$("#logBtnHint");
+  if(!db){noLog();return;}
+  const entry=entryFromPlanner();
+  if(!entry.dyes.length){hint.textContent="Put at least one dye on the disc first.";return;}
+  btn.disabled=true;hint.textContent="Saving…";
+  try{const ref=await addEntry(entry);freshId=ref.id;hint.textContent="Logged. Find it in the Test log tab.";
+    const note=revealNew(entry);showTab("log");setLogStatus("Logged. Add the set time now, and a photo once the disc is done."+note);}
+  catch(err){hint.textContent=saveErr(err);}
+  finally{btn.disabled=false;}
+});
+$("#logAdd").addEventListener("click",()=>{
+  if(!db)return;
+  editId="new";editDraft=entryFromPlanner();renderLog(true);
+  setLogStatus("Fill in the new entry. It starts from your current Planner setup.");
+});
+function fmtDate(e){const d=new Date(e.date?e.date+"T12:00:00":e.createdAt);return isNaN(d)?"":d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}
+
+/* ----- edit form ----- */
+const opt=(v,l,sel)=>`<option value="${esc(v)}"${sel?" selected":""}>${esc(l)}</option>`;
+function plasticOptions(brand,name){return PLASTICS.filter(p=>p.brand===brand).map(p=>opt(p.name,`${p.name} (${RATING[p.r].label})`,p.name===name)).join("");}
+function patternOptions(tech,pat){return techOr(tech).patterns.map(p=>opt(p,PATS[p],p===pat)).join("");}
+function techOptions(cur,curName){
+  const mine=myTechDocs.map(s=>["my:"+s.id,(s.data().name||"Untitled")+" (mine)"]).sort((a,b)=>a[1].localeCompare(b[1]));
+  const known=TECH[cur]||mine.some(([k])=>k===cur);
+  return Object.entries(TECH).map(([k,v])=>opt(k,v.label,k===cur)).join("")+mine.map(([k,l])=>opt(k,l,k===cur)).join("")
+    +(cur&&!known?opt(cur,(curName||"Deleted technique")+" (as logged)",true):"");
+}
+function dyeOptions(e,i){
+  const cur=e.dyes[i],inState=cur&&state.dyes.some(d=>d.id===cur.id&&d.hex===cur.hex);
+  return opt("","None",!cur)+(cur&&!inState?opt("entry:"+i,`${cur.name} (as logged)`,true):"")
+    +state.dyes.map(d=>opt(d.id,d.fam==="c"?d.name:`${d.name} (${d.code})`,inState&&cur.id===d.id)).join("");
+}
+function formHtml(id,e){
+  const pl=e.plastic||{},brand=PLASTICS.some(p=>p.brand===pl.brand)?pl.brand:"Innova";
+  return`<form class="eform" data-form="${esc(id)}">
+    <div class="fgrid">
+      <label><span class="label">Date</span><input type="date" name="date" value="${esc(e.date||(e.createdAt||"").slice(0,10))}"></label>
+      <label><span class="label">Disc color</span><span class="row"><input type="color" name="discHex" value="${esc(e.disc?.hex||"#ffffff")}"><input type="text" name="discName" value="${esc(e.disc?.name||"")}" placeholder="e.g. yellow" aria-label="Disc color name" data-auto="${!e.disc?.name||e.disc.name===discNameFor(e.disc.hex||"#ffffff")?1:0}"></span></label>
+      <label><span class="label">Brand</span><select name="brand" data-ef="brand">${[...new Set(PLASTICS.map(p=>p.brand))].map(b=>opt(b,b,b===brand)).join("")}</select></label>
+      <label><span class="label">Plastic</span><select name="plastic">${plasticOptions(brand,pl.name)}</select></label>
+      <label class="check"><input type="checkbox" name="translucent"${pl.translucent?" checked":""}> Translucent plastic</label>
+      <label><span class="label">Technique</span><select name="tech" data-ef="tech">${techOptions(e.tech,e.techName)}</select></label>
+      <label><span class="label">Pattern</span><select name="pattern">${patternOptions(e.tech,e.pattern)}</select></label>
+      <label><span class="label">Color depth %</span><input type="number" name="depth" min="30" max="100" value="${Math.round((e.depth||.8)*100)}"></label>
+      ${[0,1,2].map(i=>`<label><span class="label">Color ${i+1}</span><select name="dye${i}">${dyeOptions(e,i)}</select></label>`).join("")}
+      <label class="wide"><span class="label">Mix used</span><input type="text" name="mix" value="${esc(e.mix||"")}" placeholder="e.g. ½ tsp dye + 1 tsp hot water + 4 oz Floetrol"></label>
+      <label><span class="label">Set time</span><input type="text" name="setTime" value="${esc(e.setTime||"")}" placeholder="e.g. 3 hr, heat lamp"></label>
+      <label><span class="label">Closer prediction</span><select name="closer">${[["","Not decided"],["multiply","Multiply"],["darken","Darken"],["neither","Neither"]].map(([k,l])=>opt(k,l,k===(e.closer||""))).join("")}</select></label>
+      <label class="wide"><span class="label">Notes</span><textarea name="notes" rows="3">${esc(e.notes||"")}</textarea></label>
+    </div>
+    <div class="row"><button type="submit" class="btn primary">${id==="new"?"Add entry":"Save changes"}</button><button type="button" class="btn" data-cancel>Cancel</button></div>
+  </form>`;
+}
+/* Disc color name: a preset's name when the color is exactly a preset, otherwise the estimated color name. */
+function discNameFor(hex){const p=DISCS.find(([,h])=>h===String(hex).toLowerCase());return p?p[0].toLowerCase():nameColor(hex2rgb(hex));}
+/* The name follows the color picker until someone types their own name (clearing the box hands it back). */
+$("#logList").addEventListener("input",e=>{
+  const t=e.target,f=t.closest(".eform");if(!f)return;
+  if(t.name==="discHex"){const n=f.elements.discName;if(n.dataset.auto!=="0")n.value=discNameFor(t.value);}
+  else if(t.name==="discName")t.dataset.auto=t.value.trim()?"0":"1";
+});
+function readForm(f,orig){
+  const v=n=>f.elements[n].value,brand=v("brand"),pl=PLASTICS.find(p=>p.brand===brand&&p.name===v("plastic"))||PLASTICS.find(p=>p.brand===brand);
+  /* A technique deleted since logging keeps its logged key and name. */
+  const picked=v("tech"),keep=picked===orig.tech&&!techInfo(picked);
+  const tech=keep||techInfo(picked)?picked:"floetrol",pats=keep?Object.keys(PATS):techOr(tech).patterns;
+  const pat=pats.includes(v("pattern"))?v("pattern"):pats[0];
+  const techName=keep?orig.techName:techOr(tech).label;
+  const dyes=[0,1,2].map(i=>{const x=v("dye"+i);if(!x)return null;if(x.startsWith("entry:"))return orig.dyes[+x.slice(6)]||null;const d=state.dyes.find(y=>y.id===x);return d?dyeRecord(d):null;}).filter(Boolean);
+  const hex=/^#[0-9a-f]{6}$/i.test(v("discHex"))?v("discHex").toLowerCase():"#ffffff";
+  return{date:/^\d{4}-\d{2}-\d{2}$/.test(v("date"))?v("date"):new Date().toISOString().slice(0,10),
+    disc:{hex,name:v("discName").trim().slice(0,60)||discNameFor(hex)},
+    plastic:{brand:pl.brand,name:pl.name,rating:pl.r,translucent:f.elements.translucent.checked},
+    tech,techName,pattern:pat,depth:Math.min(100,Math.max(30,Math.round(+v("depth")||80)))/100,dyes,
+    mix:v("mix").slice(0,300),setTime:v("setTime").slice(0,100),notes:v("notes").slice(0,2000),closer:v("closer")};
+}
+
+/* ----- list ----- */
+function viewHtml(d){
+  const dyes=Array.isArray(d.dyes)?d.dyes:[],pm=d.predicted?.multiply||[],pd=d.predicted?.darken||[],pl=d.plastic||{};
+  const photo=d.photo&&/^[0-9a-f]{32}$/i.test(d.photo)?`<img data-blob="${d.photo}" alt="Photo of the finished disc">`:"";
+  const up=assets?`<label class="btn">${photo?"Replace photo":"Add photo"}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo hidden></label>`
+    :(photo?"":`<p class="hint">People with edit access can add a photo.</p>`);
+  return`
+    <div class="discrow"><i style="background:${esc(d.disc?.hex||"#fff")}"></i>${esc(d.disc?.name||"")} disc, ${esc(pl.brand||"")} ${esc(pl.name||"")} (${esc((RATING[pl.rating]||RATING["-"]).label)})${pl.translucent?", translucent":""}, depth ${Math.round((d.depth||0)*100)}%</div>
+    ${d.mix?`<p class="mixused"><span class="label">Mix used</span> ${esc(d.mix)}</p>`:""}
+    <div class="ebody">
+      <div class="ptable"><span></span><span class="h">In the jar</span><span class="h">Multiply</span><span class="h">Darken</span>
+        ${dyes.map((y,i)=>`<span class="n">${i+1}. ${esc(y.name)} <span class="code">${esc(y.code||"")}</span>${y.recipe&&y.recipe.length?`<span class="recipe-line">= ${esc(recipeText(y.recipe))}</span>`:""}</span><i class="c" style="background:${esc(y.hex)}"></i><i class="c" style="background:${esc(pm[i]||"transparent")}"></i><i class="c" style="background:${esc(pd[i]||"transparent")}"></i>`).join("")}
+      </div>
+      <div class="ephoto">${photo}${up}</div>
+    </div>
+    <div class="efields">
+      <label><span class="label">Set time</span><input type="text" data-f="setTime" value="${esc(d.setTime||"")}" placeholder="e.g. 3 hr, heat lamp"></label>
+      <label><span class="label">Notes</span><textarea data-f="notes" rows="2" placeholder="Mix, temperature, what you'd change">${esc(d.notes||"")}</textarea></label>
+    </div>
+    <div class="efoot">
+      <div class="closer"><span class="label">Which prediction was closer?</span>
+        <div class="seg" role="group" aria-label="Which prediction was closer">${[["multiply","Multiply"],["darken","Darken"],["neither","Neither"]].map(([k,l])=>`<button type="button" data-closer="${k}" aria-pressed="${d.closer===k}">${l}</button>`).join("")}</div></div>
+      <div class="row"><button type="button" class="btn" data-edit>Edit all fields</button><button type="button" class="btn" data-load>Load in planner</button><button type="button" class="btn danger" data-del>${delArm===d.id?"Tap again to delete":"Delete"}</button></div>
+    </div>`;
+}
+function renderLog(force){
+  if(!logReady)return;
+  if(!db){noLog();return;}
+  const act=document.activeElement;
+  /* Don't redraw under someone mid-edit: an open form or a focused text field waits until they're done. */
+  if(!force&&(editId||(act&&$("#logList").contains(act)&&act.matches("input[type=text],textarea")))){pendingLogRender=true;return;}
+  const all=logDocs.map(s=>({id:s.id,...s.data()}));
+  fillFilterOptions(all);
+  const rows=sortLog(all.filter(passesFilter));
+  const active=filterIsActive();
+  $("#lfCount").textContent=all.length?(active?`Filters on (${activeFilterText()}): showing ${rows.length} of ${all.length} entries. The tally counts only these.`:`${all.length} entries`):"";
+  $("#lfCount").classList.toggle("lfon",active);
+  const nOn=Object.keys(LF_DEFAULT).filter(k=>k!=="sort"&&lf[k]!==LF_DEFAULT[k]).length;
+  $("#lfBadge").textContent=nOn?`${nOn} on`:"";$("#lfClear").hidden=!nOn;
+  const cnt=k=>rows.filter(r=>r.closer===k).length;
+  $("#tally").innerHTML=[[rows.length,active?"Discs shown":"Discs logged"],[cnt("multiply"),"Multiply closer"],[cnt("darken"),"Darken closer"],[cnt("neither"),"Neither close"]]
+    .map(([n,l])=>`<div class="t"><b>${n}</b><span>${l}</span></div>`).join("");
+  const head=d=>`<div class="ehead"><h3>${esc(techLabelOf(d))}: ${esc(PATS[d.pattern]||d.pattern||"")}</h3><span class="emeta">${fmtDate(d)}${d.by?` · logged by <span data-by="${esc(d.by)}">someone</span>`:""}</span></div>`;
+  const cards=rows.map(d=>`<article class="entry${d.id===freshId?" fresh":""}" data-id="${esc(d.id)}">${head(d)}${editId===d.id?formHtml(d.id,editDraft||d):viewHtml(d)}</article>`);
+  if(editId==="new")cards.unshift(`<article class="entry fresh" data-id="new"><div class="ehead"><h3>New entry</h3></div>${formHtml("new",editDraft)}</article>`);
+  $("#logList").innerHTML=cards.length?cards.join("")
+    :all.length?`<p class="empty">No entries match these filters. Use "Clear filters" to see all ${all.length}.</p>`
+    :`<p class="empty">No dye jobs logged yet. Press "Log this dye job" in the Planner, or "Add entry manually" above.</p>`;
+  if(editId){const f=$(`.entry[data-id="${CSS.escape(editId)}"]`);if(f)f.scrollIntoView({block:"nearest"});}
+  if(freshId){const f=$(`.entry[data-id="${CSS.escape(freshId)}"]`);if(f){f.scrollIntoView({block:"start"});freshId=null;}}
+  fillNames();
+}
+/* ----- search, sort, filter. Only the sort order is remembered: filters that survive a reload hide new entries without warning. ----- */
+const LF_DEFAULT={q:"",sort:"new",plastic:"",disc:"",dye:"",dyeFam:"",tech:"",closer:"",from:"",to:"",photo:false};
+const lf={...LF_DEFAULT};
+try{const s=JSON.parse(localStorage.getItem("discdye.logfilter")||"{}").sort;if(s)lf.sort=s;}catch(e){}
+function saveLF(){try{localStorage.setItem("discdye.logfilter",JSON.stringify({sort:lf.sort}));}catch(e){}}
+function clearFilters(){Object.assign(lf,{...LF_DEFAULT,sort:lf.sort});saveLF();}
+/* A new entry must never land hidden: clear any filter it would fail. */
+function revealNew(entry){if(filterIsActive()&&!passesFilter(entry)){clearFilters();return" Filters were hiding it, so they've been cleared.";}return"";}
+function activeFilterText(){
+  const parts=[];
+  if(lf.q)parts.push(`search "${lf.q}"`);
+  [["plastic","plastic"],["disc","disc color"],["dyeFam","dye color"],["closer","closer"]].forEach(([k,l])=>{if(lf[k])parts.push(`${l}: ${lf[k]}`);});
+  if(lf.dye)parts.push(`dye: ${lf.dye.split("|")[0]}`);
+  if(lf.tech)parts.push(`technique: ${techLabelOf(logDocs.map(s=>s.data()).find(d=>d.tech===lf.tech)||{tech:lf.tech})}`);
+  if(lf.from||lf.to)parts.push(`dates ${lf.from||"…"} to ${lf.to||"…"}`);
+  if(lf.photo)parts.push("has a photo");
+  return parts.join(", ");
+}
+/* Color family for filtering: the name without light/deep/drab, with greys, blacks and browns merged. */
+function colorFamily(hex){
+  if(!/^#[0-9a-f]{6}$/i.test(hex||""))return"";
+  const n=nameColor(hex2rgb(hex)).replace(/^(light|deep|drab|muddy|dark|slate|near) /,"");
+  return n==="charcoal"?"black":n;
+}
+const entryDate=d=>d.date||(d.createdAt||"").slice(0,10);
+const plasticKey=d=>d.plastic?`${d.plastic.brand} ${d.plastic.name}`:"";
+const dyesOf=d=>Array.isArray(d.dyes)?d.dyes:[];
+function passesFilter(d){
+  if(lf.plastic&&plasticKey(d)!==lf.plastic)return false;
+  if(lf.disc&&colorFamily(d.disc?.hex)!==lf.disc)return false;
+  if(lf.dye&&!dyesOf(d).some(y=>`${y.name}|${y.code||""}`===lf.dye))return false;
+  if(lf.dyeFam&&!dyesOf(d).some(y=>colorFamily(y.hex)===lf.dyeFam))return false;
+  if(lf.tech&&d.tech!==lf.tech)return false;
+  if(lf.closer&&(d.closer||"none")!==lf.closer)return false;
+  const dt=entryDate(d);
+  if(lf.from&&dt<lf.from)return false;
+  if(lf.to&&dt>lf.to)return false;
+  if(lf.photo&&!d.photo)return false;
+  if(lf.q){
+    const hay=[d.notes,d.mix,d.setTime,d.disc?.name,plasticKey(d),techLabelOf(d),PATS[d.pattern],
+      ...dyesOf(d).flatMap(y=>[y.name,y.code,recipeText(y.recipe)])].join(" ").toLowerCase();
+    if(!lf.q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w)))return false;
+  }
+  return true;
+}
+function sortLog(rows){
+  const byNew=(a,b)=>entryDate(b).localeCompare(entryDate(a))||(b.createdAt||"").localeCompare(a.createdAt||"");
+  const discKey=d=>{const hx=d.disc?.hex;if(!/^#[0-9a-f]{6}$/i.test(hx||""))return 999;const l=lab(hex2rgb(hx));return l.C<12?400+(100-l.L):hue(hex2rgb(hx));};
+  const cmp={new:byNew,old:(a,b)=>-byNew(a,b),
+    disc:(a,b)=>discKey(a)-discKey(b)||byNew(a,b),
+    plastic:(a,b)=>plasticKey(a).localeCompare(plasticKey(b))||byNew(a,b),
+    tech:(a,b)=>techLabelOf(a).localeCompare(techLabelOf(b))||byNew(a,b)}[lf.sort]||byNew;
+  return rows.slice().sort(cmp);
+}
+function filterIsActive(){return Object.keys(LF_DEFAULT).some(k=>k!=="sort"&&lf[k]!==LF_DEFAULT[k]);}
+function fillSel(el,opts,cur,allLabel){
+  const has=opts.some(([v])=>v===cur);
+  el.innerHTML=opt("",allLabel,!cur)+opts.map(([v,l])=>opt(v,l,v===cur)).join("")+(cur&&!has?opt(cur,cur+" (none now)",true):"");
+  el.classList.toggle("on",!!cur);
+}
+function fillFilterOptions(all){
+  const uniq=(arr)=>[...new Map(arr.filter(([v])=>v).map(x=>[x[0],x])).values()];
+  fillSel($("#lfPlastic"),uniq(all.map(d=>[plasticKey(d),plasticKey(d)])).sort((a,b)=>a[1].localeCompare(b[1])),lf.plastic,"Any plastic");
+  fillSel($("#lfDisc"),uniq(all.map(d=>{const f=colorFamily(d.disc?.hex);return[f,f];})).sort((a,b)=>a[1].localeCompare(b[1])),lf.disc,"Any disc color");
+  fillSel($("#lfDye"),uniq(all.flatMap(d=>dyesOf(d).map(y=>[`${y.name}|${y.code||""}`,y.code&&y.code!=="Mix"&&y.code!=="Custom"?`${y.name} (${y.code})`:y.name]))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dye,"Any dye");
+  fillSel($("#lfDyeFam"),uniq(all.flatMap(d=>dyesOf(d).map(y=>{const f=colorFamily(y.hex);return[f,f];}))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dyeFam,"Any dye color");
+  fillSel($("#lfTech"),uniq(all.map(d=>[d.tech,techLabelOf(d)])),lf.tech,"Any technique");
+  fillSel($("#lfCloser"),[["multiply","Multiply"],["darken","Darken"],["neither","Neither"],["none","Not decided yet"]],lf.closer,"Any");
+  $("#lfQ").value=lf.q;$("#lfSort").value=lf.sort;$("#lfFrom").value=lf.from;$("#lfTo").value=lf.to;$("#lfPhoto").checked=lf.photo;
+  ["#lfQ","#lfFrom","#lfTo"].forEach(s=>$(s).classList.toggle("on",!!$(s).value));
+}
+const LF_IDS={lfQ:"q",lfSort:"sort",lfPlastic:"plastic",lfDisc:"disc",lfDye:"dye",lfDyeFam:"dyeFam",lfTech:"tech",lfCloser:"closer",lfFrom:"from",lfTo:"to",lfPhoto:"photo"};
+let lfTimer=null;
+$("#logTools").addEventListener("input",e=>{
+  const k=LF_IDS[e.target.id];if(!k)return;
+  lf[k]=e.target.type==="checkbox"?e.target.checked:e.target.value;saveLF();
+  clearTimeout(lfTimer);lfTimer=setTimeout(()=>renderLog(),e.target.id==="lfQ"?200:0);
+});
+$("#lfClear").addEventListener("click",()=>{clearFilters();renderLog();});
+
+async function fillNames(){
+  if(!userCap)return;
+  const els=[...document.querySelectorAll("[data-by]")],ids=[...new Set(els.map(e=>e.dataset.by))];
+  if(!ids.length)return;
+  try{const ps=await userCap.profiles(ids);els.forEach(e=>{e.textContent=(ps&&ps[e.dataset.by]&&ps[e.dataset.by].name)||"someone";});}catch(_){}
+}
+async function updateEntry(id,patch){
+  try{await db.doc("tests/"+id).update(patch);return true;}
+  catch(err){setLogStatus(saveErr(err));return false;}
+}
+const entryById=id=>{const s=logDocs.find(x=>x.id===id);return s?{id,...s.data()}:null;};
+$("#logList").addEventListener("change",async e=>{
+  const t=e.target,card=t.closest(".entry");if(!card)return;
+  const id=card.dataset.id;
+  const form=t.closest(".eform");
+  if(form){
+    if(t.dataset.ef==="brand")form.elements.plastic.innerHTML=plasticOptions(t.value,"");
+    if(t.dataset.ef==="tech")form.elements.pattern.innerHTML=patternOptions(t.value,"");
+    return;
+  }
+  if(t.dataset.f){updateEntry(id,{[t.dataset.f]:t.value.slice(0,2000)});return;}
+  const d=entryById(id)||{};
+  if(t.matches("[data-photo]")&&t.files[0]&&assets){
+    const f=t.files[0];setLogStatus("Uploading photo…");
+    try{
+      const r=await assets.upload(f,["image/jpeg","image/png","image/webp"].includes(f.type)?undefined:{type:"image/jpeg"});
+      if(await updateEntry(id,{photo:r.id})){if(d.photo&&d.photo!==r.id)assets.delete(d.photo).catch(()=>{});setLogStatus("Photo added.");}
+    }catch(err){
+      const c=err&&err.code;
+      setLogStatus(c==="too_large"?"That photo is over 20 MB. Try a smaller one."
+        :c==="unsupported_type"?"Use a JPG, PNG or WebP photo. iPhone HEIC photos need converting first."
+        :c==="rate_limited"?"Too many uploads at once. Wait a moment and try again."
+        :c==="quota_or_state"?"Photo storage for this page is full. Delete old entries with photos to make room."
+        :"Couldn't upload the photo. Try again.");
+    }
+  }
+});
+$("#logList").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=e.target,id=f.dataset.form,btn=f.querySelector("[type=submit]");
+  const orig=id==="new"?editDraft:(entryById(id)||editDraft);
+  const entry=withPredictions(readForm(f,orig));
+  btn.disabled=true;
+  try{
+    if(id==="new"){const ref=await addEntry(entry);freshId=ref.id;setLogStatus("Entry added."+revealNew(entry));}
+    else{await db.doc("tests/"+id).update(entry);freshId=id;setLogStatus("Changes saved."+revealNew(entry));}
+    editId=null;editDraft=null;renderLog(true);
+  }catch(err){setLogStatus(saveErr(err));btn.disabled=false;}
+});
+$("#logList").addEventListener("focusout",()=>{setTimeout(()=>{if(pendingLogRender&&!editId&&!$("#logList").contains(document.activeElement)){pendingLogRender=false;renderLog();}},0);});
+$("#logList").addEventListener("click",async e=>{
+  const card=e.target.closest(".entry");if(!card)return;
+  const id=card.dataset.id;
+  if(e.target.closest("[data-cancel]")){editId=null;editDraft=null;setLogStatus("");renderLog(true);return;}
+  const d=entryById(id);if(!d)return;
+  if(e.target.closest("[data-edit]")){editId=id;editDraft=null;renderLog(true);return;}
+  const cb=e.target.closest("[data-closer]");
+  if(cb){updateEntry(id,{closer:d.closer===cb.dataset.closer?"":cb.dataset.closer});return;}
+  if(e.target.closest("[data-load]")){loadEntry(d);return;}
+  if(e.target.closest("[data-del]")){
+    if(delArm!==id){delArm=id;renderLog(true);return;}
+    delArm=null;
+    try{await db.doc("tests/"+id).delete();if(d.photo&&assets)assets.delete(d.photo).catch(()=>{});setLogStatus("Entry deleted.");}
+    catch(err){setLogStatus("Couldn't delete that entry.");renderLog(true);}
+  }
+});
+/* ----- printable sheet: plain text, 72 columns, Windows line endings so Notepad prints it cleanly ----- */
+function wrapText(s,w){const out=[];let cur="";String(s).split(/\s+/).forEach(word=>{if((cur+" "+word).trim().length>w){if(cur)out.push(cur);cur=word;}else cur=(cur+" "+word).trim();});if(cur)out.push(cur);return out;}
+function sheetText(prefill){
+  const e=prefill?entryFromPlanner():null,W=72,bar="=".repeat(W),rule="_".repeat(W);
+  const f=(v,n)=>v?String(v).slice(0,n).padEnd(n):"_".repeat(n),box=on=>on?"[x]":"[ ]";
+  const techs=[["spin","Spin"],["floetrol","Floetrol"],["glue","Glue"],["cream","Shaving cream / lotion"],["hotdip","Hot dip"]];
+  const L=["DISC DYE LOG SHEET".padEnd(W-10)+"Page ____","Fill this in while you dye. Later, open the Test log and use","\"Add entry manually\". Fields follow the entry form, top to bottom."];
+  for(const n of [1,2]){
+    const p=n===1?e:null;
+    L.push("",bar,`DISC ${n}`,bar,
+      `Date: ${f(p&&p.date,12)}      Dyed by: ${"_".repeat(30)}`,
+      `Disc color: ${f(p&&p.disc.name,16)}  Brand / plastic: ${f(p&&`${p.plastic.brand} ${p.plastic.name}`,25)}`,
+      `Translucent:  ${box(p&&p.plastic.translucent)} yes  ${box(p&&!p.plastic.translucent)} no`,
+      "Technique:  "+techs.slice(0,3).map(([k,l])=>`${box(p&&p.tech===k)} ${l}`).join("   "),
+      "            "+techs.slice(3).map(([k,l])=>`${box(p&&p.tech===k)} ${l}`).join("   "),
+      `            ${box(p&&!TECH[p.tech])} My technique: ${f(p&&!TECH[p.tech]&&p.techName,30)}`,
+      `Pattern: ${f(p&&PATS[p.pattern],20)}  Color depth: ${p?Math.round(p.depth*100)+"%":"light / medium / strong"}`,
+      "","Colors, in order     Jar code     Mix recipe (parts), if it's a mix");
+    for(let i=0;i<3;i++){const d=p&&p.dyes[i];L.push(` ${i+1}. ${f(d&&d.name,16)} ${f(d&&d.code,11)}  ${f(d&&recipeText(d.recipe),36)}`);}
+    L.push("","Mix used (dye + water + medium):");
+    if(p&&p.mix)wrapText(p.mix,W-2).forEach(x=>L.push("  "+x));else L.push(rule);
+    L.push(`Set time: ${"_".repeat(22)}   Heat / temp (goes in Notes): ${"_".repeat(10)}`,
+      "Notes (what worked, what you'd change):",rule,rule,rule,
+      "Closer prediction:  [ ] Multiply   [ ] Darken   [ ] Neither   [ ] Not sure yet",
+      "Photo taken:  [ ] yes            Entered in the Test log:  [ ] yes");
+  }
+  return L.join("\r\n")+"\r\n";
+}
+const renderSheet=()=>{$("#sheetPre").textContent=sheetText($("#sheetPrefill").checked);};
+$("#sheetFold").addEventListener("toggle",renderSheet);
+$("#sheetPrefill").addEventListener("change",renderSheet);
+$("#sheetCopy").addEventListener("click",()=>{
+  const t=sheetText($("#sheetPrefill").checked),msg=$("#sheetMsg");renderSheet();
+  const selectIt=()=>{const r=document.createRange();r.selectNodeContents($("#sheetPre"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Copying isn't allowed here. The sheet text is selected; press Ctrl+C.";};
+  try{navigator.clipboard.writeText(t).then(()=>msg.textContent="Copied. Paste it into Notepad and print.",selectIt);}catch(_){selectIt();}
+});
+let downloadsCap=null;
+async function initDownloads(){
+  const c=window.claude;
+  try{downloadsCap=c&&typeof c.use==="function"?await c.use("downloads"):null;}catch(_){downloadsCap=null;}
+  if(!downloadsCap)$("#sheetDl").hidden=true;
+}
+$("#sheetDl").addEventListener("click",async()=>{
+  const msg=$("#sheetMsg");if(!downloadsCap)return;
+  try{await downloadsCap.save({filename:"disc-dye-sheet.txt",data:sheetText($("#sheetPrefill").checked)});msg.textContent="Saved. Open it in Notepad and print.";}
+  catch(err){const c=err&&err.code;msg.textContent=c==="declined"?"Download canceled.":c==="rate_limited"?"A save prompt is already open.":"Downloading isn't available here. Use Copy sheet text instead.";}
+});
+
+function loadEntry(d){
+  const ids=(Array.isArray(d.dyes)?d.dyes:[]).map(y=>{
+    if(state.dyes.some(x=>x.id===y.id&&x.hex===y.hex))return y.id;
+    const same=state.dyes.find(x=>x.fam==="c"&&x.name===y.name&&x.hex===y.hex);
+    return same?same.id:(/^#[0-9a-f]{6}$/i.test(y.hex)?addCustomDye(String(y.name),y.hex,y.code==="Mix"?"Mix":"Custom",y.recipe):null);
+  }).filter(Boolean);
+  applySetup({base:d.disc?.hex,baseName:null,brand:d.plastic?.brand,plastic:d.plastic?.name,translucent:!!d.plastic?.translucent,tech:d.tech,pattern:d.pattern,depth:d.depth,sel:ids});
+  showTab("planner");window.scrollTo({top:0});
+}
+/* Cliff Notes thumbnails: sample ProChem colors (Caribbean, Neon Hot Orange, Dandelion) on a white disc. */
+function drawThumbs(){
+  document.querySelectorAll(".thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
+}
+const DOT_LABEL={pc:"Source: ProChem",sc:"Source: published guides",ai:"Source: AI chat, unconfirmed"};
+document.querySelectorAll("#tab-notes .dot").forEach(d=>{const k=["pc","sc","ai"].find(c=>d.classList.contains(c));d.setAttribute("role","img");d.setAttribute("aria-label",DOT_LABEL[k]);d.title=DOT_LABEL[k];});
+$("#techJump").addEventListener("click",e=>{
+  const b=e.target.closest("[data-jump]");if(!b)return;
+  const d=document.getElementById(b.dataset.jump);d.open=true;d.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+});
+/* ---------- My techniques (shared db collection "techniques"; photos in assets) ---------- */
+let myTechDocs=[],techEdit=null,techDraft=null,techDelArm=null,techPending=false,techUploads=[];
+const TECH_FIELDS=[["base","Base"],["plastics","Plastics"],["dyes","Dyes"],["how","How"],["mix","Mix"],["heat","Heat"],["setTime","Set"],["notes","Notes"]];
+const baseLabel2=k=>k?(TECH[k]?.label||"Other"):"";
+const tagsOf=t=>Array.isArray(t.tags)?t.tags.filter(x=>typeof x==="string"&&x):[];
+/* Search, sort and filter for My techniques. Only the sort order is remembered. */
+const TF_DEFAULT={q:"",sort:"name",base:"",pat:"",tag:""};
+const tf={...TF_DEFAULT};
+try{const s=localStorage.getItem("discdye.techsort");if(s)tf.sort=s;}catch(e){}
+function techPasses(t){
+  if(tf.base&&(t.base||"other")!==tf.base)return false;
+  if(tf.pat&&t.pattern!==tf.pat)return false;
+  if(tf.tag&&!tagsOf(t).some(x=>x.toLowerCase()===tf.tag))return false;
+  if(tf.q){const hay=[t.name,t.looks,t.description,baseLabel2(t.base),t.plastics,t.dyes,t.how,t.mix,t.heat,t.setTime,t.notes,PATS[t.pattern],...tagsOf(t)].join(" ").toLowerCase();
+    if(!tf.q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w)))return false;}
+  return true;
+}
+function techSort(rows){
+  const c={name:(a,b)=>(a.name||"").localeCompare(b.name||""),new:(a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""),updated:(a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||"")}[tf.sort]||((a,b)=>(a.name||"").localeCompare(b.name||""));
+  return rows.slice().sort(c);
+}
+function fillTechFilters(all){
+  const uniqPairs=a=>[...new Map(a.filter(([v])=>v).map(x=>[x[0],x])).values()].sort((x,y)=>x[1].localeCompare(y[1]));
+  fillSel($("#tfBase"),uniqPairs(all.map(t=>[t.base||"other",baseLabel2(t.base)||"Other"])),tf.base,"Any base");
+  fillSel($("#tfPat"),uniqPairs(all.map(t=>[t.pattern,PATS[t.pattern]||t.pattern])),tf.pat,"Any style");
+  fillSel($("#tfTag"),uniqPairs(all.flatMap(t=>tagsOf(t).map(x=>[x.toLowerCase(),x]))),tf.tag,"Any tag");
+  $("#tfQ").value=tf.q;$("#tfSort").value=tf.sort;$("#tfQ").classList.toggle("on",!!tf.q);
+}
+let tfTimer=null;
+$("#techTools").addEventListener("input",e=>{
+  const k={tfQ:"q",tfSort:"sort",tfBase:"base",tfPat:"pat",tfTag:"tag"}[e.target.id];if(!k)return;
+  tf[k]=e.target.value;if(k==="sort")try{localStorage.setItem("discdye.techsort",tf.sort);}catch(_){}
+  clearTimeout(tfTimer);tfTimer=setTimeout(()=>renderMyTech(),k==="q"?200:0);
+});
+$("#tfClear").addEventListener("click",()=>{Object.assign(tf,{...TF_DEFAULT,sort:tf.sort});renderMyTech();});
+const techStatus=t=>{$("#myTechStatus").textContent=t;};
+function initTechniques(){
+  if(!db){$("#myTechAdd").disabled=true;techStatus("This browser can't save techniques. Try Chrome, Edge or Safari.");return;}
+  db.collection("techniques").orderBy("name").limit(200).onSnapshot(
+    s=>{
+      myTechDocs=s.docs;renderMyTech();
+      /* Keep the Planner in step: apply a remembered user technique once it has loaded, and refresh the picker. */
+      if(pendingTech&&techInfo(pendingTech.tech)){state.tech=pendingTech.tech;const ps=techOr(state.tech).patterns;state.pattern=ps.includes(pendingTech.pattern)?pendingTech.pattern:ps[0];pendingTech=null;}
+      renderTech();renderRoles();render();
+      if(!$("#tab-log").hidden)renderLog();
+    },
+    ()=>techStatus("My techniques stopped updating. Reload the page to reconnect."));
+}
+const blankTech=()=>({name:"",looks:"",description:"",base:"",plastics:"",dyes:"",tags:[],how:"",mix:"",heat:"",setTime:"",notes:"",pattern:"swirl",photo:null});
+function techThumb(t){
+  return t.photo&&/^[0-9a-f]{32}$/i.test(t.photo)?`<img class="thumb" data-blob="${t.photo}" alt="">`
+    :`<canvas class="thumb" data-pattern="${esc(PATS[t.pattern]?t.pattern:"swirl")}" width="140" height="140" aria-hidden="true"></canvas>`;
+}
+function techFormHtml(id,t){
+  const photo=t.photo&&/^[0-9a-f]{32}$/i.test(t.photo);
+  return`<div class="tcard tform" data-tform="${esc(id)}"><form class="eform" data-techform="${esc(id)}">
+    <h4 class="subhead">${id==="new"?"New technique":"Edit technique"}</h4>
+    <div class="fgrid">
+      <label><span class="label">Name (required)</span><input type="text" name="name" maxlength="60" required value="${esc(t.name)}" placeholder="e.g. Lazy wave"></label>
+      <label><span class="label">Looks like</span><input type="text" name="looks" maxlength="80" value="${esc(t.looks)}" placeholder="e.g. Soft waves, cells"></label>
+      <label><span class="label">Preview pattern (if no photo)</span><select name="pattern">${Object.entries(PATS).map(([k,l])=>opt(k,l,k===t.pattern)).join("")}</select></label>
+      <label><span class="label">Base</span><select name="base">${opt("","Not set",!t.base)}${Object.entries(TECH).map(([k,v])=>opt(k,v.label,k===t.base)).join("")}${opt("other","Other",t.base==="other")}</select></label>
+      <label><span class="label">Plastics used on</span><input type="text" name="plastics" maxlength="200" value="${esc(t.plastics)}" placeholder="e.g. Star, ESP, Neutron"></label>
+      <label><span class="label">Tags (comma separated)</span><input type="text" name="tags" maxlength="200" value="${esc(tagsOf(t).join(", "))}" placeholder="e.g. favorite, neon, gift"></label>
+      <label class="wide"><span class="label">Dyes used</span><input type="text" name="dyes" maxlength="300" value="${esc(t.dyes)}" placeholder="e.g. DGD401 Caribbean, DGD408 Royal"></label>
+      <label class="wide"><span class="label">Description</span><textarea name="description" rows="2" maxlength="400">${esc(t.description)}</textarea></label>
+      <label class="wide"><span class="label">How</span><textarea name="how" rows="3" maxlength="2000">${esc(t.how)}</textarea></label>
+      <label class="wide"><span class="label">Mix</span><textarea name="mix" rows="2" maxlength="1000" placeholder="e.g. ½ tsp dye + 1 tsp hot water + 4 oz Floetrol">${esc(t.mix)}</textarea></label>
+      <label class="half"><span class="label">Heat</span><textarea name="heat" rows="2" maxlength="300" placeholder="e.g. Heat lamp, under 120°F">${esc(t.heat)}</textarea></label>
+      <label class="half"><span class="label">Set time</span><textarea name="setTime" rows="2" maxlength="300" placeholder="e.g. 3 hr">${esc(t.setTime)}</textarea></label>
+      <label class="wide"><span class="label">Notes</span><textarea name="notes" rows="3" maxlength="2000">${esc(t.notes)}</textarea></label>
+      <div class="wide"><span class="label">Photo</span>
+        <div class="photorow"><span data-photoprev>${photo?`<img data-blob="${t.photo}" alt="Technique photo">`:`<span class="hint">No photo yet.</span>`}</span>
+          ${assets?`<label class="btn">${photo?"Replace photo":"Add photo"}<input type="file" accept="image/jpeg,image/png,image/webp" data-techphoto hidden></label>${photo?`<button type="button" class="btn" data-techphotorm>Remove photo</button>`:""}`
+            :`<span class="hint">People with edit access can add a photo.</span>`}</div></div>
+    </div>
+    <div class="row"><button type="submit" class="btn primary">${id==="new"?"Add technique":"Save changes"}</button><button type="button" class="btn" data-techcancel>Cancel</button></div>
+  </form></div>`;
+}
+function techViewHtml(t,open){
+  const facts=TECH_FIELDS.filter(([k])=>t[k]).map(([k,l])=>`<dt>${l}</dt><dd class="pre">${esc(k==="base"?baseLabel2(t.base):t[k])}</dd>`).join("");
+  const tags=tagsOf(t);
+  return`<details class="tcard" id="mt-${esc(t.id)}"${open?" open":""}>
+    <summary>${techThumb(t)}<span class="tsum"><span class="tname">${esc(t.name)}</span>${t.looks?`<span class="looks">${esc(t.looks)}</span>`:""}${t.description?`<span class="tlede">${esc(t.description)}</span>`:""}${tags.length?`<span class="techtags">${tags.map(x=>`<span>${esc(x)}</span>`).join("")}</span>`:""}</span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="tbody">${facts?`<dl class="facts">${facts}</dl>`:`<p class="hint">No details yet. Use Edit to add how, mix, heat and set time.</p>`}
+      <div class="tfoot"><span class="hint">${t.by?`Added by <span data-by="${esc(t.by)}">someone</span>`:""}</span>
+        <span class="row"><button type="button" class="btn" data-tedit="${esc(t.id)}">Edit</button><button type="button" class="btn danger" data-tdel="${esc(t.id)}">${techDelArm===t.id?"Tap again to delete":"Delete"}</button></span></div>
+    </div></details>`;
+}
+function renderMyTech(force){
+  if(!force&&techEdit){techPending=true;return;}
+  const openIds=new Set([...document.querySelectorAll("#myTechList details[open]")].map(d=>d.id));
+  const all=myTechDocs.map(s=>({id:s.id,...s.data()}));
+  fillTechFilters(all);
+  /* The entry being edited always stays visible, even if it no longer matches the filters. */
+  const rows=techSort(all.filter(t=>t.id===techEdit||techPasses(t)));
+  const on=Object.keys(TF_DEFAULT).some(k=>k!=="sort"&&tf[k]!==TF_DEFAULT[k]);
+  $("#techTools").hidden=all.length<2&&!on;
+  $("#tfCount").textContent=on?`Filters on: showing ${rows.length} of ${all.length} techniques.`:`${all.length} techniques`;
+  $("#tfCount").classList.toggle("lfon",on);$("#tfClear").hidden=!on;
+  const cards=rows.map(t=>techEdit===t.id?techFormHtml(t.id,techDraft||t):techViewHtml(t,openIds.has("mt-"+t.id)));
+  if(techEdit==="new")cards.unshift(techFormHtml("new",techDraft));
+  $("#myTechList").innerHTML=cards.join("")||(all.length?`<p class="empty">No techniques match these filters.</p>`:`<p class="empty">No techniques of your own yet.</p>`);
+  document.querySelectorAll("#myTechList canvas.thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
+  const f=$("#myTechList .tform");if(f)f.scrollIntoView({block:"nearest"});
+  fillNames();
+}
+function readTechForm(f){
+  const v=n=>f.elements[n].value.trim();
+  const base=f.elements.base.value;
+  return{name:v("name").slice(0,60),looks:v("looks").slice(0,80),description:v("description").slice(0,400),
+    base:TECH[base]||base==="other"?base:"",plastics:v("plastics").slice(0,200),dyes:v("dyes").slice(0,300),
+    tags:[...new Set(v("tags").split(",").map(x=>x.trim().slice(0,30)).filter(Boolean))].slice(0,12),how:v("how").slice(0,2000),
+    mix:v("mix").slice(0,1000),heat:v("heat").slice(0,300),setTime:v("setTime").slice(0,300),notes:v("notes").slice(0,2000),
+    pattern:PATS[f.elements.pattern.value]?f.elements.pattern.value:"swirl",photo:techDraft.photo||null};
+}
+function startTechEdit(id,draft){techEdit=id;techDraft=draft;techUploads=[];techDelArm=null;renderMyTech(true);}
+/* Photos uploaded during an edit that didn't end up saved are deleted, so storage doesn't fill with orphans. */
+function endTechEdit(savedPhoto){
+  techUploads.filter(p=>p!==savedPhoto).forEach(p=>assets&&assets.delete(p).catch(()=>{}));
+  techEdit=null;techDraft=null;techUploads=[];techPending=false;renderMyTech(true);
+}
+$("#myTechAdd").addEventListener("click",()=>{if(db)startTechEdit("new",blankTech());});
+$("#tab-notes").addEventListener("click",e=>{
+  const c=e.target.closest("[data-copytech]");if(!c||!db)return;
+  const card=document.getElementById(c.dataset.copytech),t=blankTech();
+  t.name=("My "+card.querySelector(".tname").textContent).slice(0,60);
+  t.looks=card.querySelector(".looks")?.textContent||"";t.description=card.querySelector(".tlede")?.textContent||"";
+  t.pattern=card.querySelector("canvas.thumb")?.dataset.pattern||"swirl";
+  t.base={"t-spin":"spin","t-floetrol":"floetrol","t-glue":"glue","t-cream":"cream","t-hotdip":"hotdip"}[card.id]||"";
+  const map={How:"how",Mix:"mix",Heat:"heat",Set:"setTime"},extra=[];
+  [...card.querySelectorAll(".facts dt")].forEach(dt=>{const k=map[dt.textContent.trim()],txt=dt.nextElementSibling.innerText.trim();
+    if(k)t[k]=txt;else extra.push(`${dt.textContent.trim()}: ${txt}`);});
+  const heads=card.querySelector(".heads");if(heads)extra.push(heads.textContent.trim());
+  t.notes=extra.join("\n");
+  startTechEdit("new",t);$("#myTechSec").scrollIntoView({block:"start"});
+  techStatus("Started from the built-in card. Change anything, then add it.");
+});
+$("#myTechList").addEventListener("click",async e=>{
+  if(e.target.closest("[data-techcancel]")){endTechEdit(techEdit!=="new"?(myTechDocs.find(s=>s.id===techEdit)?.data().photo):null);techStatus("");return;}
+  if(e.target.closest("[data-techphotorm]")){techDraft.photo=null;const f=e.target.closest("form");
+    f.querySelector("[data-photoprev]").innerHTML=`<span class="hint">Photo will be removed when you save.</span>`;e.target.closest("[data-techphotorm]").remove();return;}
+  const ed=e.target.closest("[data-tedit]");
+  if(ed){const s=myTechDocs.find(x=>x.id===ed.dataset.tedit);if(s)startTechEdit(s.id,{...blankTech(),...s.data()});return;}
+  const del=e.target.closest("[data-tdel]");
+  if(del){const id=del.dataset.tdel;
+    if(techDelArm!==id){techDelArm=id;renderMyTech();return;}
+    techDelArm=null;const photo=myTechDocs.find(x=>x.id===id)?.data().photo;
+    try{await db.doc("techniques/"+id).delete();if(photo&&assets)assets.delete(photo).catch(()=>{});techStatus("Technique deleted.");}
+    catch(err){techStatus("Couldn't delete that technique.");renderMyTech();}
+  }
+});
+$("#myTechList").addEventListener("change",async e=>{
+  const t=e.target;if(!t.matches("[data-techphoto]")||!t.files[0]||!assets)return;
+  const f=t.files[0];techStatus("Uploading photo…");
+  try{
+    const r=await assets.upload(f,["image/jpeg","image/png","image/webp"].includes(f.type)?undefined:{type:"image/jpeg"});
+    techUploads.push(r.id);techDraft.photo=r.id;
+    t.closest("form").querySelector("[data-photoprev]").innerHTML=`<img src="${esc(r.url)}" alt="Technique photo">`;
+    techStatus("Photo ready. It's saved when you save the technique.");
+  }catch(err){
+    const c=err&&err.code;
+    techStatus(c==="too_large"?"That photo is over 20 MB. Try a smaller one.":c==="unsupported_type"?"Use a JPG, PNG or WebP photo. iPhone HEIC photos need converting first."
+      :c==="quota_or_state"?"Photo storage for this page is full.":"Couldn't upload the photo. Try again.");
+  }
+});
+$("#myTechList").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=e.target,id=f.dataset.techform,data=readTechForm(f),btn=f.querySelector("[type=submit]");
+  if(!data.name){techStatus("Give the technique a name.");f.elements.name.focus();return;}
+  btn.disabled=true;
+  try{
+    const now=new Date().toISOString();
+    if(id==="new"){let by=null;try{by=userCap?await userCap.id():null;}catch(_){}
+      await db.collection("techniques").add({...data,by,createdAt:now,updatedAt:now});techStatus(`Added "${data.name}".`);}
+    else{const old=myTechDocs.find(x=>x.id===id)?.data().photo;
+      await db.doc("techniques/"+id).update({...data,updatedAt:now});
+      if(old&&old!==data.photo&&assets)assets.delete(old).catch(()=>{});
+      techStatus(`Saved "${data.name}".`);}
+    endTechEdit(data.photo);
+  }catch(err){techStatus(saveErr(err));btn.disabled=false;}
+});
+/* "Make my version" on each built-in technique card */
+document.querySelectorAll('#tab-notes details.tcard[id^="t-"] .tbody').forEach(b=>{
+  b.insertAdjacentHTML("beforeend",`<div class="row"><button type="button" class="btn small" data-copytech="${b.parentElement.id}">Make my version</button></div>`);
+});
+
+$("#expandAll").addEventListener("click",e=>{
+  const all=[...document.querySelectorAll("#tab-notes details")],open=!all.every(d=>d.open);
+  all.forEach(d=>d.open=open);e.currentTarget.textContent=open?"Close all":"Open all";
+});
+$(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)showTab(b.dataset.tab);});
+loadCustom();fillMixers();
+fillPlastics();renderTech();renderRoles();
+const savedSetup=loadSetup();
+if(savedSetup)applySetup(savedSetup);else setBase("#f2dc3c","Yellow");
+if(!state.sel.length&&state.combos[0]){state.sel=comboOption(state.combos[0])[1].map(r=>r.dye.id);render();}
+if(["#notes","#log","#data"].includes(location.hash))showTab(location.hash.slice(1));
+initLog();initDownloads();
+</script>
+<script>
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
-    const ask=()=>{if(reg.active)reg.active.postMessage("VERSION");};
-    ask();navigator.serviceWorker.ready.then(ask);
     /* A new version installed in the background: offer a reload instead of switching under the user. */
-    const offer=w=>{$("#updateBar").hidden=false;$("#updateBtn").onclick=()=>w.postMessage("SKIP_WAITING");};
+    const offer=w=>{const el=document.getElementById("updateBar");el.hidden=false;document.getElementById("updateBtn").onclick=()=>w.postMessage("SKIP_WAITING");};
     if(reg.waiting&&navigator.serviceWorker.controller)offer(reg.waiting);
     reg.addEventListener("updatefound",()=>{const w=reg.installing;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)offer(w);});});
     setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
   });
-  navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.version)$("#ver").textContent=e.data.version;});
   let reloaded=false;
   navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload();}});
-}else $("#ver").textContent="(no offline support in this browser)";
-
-renderList();checkPersist();initFolder();showBackup();
+}
 </script>
+<div id="updateBar" hidden><span>A new version of DIPS is ready.</span><button type="button" id="updateBtn">Reload</button></div>
 </body>
 </html>
