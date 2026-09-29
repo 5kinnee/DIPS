@@ -4,13 +4,17 @@
 
 DIPS is a planner and logbook for dyeing disc golf discs. It predicts how PRO Chemical & Dye colors will look on a colored disc, suggests color combos for your technique, and keeps a log of every dye job so you can learn from real results. It is a web app you install from a link. It works offline, and your data stays on your own device.
 
+**Open the app: https://5kinnee.github.io/DIPS/**
+
+This GitHub page holds the app's source code. Clicking files here (like `index.html`) shows code, not the app. Use the link above to run it.
+
 **Status:** proof of concept. It tests install, local storage, saving to a folder, backup/restore and updates. The full planner is being ported next.
 
 ### Install
 
-- **Windows or Mac (Chrome or Edge):** open the app link, then click the install icon in the address bar (or the Install button in the app).
-- **Android (Chrome):** open the link, then menu > Install app (or Add to Home screen).
-- **iPhone or iPad:** open the link in Safari, tap Share, then Add to Home Screen.
+- **Windows or Mac (Chrome or Edge):** open https://5kinnee.github.io/DIPS/, then click the install icon in the address bar (or the Install button in the app).
+- **Android (Chrome):** open https://5kinnee.github.io/DIPS/, then menu > Install app (or Add to Home screen).
+- **iPhone or iPad:** open https://5kinnee.github.io/DIPS/ in Safari, tap Share, then Add to Home Screen.
 - **Firefox:** works as a normal website, but can't be installed.
 
 Use the installed app rather than a browser tab. The two keep separate data, and Safari can clear data from sites you haven't opened in 7 days.
