@@ -34,6 +34,8 @@ input[type=text],textarea{font:inherit;width:100%;padding:8px 10px;border:1px so
 #updateBar button{background:var(--surface);color:var(--ink);border:0}
 [hidden]{display:none!important}
 code{font-size:13px}
+.confirm{display:grid;gap:8px;background:var(--warn-bg);border-radius:10px;padding:12px}
+.confirm p{margin:0}
 .steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:15px}
 #installState{margin:0;font-weight:700}
 </style>
@@ -57,7 +59,13 @@ code{font-size:13px}
     <p class="hint" id="persistState">Checking storage…</p>
     <div id="folderBox">
       <p class="hint" id="folderState"></p>
-      <div class="row"><button type="button" id="folderBtn" class="primary">Choose a data folder</button><button type="button" id="folderForget" hidden>Disconnect folder</button></div>
+      <div class="confirm" id="folderConfirm" hidden>
+        <p id="folderConfirmText"></p>
+        <label class="hint" for="folderWhere">Where is it? Your browser only tells DIPS the folder's name, so jot down where you put it:</label>
+        <input type="text" id="folderWhere" maxlength="200" placeholder="e.g. OneDrive > Documents > DIPS">
+        <div class="row"><button type="button" id="folderYes" class="primary">Yes, save here</button><button type="button" id="folderNo">Pick again</button></div>
+      </div>
+      <div class="row"><button type="button" id="folderBtn" class="primary">Choose a folder to save to</button><button type="button" id="folderForget" hidden>Stop saving to this folder</button></div>
     </div>
     <p class="hint" id="noFolder" hidden>This browser can't save to a folder automatically. Use Backup below and keep the file somewhere safe.</p>
     <div class="row"><button type="button" id="backupBtn">Backup to a file</button><label class="btn">Restore from a file<input type="file" id="restoreIn" accept=".json,application/json" hidden></label></div>
@@ -163,23 +171,39 @@ async function folderPermission(h,ask){
   if(await h.queryPermission(opts)==="granted")return true;
   return ask?(await h.requestPermission(opts))==="granted":false;
 }
+/* Browsers only reveal a folder's name, never its full location (privacy), so the user's own note
+   about where it lives is kept and shown alongside the name. */
+const whereText=async()=>{const w=await getMeta("folderWhere");return w?` (${esc(w)})`:"";};
 async function initFolder(){
   if(!canFolder){$("#folderBox").hidden=true;$("#noFolder").hidden=false;return;}
+  $("#folderConfirm").hidden=true;
   const h=await getMeta("folder");
-  if(!h){$("#folderState").textContent="No data folder yet. Pick one (for example Documents\\DIPS, or a OneDrive folder) and DIPS keeps a copy of everything there automatically.";return;}
+  if(!h){folder=null;$("#folderState").textContent="Pick a folder on this computer, like Documents > DIPS or a OneDrive folder, and DIPS keeps a copy of everything there automatically. If your browser is ever cleared, pick the same folder again and your notes come back.";$("#folderBtn").textContent="Choose a folder to save to";$("#folderForget").hidden=true;return;}
   folder=h;
-  if(await folderPermission(h,false)){$("#folderState").innerHTML=`<span class="ok">Saving to folder:</span> ${esc(h.name)}`;$("#folderBtn").textContent="Change folder";$("#folderForget").hidden=false;}
-  else{$("#folderState").textContent=`Folder "${h.name}" needs your OK again.`;$("#folderBtn").textContent="Reconnect folder";$("#folderForget").hidden=false;}
+  if(await folderPermission(h,false)){$("#folderState").innerHTML=`<span class="ok">Saving a copy to the folder "${esc(h.name)}"</span>${await whereText()}.`;$("#folderBtn").textContent="Use a different folder";$("#folderForget").hidden=false;}
+  else{$("#folderState").innerHTML=`DIPS needs your OK again to keep saving to "${esc(h.name)}"${await whereText()}.`;$("#folderBtn").textContent="Allow saving again";$("#folderForget").hidden=false;}
 }
+/* A picked folder is only used after the user confirms its name: the Windows picker can hand back
+   a highlighted neighbor folder instead of the one they were in. */
+let pickedFolder=null;
 $("#folderBtn").addEventListener("click",async()=>{
   try{
-    if(folder&&$("#folderBtn").textContent==="Reconnect folder"){if(await folderPermission(folder,true)){await importFromFolder();await syncFolder();}await initFolder();return;}
-    const h=await window.showDirectoryPicker({id:"dips-data",mode:"readwrite"});
-    folder=h;await setMeta("folder",h);
-    await importFromFolder();await syncFolder();await initFolder();
-  }catch(err){if(err&&err.name!=="AbortError")$("#folderState").textContent="Couldn't use that folder: "+(err.message||err);}
+    if(folder&&$("#folderBtn").textContent==="Allow saving again"){if(await folderPermission(folder,true)){await importFromFolder();await syncFolder();}await initFolder();return;}
+    pickedFolder=await window.showDirectoryPicker({id:"dips-data",mode:"readwrite",startIn:"documents"});
+    $("#folderConfirmText").innerHTML=`You picked the folder named <b>"${esc(pickedFolder.name)}"</b>. Is that the right one?`;
+    $("#folderWhere").value=(await getMeta("folderWhere"))||"";
+    $("#folderConfirm").hidden=false;
+  }catch(err){if(err&&err.name!=="AbortError")$("#folderState").textContent="That folder can't be used. Try a folder inside Documents. ("+(err.message||err)+")";}
 });
-$("#folderForget").addEventListener("click",async()=>{await del("meta","folder");folder=null;$("#folderBtn").textContent="Choose a data folder";$("#folderForget").hidden=true;initFolder();});
+$("#folderYes").addEventListener("click",async()=>{
+  if(!pickedFolder)return;
+  folder=pickedFolder;pickedFolder=null;
+  await setMeta("folder",folder);await setMeta("folderWhere",$("#folderWhere").value.trim());
+  $("#folderConfirm").hidden=true;
+  await importFromFolder();await syncFolder();await initFolder();
+});
+$("#folderNo").addEventListener("click",()=>{pickedFolder=null;$("#folderConfirm").hidden=true;$("#folderBtn").click();});
+$("#folderForget").addEventListener("click",async()=>{await del("meta","folder");initFolder();});
 /* Write data.json plus photos/<id>.jpg. Photos already in the folder are not rewritten. */
 async function syncFolder(){
   if(!folder||!(await folderPermission(folder,false)))return;
@@ -195,7 +219,7 @@ async function syncFolder(){
       const p=await get("photos",e.photoId);if(!p)continue;
       const fw=await(await pd.getFileHandle(name,{create:true})).createWritable();await fw.write(p.blob);await fw.close();
     }
-    $("#folderState").innerHTML=`<span class="ok">Saving to folder:</span> ${esc(folder.name)} (last saved ${new Date().toLocaleTimeString()})`;
+    $("#folderState").innerHTML=`<span class="ok">Saving a copy to the folder "${esc(folder.name)}"</span>${await whereText()}. Last saved ${new Date().toLocaleTimeString()}.`;
   }catch(err){$("#folderState").textContent="Saving to the folder failed: "+(err.message||err);}
 }
 /* Bring back anything in the folder that this browser doesn't have (e.g. after clearing site data). */
