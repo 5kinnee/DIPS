@@ -307,7 +307,13 @@ img.thumb{border-radius:50%;object-fit:cover;background:var(--surface-2)}
 .efoot{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
 .closer{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (prefers-reduced-motion:no-preference){.dye,.btn,.jar{transition:border-color .15s,box-shadow .15s}}
-.h1sub{display:block;font-family:var(--body);font-stretch:100%;font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--muted);margin-top:4px}
+/* Defaults claude.ai's page frame supplied and this page relies on. Without [hidden], every hidden
+   tab, banner and dialog shows (found 2026-09-28: all tabs stacked, update banner stuck on). */
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100%;font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--muted);margin-top:4px}
 .nudge{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);border-radius:10px;padding:10px 14px;font-size:14px}
 .nudge span{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .nudgex{appearance:none;border:0;background:none;font:inherit;font-size:18px;font-weight:700;color:var(--muted);cursor:pointer;padding:0 4px}
@@ -744,7 +750,7 @@ img.thumb{border-radius:50%;object-fit:cover;background:var(--surface-2)}
   </div>
 </div>
 
-<script src="local.js?v=0.1.0"></script>
+<script src="local.js?v=0.1.1"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
@@ -1330,6 +1336,8 @@ function renderShelf(){
 function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
 function drawPattern(ctx,cols,W,c,r,pattern){
   const n=cols.length,TAU=Math.PI*2,rnd=seeded(11);
+  /* A canvas too small to draw on gives r <= 0; without this guard the ring loop never ends. */
+  if(!(r>1))return;
   const rings=(cx,cy,max)=>{let rad=r*.06,i=0;
     while(rad<max){const w=r*(.035+rnd()*.07),ph=rnd()*TAU;ctx.beginPath();
       for(let a=0;a<=TAU+.001;a+=.04){const rr=rad+Math.sin(a*3+ph)*w*.3+Math.sin(a*7+ph*2)*w*.12;const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;a===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
