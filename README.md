@@ -22,6 +22,8 @@ Use the installed app rather than a browser tab. The two keep separate data, and
 Static files only, served by GitHub Pages. No server, no accounts, no build step.
 
 - `index.html` is the app: the Planner, Cliff Notes, Test log, My techniques and the "Your data" tab, with its styles and code inline. It was first built as a claude.ai page and still calls storage through `window.claude.use("db" | "assets" | "user" | "downloads")`.
+- `combos.js` holds all the color, combo-picker and color-wheel math (moved out of `index.html` so it can be checked by script): classify a dye against a disc, build the ranked combo types, and the wheel/dial geometry. Loaded as a classic script before `local.js`, so its functions are globals that `index.html` calls directly; it also exports the same functions as CommonJS so `tests/` can run against it with Node, outside the browser.
+- `tests/` holds `node:test` checks for `combos.js`: the new color math against a frozen copy of 0.1.1's (so a refactor can't silently change a prediction), the combo picker's variety rules, the color wheel's dial, and that `sw.js`'s version stays in step with `index.html`'s script tags. Not part of the app; never referenced by `index.html` or listed in `sw.js`'s `FILES`.
 - `local.js` answers those calls from this device, so the planner code runs unchanged:
   - **db:** collections of documents (`tests`, `techniques`) held in memory and written through to IndexedDB (database `dips`, store `docs`), with live listeners.
   - **assets:** photos, shrunk to 1600 px JPEG and stored as Blobs (store `blobs`). The planner renders them as `<img data-blob="id">`; a MutationObserver fills in the image.
@@ -46,7 +48,7 @@ Static files only, served by GitHub Pages. No server, no accounts, no build step
 
 ## Invariants
 
-- **Release checklist:** bump `VERSION` in `sw.js` **and** the `?v=` on the `local.js` script tag in `index.html`, to the same value. The browser only installs a new service worker when `sw.js` changes, and the `?v=` stops a browser pairing a new page with an old cached `local.js` (GitHub Pages lets browsers cache files for 10 minutes).
+- **Release checklist:** bump `VERSION` in `sw.js` **and** the `?v=` on **every** script tag in `index.html` (`combos.js` and `local.js`), all to the same value; run `node --test "tests/*.test.js"` from the repo folder. The browser only installs a new service worker when `sw.js` changes, and the `?v=` stops a browser pairing a new page with an old cached script (GitHub Pages lets browsers cache files for 10 minutes).
 - **Add every new app file to the `FILES` list in `sw.js`,** or it won't work offline.
 - Updates never switch under the user: a waiting worker shows "A new version of DIPS is ready" and only activates when they tap Reload.
 - All user data must be reachable through the DIPS folder or the backup file. No feature may store data only in the browser. New `localStorage` keys that hold user data go in `LOCAL_KEYS` in `local.js`.

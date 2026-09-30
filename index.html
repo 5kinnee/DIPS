@@ -86,6 +86,28 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 @media (max-width:860px){.side{position:static}}
 .stage{display:grid;justify-items:center;gap:12px}
 #disc{width:100%;max-width:280px;aspect-ratio:1;display:block}
+/* ---------- color wheel, dial, pick-on-wheel ---------- */
+#wheelBox{width:100%;display:grid;gap:8px;justify-items:center}
+#wheelWrap,#pickWrap{position:relative;width:100%;max-width:280px;aspect-ratio:1}
+#pickWrap{max-width:240px;margin:8px auto 0}
+/* The wheel is a color map, so it keeps its own white center and hue ring in both themes. */
+.wring{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,255,255,0) 72%),conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);box-shadow:0 0 0 1px var(--line)}
+#pickRing{cursor:crosshair}
+#wheelWrap svg,#pickWrap svg{position:absolute;inset:0;width:100%;height:100%}
+#wheelSvg circle.dot{cursor:pointer}
+.wfold,#dialFold{width:100%;font-size:14px}
+.wfold .opts{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px}
+.wfold label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#dialFold select{font:inherit;font-size:14px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);width:100%;margin-top:6px}
+#dialList{margin-top:6px;font-size:13px}
+#dialList .ptr{margin:8px 0 3px;font-weight:700;color:var(--muted)}
+#dialList .chips{display:flex;flex-wrap:wrap;gap:4px}
+#dialList button.dchip{width:auto;flex:0 0 auto;appearance:none;font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 4px;background:var(--surface);color:var(--ink);cursor:pointer}
+#dialList button.dchip i{width:16px;height:16px;border-radius:50%;border:1px solid #0003;flex:none}
+#dialList button.dchip.mud{opacity:.7;text-decoration:line-through}
+#dialList button.dchip.mud i{opacity:.7}
+#dialList .note{color:var(--muted);margin:4px 0}
+@media (max-width:400px){#wheelWrap{max-width:260px}#pickWrap{max-width:220px}}
 .on{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px}
 .tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 10px 3px 4px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
 .tag i{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
@@ -358,6 +380,11 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         <input type="text" class="hexin" id="baseHex" aria-label="Disc color hex code" spellcheck="false">
         <span class="hint" id="baseName"></span>
       </div>
+      <details id="pickFold">
+        <summary>Pick on a wheel</summary>
+        <div id="pickWrap"><div class="wring" id="pickRing"></div><svg id="pickSvg" viewBox="0 0 340 340" aria-hidden="true"></svg></div>
+        <p class="hint" style="text-align:center">Tap the wheel to set the disc color. Toward the middle is paler.</p>
+      </details>
       <details>
         <summary>Match from a photo</summary>
         <div class="photo">
@@ -390,7 +417,29 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   <div class="layout">
     <aside class="side panel" aria-label="Preview">
       <div class="stage">
+        <div class="seg" id="viewSeg" role="group" aria-label="Preview">
+          <button type="button" data-view="disc" aria-pressed="true">Disc</button>
+          <button type="button" data-view="wheel" aria-pressed="false">Wheel</button>
+        </div>
         <canvas id="disc" width="280" height="280" aria-label="Preview of the dyed disc"></canvas>
+        <div id="wheelBox" hidden>
+          <div id="wheelWrap"><div class="wring"></div><svg id="wheelSvg" viewBox="0 0 340 340" role="img" aria-label="Color wheel of every dye, in the jar and on your disc"></svg></div>
+          <details id="dialFold">
+            <summary>Find colors that go with...</summary>
+            <select id="dialType" aria-label="Kind of match"></select>
+            <select id="dialFrom" aria-label="Starting color"></select>
+            <div id="dialList"></div>
+          </details>
+          <details class="wfold">
+            <summary>Show</summary>
+            <div class="opts">
+              <label><input type="checkbox" id="tJar" checked> In the jar</label>
+              <label><input type="checkbox" id="tDisc" checked> On your disc</label>
+              <label><input type="checkbox" id="tArrow" checked> Arrows</label>
+            </div>
+          </details>
+          <p class="hint" style="text-align:center">Tap a dot to add that dye. Grey band on the rim: colors that go muddy on this disc.</p>
+        </div>
         <div class="seg" id="patSeg" role="group" aria-label="Pattern"></div>
         <div class="on" id="onDisc"></div>
         <p class="hint roles" id="roles"></p>
@@ -750,7 +799,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </div>
 </div>
 
-<script src="local.js?v=0.1.1"></script>
+<script src="combos.js?v=0.2.0"></script>
+<script src="local.js?v=0.2.0"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
@@ -1104,143 +1154,27 @@ function saveOwned(){try{localStorage.setItem("discdye.owned",JSON.stringify([..
 
 const state={base:"#f2dc3c",baseName:"Yellow",depth:.8,blend:"multiply",tech:"floetrol",pattern:"cells",
   brand:"Innova",plastic:"Star / Shimmer",translucent:false,pool:"all",sel:[],owned:new Set(loadOwned()),
-  dyes:PROCHEM.split("\n").map(l=>{const[code,name,hex]=l.split("|");return{id:code,code,name,hex,rgb:hex2rgb(hex),fam:code[3]};}),
+  dyes:dyesFromText(PROCHEM),
   results:[],byId:{},combos:[]};
-
-/* ---------- color math ---------- */
-function hex2rgb(h){h=h.replace("#","");if(h.length===3)h=h.split("").map(c=>c+c).join("");const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255];}
-function rgb2hex(c){return"#"+c.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("");}
-const blendRgb=(a,b)=>state.blend==="darken"?a.map((v,i)=>Math.min(v,b[i])):a.map((v,i)=>v*b[i]/255);
-const soakRgb=(d,s)=>d.map(v=>255-(255-v)*s);
-function lab(rgb){
-  const [r,g,b]=rgb.map(c=>{c/=255;return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);});
-  const X=(.4124*r+.3576*g+.1805*b)/.95047,Y=.2126*r+.7152*g+.0722*b,Z=(.0193*r+.1192*g+.9505*b)/1.08883;
-  const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
-  const fx=f(X),fy=f(Y),fz=f(Z),A=500*(fx-fy),B=200*(fy-fz);
-  return{L:116*fy-16,a:A,b:B,C:Math.hypot(A,B)};
-}
-const dE=(p,q)=>Math.hypot(p.L-q.L,p.a-q.a,p.b-q.b);
-function hue(rgb){
-  const [r,g,b]=rgb.map(v=>v/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
-  if(!d)return 0;let h;
-  if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;
-  return(h*60+360)%360;
-}
-const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d;};
-function hueName(h){
-  if(h<12)return"red";if(h<40)return"orange";if(h<62)return"yellow";if(h<85)return"lime";
-  if(h<150)return"green";if(h<185)return"teal";if(h<200)return"turquoise";if(h<250)return"blue";
-  if(h<280)return"purple";if(h<320)return"magenta";if(h<345)return"pink";return"red";
-}
-function nameColor(rgb){
-  const {L,C}=lab(rgb),h=hue(rgb);
-  if(C<9)return L>88?"white":L>65?"light grey":L>35?"grey":L>18?"charcoal":"black";
-  if(L<16)return"near black";
-  if(C<20&&L<62)return(h<90||h>=330)?"muddy brown":(h>=180&&h<280)?"slate grey":"drab "+hueName(h);
-  if((h>=12&&h<50&&L<52)||((h<12||h>=345)&&L<32&&C<45))return L<28?"dark brown":"brown";
-  if(h>=50&&h<90&&L<48)return"olive";
-  let n=hueName(h);
-  if(n==="red"&&L>68)n="pink";
-  if(L<32)return"deep "+n;
-  if(L>84&&n!=="yellow")return"light "+n;
-  return n;
-}
-const isMud=rgb=>{const l=lab(rgb);return l.L<16||(l.C<20&&l.L<62)||/brown|olive/.test(nameColor(rgb));};
 
 /* ---------- analysis ---------- */
 const curPlastic=()=>PLASTICS.find(p=>p.brand===state.brand&&p.name===state.plastic)||PLASTICS[0];
-const strength=()=>state.depth*RATING[curPlastic().r].f*(state.translucent?.7:1);
 function baseLabel(){return state.baseName?state.baseName.toLowerCase():nameColor(hex2rgb(state.base));}
-function classify(dye){
-  const base=hex2rgb(state.base),eff=soakRgb(dye.rgb,strength()),res=blendRgb(base,eff);
-  const lb=lab(base),lr=lab(res),ld=lab(dye.rgb),d=dE(lb,lr);
-  const darkDye=ld.C<25&&ld.L<45,baseLight=lb.L>80&&lb.C<15;
-  const bn=baseLabel(),rn=nameColor(res),dn=dye.name;
-  let cat,why;
-  if(!darkDye&&lr.L<16){cat="mud";why="Goes nearly black. Disc and dye together block almost all light.";}
-  else if(!darkDye&&lb.C>22&&((ld.C>30&&lr.C<20&&lr.L<72)||(hueDist(hue(base),hue(dye.rgb))>110&&/brown|olive/.test(rn)))){
-    cat="mud";
-    why=hueDist(hue(base),hue(dye.rgb))>110?`${dn} sits across the color wheel from ${bn}, so they cancel out to ${rn}.`:`The mix lands on ${rn}, a dull shade.`;
-  }
-  else if(!darkDye&&/brown|olive/.test(rn)&&!/brown|olive/.test(nameColor(dye.rgb))){cat="mud";why=`Turns ${rn} on this disc, which reads as muddy.`;}
-  else if(d<14){
-    cat="subtle";
-    why=darkDye?"Barely darker than the disc. Not enough contrast to read."
-      :(lb.C>22&&hueDist(hue(base),hue(dye.rgb))<35)?"Same color family as the disc, so it only deepens it. Good for tone-on-tone."
-      :`Lands close to the disc color (${rn}), so it barely shows.`;
-  }
-  else{
-    cat="pop";
-    if(darkDye)why=`Strong dark contrast (${rn}). Great for outlines and rim rings.`;
-    else if(baseLight)why=`Shows true on a light disc: ${rn}.`;
-    else why=hueDist(hue(res),hue(eff))>25?`Turns ${rn} on this disc. What you pour is not what you get.`:`Stays clean: ${rn}.`;
-  }
-  return{dye,eff,res,cat,why,darkDye,score:cat==="mud"?-1:d+lr.C*.4};
-}
-const touchRgb=(a,b)=>blendRgb(a.res,b.eff);
-/* Combo types, each with up to 8 ranked options. The technique's own type comes first. */
-function buildCombos(pool){
-  const pops=pool.filter(r=>r.cat==="pop"&&!r.darkDye).sort((a,b)=>b.score-a.score);
-  const darks=pool.filter(r=>r.cat==="pop"&&r.darkDye).sort((a,b)=>lab(a.res).L-lab(b.res).L);
-  const H=r=>hue(r.res),L=r=>lab(r.res).L,hd=(a,b)=>hueDist(H(a),H(b));
-  const ok=(a,b)=>!isMud(touchRgb(a,b)),distinct=(a,b)=>dE(lab(a.res),lab(b.res))>=12;
-  const sum=s=>s.reduce((t,r)=>t+r.score,0);
-  const uniq=sets=>{const seen=new Set();return sets.filter(s=>{const k=s.map(r=>r.dye.id).sort().join("|");if(seen.has(k))return false;seen.add(k);return true;});};
-  const top=pops.slice(0,16),types=[];
-  const nb=[];
-  for(const a of top)for(const b of top){
-    if(b===a||!distinct(a,b)||hd(a,b)<20||hd(a,b)>70||!ok(a,b))continue;
-    const c=top.find(x=>x!==a&&x!==b&&distinct(x,a)&&distinct(x,b)&&hd(b,x)>=20&&hd(b,x)<=70&&hd(a,x)>=35&&ok(b,x));
-    nb.push(c?[a,b,c]:[a,b]);
-  }
-  const neighbors=uniq(nb).sort((x,y)=>y.length-x.length||sum(y)-sum(x));
-  const ct=[];
-  for(let i=0;i<top.length;i++)for(let j=i+1;j<top.length;j++)if(hd(top[i],top[j])>=100&&distinct(top[i],top[j]))ct.push([top[i],top[j]]);
-  ct.sort((x,y)=>(hd(y[0],y[1])+sum(y)*.3)-(hd(x[0],x[1])+sum(x)*.3));
-  const bd=[];
-  for(const lead of top.slice(0,8)){
-    const mate=top.find(x=>x!==lead&&distinct(x,lead)&&hd(lead,x)>=20&&hd(lead,x)<=60&&ok(lead,x));
-    darks.slice(0,3).forEach(d=>bd.push(mate?[lead,mate,d]:[lead,d]));
-  }
-  const tb=techOr(state.tech).base;
-  if(tb==="floetrol"){
-    const bgs=uniq(darks.concat(pops.filter(r=>L(r)<45)).map(r=>[r])).map(s=>s[0]),brights=pops.filter(r=>L(r)>=55).slice(0,10),cells=[];
-    for(const bg of bgs.slice(0,6))for(let i=0;i<brights.length;i++)for(let j=i+1;j<brights.length;j++){
-      const a=brights[i],b=brights[j];
-      if(a!==bg&&b!==bg&&distinct(a,b)&&L(a)-L(bg)>=20&&L(b)-L(bg)>=20)cells.push([bg,a,b]);
-    }
-    const clean=s=>(ok(s[0],s[1])?1:0)+(ok(s[0],s[2])?1:0);
-    cells.sort((x,y)=>clean(y)-clean(x)||sum(y)-sum(x));
-    types.push({key:"cells",title:"Background + cells",options:uniq(cells),blurb:()=>"Color 1 is a darker background. Colors 2 and 3 are brighter cell colors that stand out against it."});
-  }else if(tb==="spin"){
-    types.push({key:"rainbow",title:"Rainbow progression",options:neighbors.filter(s=>s.length===3&&hd(s[0],s[2])>=50),blurb:()=>"Three colors stepping around the color wheel, in ring order, so neighboring rings blend cleanly."});
-  }else if(tb==="hotdip"){
-    const sr=[];for(const lead of top.slice(0,8))darks.slice(0,2).forEach(d=>sr.push([lead,d]));
-    types.push({key:"solidrim",title:"Solid + rim",options:uniq(sr),blurb:o=>`Color 1 is the dip. Use ${o[1].dye.name} for a dark rim or a second, partial dip.`});
-  }else{
-    const ld=[];
-    for(const a of top){
-      const fam=pool.filter(r=>r!==a&&r.cat!=="mud"&&!r.darkDye&&lab(r.res).C>=20&&hueDist(H(r),H(a))<30);
-      const b=fam.find(r=>L(a)-L(r)>=12&&L(a)-L(r)<=30&&ok(a,r)),c=b&&fam.find(r=>r!==b&&L(b)-L(r)>=12&&ok(b,r));
-      if(b&&c)ld.push([a,b,c]);
-    }
-    types.push({key:"lightdark",title:"Light to dark",options:uniq(ld),blurb:()=>"One color family from light to dark. Swirls and marbling read as depth instead of mud."});
-  }
-  types.push({key:"neighbors",title:"Neighbors",options:neighbors,blurb:()=>"Close together on the color wheel, so where they bleed into each other they stay clean."});
-  types.push({key:"contrast",title:"High contrast",options:ct,blurb:o=>isMud(touchRgb(o[0],o[1]))?"Big contrast. Leave a gap between them, because where they touch they go muddy.":"Big contrast, and even where they touch it stays usable."});
-  types.push({key:"bolddark",title:"Bold + dark accent",options:uniq(bd),blurb:o=>`Use ${o[o.length-1].dye.name} for crisp lines, the rim, or the outer ring.`});
-  types.forEach(t=>t.options=t.options.slice(0,8));
-  return types.filter(t=>t.options.length);
+/* Everything classify()/buildCombos() need from the page's state, gathered once per render. */
+function currentSetup(){
+  return{base:hex2rgb(state.base),baseText:baseLabel(),blend:state.blend,
+    strength:strengthFor(state.depth,curPlastic().r,state.translucent),
+    techBase:techOr(state.tech).base,pattern:state.pattern};
 }
 
 /* ---------- rendering ---------- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function chipBox(hex,caption){return`<span class="chipbox"><span class="chip" style="background:${hex}"></span><small>${caption}</small></span>`;}
-function touchHtml(list){
-  const pairs=[];for(let i=0;i+1<list.length;i++)pairs.push([list[i],list[i+1]]);
+function touchHtml(list,pattern){
+  const pairs=comboTouchPairs(pattern,list.length);
   if(!pairs.length)return"";
-  return`<span class="label">Where they touch</span><div class="trow">${pairs.map(([a,b])=>{
-    const t=touchRgb(a,b),m=isMud(t);
+  return`<span class="label">Where they touch</span><div class="trow">${pairs.map(([i,j])=>{
+    const a=list[i],b=list[j],t=touchRgb(a,b,state.blend),m=isMud(t);
     return`<span class="tchip"><i style="background:${rgb2hex(t)}"></i><span>${esc(a.dye.name)} + ${esc(b.dye.name)}<br><em class="${m?"bad":"ok"}">${m?"muddy":"clean"}: ${nameColor(t)}</em></span></span>`;
   }).join("")}</div>`;
 }
@@ -1258,7 +1192,7 @@ function renderCards(){
       :`<p class="empty">${state.pool==="owned"&&!state.owned.size?"Your shelf is empty. Tap the jars you own in My dye shelf below.":"None for this disc."}</p>`;
   });
 }
-const comboIdx={};
+const comboIdx={},comboSig={};
 function comboOption(t){const i=Math.min(comboIdx[t.key]||0,t.options.length-1);return[i,t.options[i]];}
 function renderCombos(){
   const p=curPlastic(),n=poolResults().length,bn=baseLabel();
@@ -1268,10 +1202,10 @@ function renderCombos(){
   el.innerHTML=state.combos.map(t=>{
     const[i,o]=comboOption(t);
     return`<div class="combo">
-    <div class="chead"><h3>${t.title}</h3>${t.options.length>1?`<button type="button" class="btn small" data-next="${t.key}" aria-label="Next ${t.title} option">Next (${i+1} of ${t.options.length})</button>`:""}</div>
+    <div class="chead"><h3>${esc(t.title)}</h3>${t.options.length>1?`<button type="button" class="btn small" data-next="${t.key}" aria-label="Next ${esc(t.title)} option">Next (${i+1} of ${t.options.length})</button>`:""}</div>
     <div class="strip${o.length===2?" two":""}">${o.map((r,k)=>chipBox(rgb2hex(r.res),`${k+1}. ${esc(r.dye.name)}<br>${esc(r.dye.code)}`)).join("")}</div>
     <p>${esc(t.blurb(o))}</p>
-    <div class="touch">${touchHtml(o)}</div>
+    <div class="touch">${touchHtml(o,t.touch)}</div>
     <button type="button" class="btn" data-combo="${t.key}">Show on disc</button></div>`;
   }).join("");
 }
@@ -1290,7 +1224,7 @@ function renderBanner(){
 function renderOnDisc(){
   const sel=state.sel.map(id=>state.byId[id]).filter(Boolean);
   $("#onDisc").innerHTML=sel.length?sel.map((r,i)=>`<span class="tag" data-idx="${i}" title="Drag to change the color order"><span class="grip" aria-hidden="true">⠿</span><span class="num">${i+1}</span><i style="background:${rgb2hex(r.res)}"></i>${esc(r.dye.name)}${i?`<button type="button" class="tb" data-left="${i}" aria-label="Move ${esc(r.dye.name)} to color ${i}">←</button>`:""}<button type="button" class="tb" data-remove="${i}" aria-label="Remove ${esc(r.dye.name)}">×</button></span>`).join(""):`<span class="hint">No dye yet</span>`;
-  const t=$("#touchNow");t.innerHTML=touchHtml(sel);t.hidden=sel.length<2;
+  const t=$("#touchNow");t.innerHTML=touchHtml(sel,state.pattern);t.hidden=sel.length<2;
   renderRoles();
 }
 const ROLES={
@@ -1414,12 +1348,129 @@ function drawDiscOn(cv,fallbackW,base,cols,pattern,blend){
   ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.lineWidth=1;ctx.strokeStyle="rgba(0,0,0,.3)";ctx.stroke();
 }
 
+/* ---------- color wheel, dial, pick on a wheel ---------- */
+const WHEEL_C=170,WHEEL_R=158;
+const wheelArcP=(t,rr)=>`${WHEEL_C+rr*Math.sin(t)},${WHEEL_C-rr*Math.cos(t)}`;
+let previewView="disc",dialFromChosen=false; /* not saved: the wheel always opens on Disc */
+
+$("#viewSeg").addEventListener("click",e=>{
+  const b=e.target.closest("[data-view]");if(!b)return;
+  previewView=b.dataset.view;
+  document.querySelectorAll("#viewSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  $("#disc").hidden=previewView!=="disc";$("#wheelBox").hidden=previewView!=="wheel";
+  drawStage();
+});
+["tJar","tDisc","tArrow","dialType"].forEach(id=>$("#"+id).addEventListener("change",drawWheel));
+$("#dialFold").addEventListener("toggle",drawWheel);
+
+$("#pickRing").addEventListener("click",e=>{
+  const b=e.currentTarget.getBoundingClientRect();
+  const dx=(e.clientX-b.left)/b.width*340-WHEEL_C,dy=(e.clientY-b.top)/b.height*340-WHEEL_C;
+  setBase(rgb2hex(wheelPointToRgb(dx,dy,WHEEL_R)),null);
+});
+function drawPick(){
+  const[x,y]=wheelPos(hex2rgb(state.base),WHEEL_C,WHEEL_R);
+  $("#pickSvg").innerHTML=`<circle cx="${x}" cy="${y}" r="12" fill="${state.base}" stroke="#000" stroke-width="3"/>`;
+}
+
+/* Starts from color 1 when there is one, until the user picks a starting color themselves.
+   The flag is set before the redraw, which rebuilds the list and would otherwise drop the pick. */
+$("#dialFrom").addEventListener("change",()=>{dialFromChosen=true;drawWheel();});
+function fillFrom(){
+  const el=$("#dialFrom"),keep=dialFromChosen?el.value:"";
+  const sel=state.sel.map(id=>state.byId[id]).filter(Boolean);
+  el.innerHTML=`<option value="disc">Starting from: your disc</option>`+sel.map((r,i)=>`<option value="${esc(r.dye.id)}">Starting from: color ${i+1}, ${esc(r.dye.name)}</option>`).join("")
+    +`<optgroup label="Any dye">${state.results.slice().sort((a,b)=>a.dye.name.localeCompare(b.dye.name)).map(r=>`<option value="${esc(r.dye.id)}">Starting from: ${esc(r.dye.name)}</option>`).join("")}</optgroup>`;
+  if(keep&&[...el.options].some(o=>o.value===keep))el.value=keep;
+  else el.value=sel.length?sel[0].dye.id:"disc";
+}
+function dialStart(){
+  const from=$("#dialFrom").value;
+  if(from!=="disc"&&state.byId[from])return{rgb:state.byId[from].res,name:state.byId[from].dye.name};
+  return{rgb:hex2rgb(state.base),name:"your disc"};
+}
+/* Dial kinds: key, name shown on the list, and the term people may know from school. */
+const DIAL_KINDS=[["opp","Opposite","complementary"],["next","Next-door","analogous"],["split","Split opposite","split-complementary"],["tri","Triangle","triad"],["sq","Square","tetrad"]];
+const DIAL_NAMES=Object.fromEntries(DIAL_KINDS.map(([k,n])=>[k,n]));
+$("#dialType").innerHTML=DIAL_KINDS.map(([k,n,t])=>`<option value="${k}"${k==="next"?" selected":""}>${n} (${t})</option>`).join("");
+function dialSvgAndHits(){
+  if(!$("#dialFold").open)return{svg:"",hits:null};
+  const type=$("#dialType").value,start=dialStart(),list=$("#dialList");
+  const m=dialMatch(state.results,start.rgb,type);
+  if(m.neutral){
+    list.innerHTML=`<p class="note">${start.name==="your disc"?"Your disc is white, grey or black":esc(start.name)+" is a dark or grey color"}, so it has no place on the dial. Start from a colored dye instead.</p>`;
+    return{svg:"",hits:null};
+  }
+  const hits=new Set();let svg="",html="";
+  m.pointers.forEach(({offset,angle,dyes})=>{
+    const a=angle*Math.PI/180,a0=(angle-15)*Math.PI/180,a1=(angle+15)*Math.PI/180;
+    svg+=`<path d="M${WHEEL_C},${WHEEL_C} L${wheelArcP(a0,WHEEL_R)} A${WHEEL_R},${WHEEL_R} 0 0 1 ${wheelArcP(a1,WHEEL_R)} Z" fill="rgba(0,0,0,.10)" pointer-events="none"/>`;
+    const[ex,ey]=wheelArcP(a,WHEEL_R+10).split(",");
+    svg+=`<line x1="${WHEEL_C}" y1="${WHEEL_C}" x2="${ex}" y2="${ey}" stroke="#111" stroke-width="${offset?3:4}" stroke-dasharray="${offset?"":"7 4"}" pointer-events="none"/>`;
+    dyes.forEach(r=>hits.add(r.dye.id));
+    html+=`<div class="ptr">${offset?DIAL_NAMES[type]:"Same family as "+esc(start.name)}</div><div class="chips">${dyes.length
+      ?dyes.map(r=>`<button type="button" class="dchip${r.cat==="mud"?" mud":""}" data-add="${esc(r.dye.id)}" aria-pressed="${state.sel.includes(r.dye.id)}" title="${r.cat==="mud"?"Goes muddy on this disc":"Tap to add"}"><i style="background:${rgb2hex(r.res)}"></i>${esc(r.dye.name)}${r.cat==="mud"?" (goes muddy)":""}</button>`).join("")
+      :`<span class="note">No dye ends up this color on this disc. Dye only darkens the disc, so jars from this part of the wheel turn into another color or go muddy.</span>`}</div>`;
+  });
+  list.innerHTML=`<p class="note">Colors as they land on your disc. Tap one to add it.${type==="opp"||type==="split"?" Opposite colors turn brown where they touch: keep them apart, or separate them with black.":""}</p>`+html;
+  return{svg,hits};
+}
+$("#dialList").addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(b)toggleDye(b.dataset.add);});
+
+function drawWheel(){
+  if(previewView!=="wheel"||!state.results.length)return;
+  fillFrom();
+  const jar=$("#tJar").checked,dsc=$("#tDisc").checked,arrow=$("#tArrow").checked;
+  const svgEl=$("#wheelSvg"),fontSize=Math.max(15,12*340/(svgEl.clientWidth||280));
+  let svg=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" fill="#333"/></marker></defs>`;
+  mudRimHues(state.setup).forEach(h=>{
+    const a0=(h-2.5)*Math.PI/180,a1=(h+2.5)*Math.PI/180;
+    svg+=`<path d="M${wheelArcP(a0,WHEEL_R+2)} L${wheelArcP(a0,WHEEL_R+11)} L${wheelArcP(a1,WHEEL_R+11)} L${wheelArcP(a1,WHEEL_R+2)} Z" fill="#6b6f75"/>`;
+  });
+  const{svg:dialSvg,hits}=dialSvgAndHits(),num=new Map(state.sel.map((id,k)=>[id,k+1]));
+  svg+=dialSvg;
+  let dots="";
+  state.results.forEach(r=>{
+    const[jx,jy]=wheelPos(r.eff,WHEEL_C,WHEEL_R),[dx,dy]=wheelPos(r.res,WHEEL_C,WHEEL_R),n=num.get(r.dye.id),dim=hits&&!hits.has(r.dye.id)&&!n?.18:1;
+    if(arrow&&jar&&dsc&&Math.hypot(dx-jx,dy-jy)>6)svg+=`<line x1="${jx}" y1="${jy}" x2="${dx}" y2="${dy}" stroke="#333" stroke-width="1" opacity="${.5*dim}" marker-end="url(#ah)" pointer-events="none"/>`;
+    const t=`<title>${esc(r.dye.name)}${r.cat==="mud"?" (goes muddy)":""}. Tap to ${n?"remove":"add"}.</title>`;
+    if(jar)dots+=`<circle class="dot" data-id="${esc(r.dye.id)}" data-layer="jar" cx="${jx}" cy="${jy}" r="${n?7:5}" fill="#fff" stroke="${rgb2hex(r.eff)}" stroke-width="3" opacity="${dim}">${t}</circle>`;
+    if(dsc)dots+=`<circle class="dot" data-id="${esc(r.dye.id)}" data-layer="disc" cx="${dx}" cy="${dy}" r="${n?10:hits&&hits.has(r.dye.id)?7.5:5.5}" fill="${rgb2hex(r.res)}" stroke="${n||(hits&&hits.has(r.dye.id))?"#000":"#fff"}" stroke-width="${n?2.5:hits&&hits.has(r.dye.id)?2:1}" opacity="${dim}">${t}</circle>`;
+    if(n)dots+=`<text x="${dsc?dx:jx}" y="${(dsc?dy:jy)+4}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke" pointer-events="none">${n}</text>`;
+  });
+  const[bx,by]=wheelPos(hex2rgb(state.base),WHEEL_C,WHEEL_R);
+  svg+=dots+`<circle cx="${bx}" cy="${by}" r="13" fill="${state.base}" stroke="#000" stroke-width="3" pointer-events="none"><title>Your disc</title></circle>`;
+  svgEl.innerHTML=svg;
+}
+$("#wheelSvg").addEventListener("click",e=>{
+  const svg=e.currentTarget,ctm=svg.getScreenCTM();if(!ctm)return;
+  const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const loc=pt.matrixTransform(ctm.inverse()),maxDist=22/ctm.a;
+  const nearest=layer=>{let best=null,bd=Infinity;
+    svg.querySelectorAll(`circle.dot[data-layer="${layer}"]`).forEach(c=>{
+      const d=Math.hypot(+c.getAttribute("cx")-loc.x,+c.getAttribute("cy")-loc.y);
+      if(d<bd){bd=d;best=c;}
+    });
+    return bd<=maxDist?best:null;};
+  const hit=nearest("disc")||nearest("jar");
+  if(hit)toggleDye(hit.dataset.id);
+});
+
 function render(){
-  state.results=state.dyes.map(classify);
+  state.setup=currentSetup();
+  state.results=state.dyes.map(d=>classify(d,state.setup));
   state.byId={};state.results.forEach(r=>state.byId[r.dye.id]=r);
   state.sel=state.sel.filter(id=>state.byId[id]);
-  state.combos=buildCombos(poolResults());
-  renderBanner();renderPlastic();renderCombos();renderCards();renderOnDisc();renderShelf();drawDisc();
+  state.combos=buildCombos(poolResults(),state.setup);
+  /* A combo type's options can reshuffle on any input change; reset "Next" back to option 1 only for
+     the types whose actual option set changed, so an unrelated type doesn't lose the user's place. */
+  state.combos.forEach(t=>{
+    const sig=t.options.map(o=>o.map(r=>r.dye.id).join(",")).join("|");
+    if(comboSig[t.key]!==sig){comboSig[t.key]=sig;comboIdx[t.key]=0;}
+  });
+  renderBanner();renderPlastic();renderCombos();renderCards();renderOnDisc();renderShelf();
+  previewView==="disc"?drawDisc():drawWheel();
+  drawPick();
   $("#depthVal").textContent=Math.round(state.depth*100)+"%";
   saveSetup();
 }
@@ -1464,8 +1515,6 @@ function applySetup(s){
 }
 
 /* ---------- mix two jars ---------- */
-/* Estimate: weighted geometric mean of each channel, the usual stand-in for subtractive (pigment) mixing. */
-function mixRgb(a,pa,b,pb){return a.map((v,i)=>{const x=Math.max(v/255,.02),y=Math.max(b[i]/255,.02);return 255*Math.exp((pa*Math.log(x)+pb*Math.log(y))/(pa+pb));});}
 function fillMixers(){
   ["#mixA","#mixB"].forEach((sel,k)=>{const el=$(sel),cur=el.value||(k?"DGD408":"DGD401");
     el.innerHTML=state.dyes.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}${d.fam==="c"?"":" ("+d.code+")"}</option>`).join("");
@@ -1593,12 +1642,13 @@ $("#cdAdd").addEventListener("click",()=>{
   const hex=$("#cdColor").value,name=$("#cdName").value.trim()||"Custom "+hex;
   $("#cdName").value="";addToDisc(addCustomDye(name,hex,"Custom"));render();
 });
-window.addEventListener("resize",drawDisc);
+function drawStage(){previewView==="disc"?drawDisc():drawWheel();}
+window.addEventListener("resize",drawStage);
 
 function showTab(t){
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
   ["planner","notes","log","data"].forEach(k=>$("#tab-"+k).hidden=k!==t);
-  if(t==="planner")drawDisc();else if(t==="notes")drawThumbs();else if(t==="log")renderLog();else if(window.dipsData)window.dipsData.render();
+  if(t==="planner")drawStage();else if(t==="notes")drawThumbs();else if(t==="log")renderLog();else if(window.dipsData)window.dipsData.render();
 }
 
 /* ---------- test log (shared: db + assets + user capabilities) ---------- */
@@ -1621,11 +1671,6 @@ async function initLog(){
   db.collection("tests").orderBy("createdAt","desc").limit(300).onSnapshot(
     s=>{logDocs=s.docs;logReady=true;renderLog();},
     ()=>setLogStatus("The log stopped updating. Reload the page to reconnect."));
-}
-/* Predictions are always computed from the entry's own fields, so an edited entry stays consistent. */
-function predictHexes(baseHex,s,dyeHexes,mode){
-  const base=hex2rgb(baseHex);
-  return dyeHexes.map(h=>{const eff=soakRgb(hex2rgb(h),s);return rgb2hex(mode==="darken"?base.map((v,i)=>Math.min(v,eff[i])):base.map((v,i)=>v*eff[i]/255));});
 }
 const strengthFor=(depth,r,transl)=>depth*(RATING[r]||RATING["-"]).f*(transl?.7:1);
 const dyeRecord=d=>({id:d.id,code:d.code,name:d.name,hex:d.hex,recipe:d.recipe||null});
