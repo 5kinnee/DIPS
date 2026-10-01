@@ -50,10 +50,14 @@ async function openApp(device) {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   /* First visit: the offline worker installs, takes over and the page reloads itself once
-     (DIPS-023). Open the app again once it is in control, as a returning user would. */
+     (DIPS-023). Open the app again once it is in control, as a returning user would; that
+     self-reload can interrupt this navigation, so try again (it happens only once). */
   await page.goto(base);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
-  await page.goto(base);
+  for (let attempt = 1; ; attempt++) {
+    try { await page.goto(base); break; }
+    catch (e) { if (attempt === 3 || !/interrupted by another navigation/.test(e.message)) throw e; }
+  }
   await page.waitForFunction(() => /^#[0-9a-f]{6}$/.test(document.querySelector("#baseHex").value));
   return { context, page, errors };
 }
