@@ -1,4 +1,6 @@
 tmp/
+# Test tooling (playwright-core), installed by `npm install`; never part of the app.
+node_modules/
 # Obsidian vault junction (private project docs). Never commit: this repo is public.
 /specs
 /specs/
