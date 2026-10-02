@@ -14,25 +14,19 @@
 <style>
 :root{
   --bg:#e8eaed; --surface:#f6f7f8; --surface-2:#eef0f2; --ink:#15181c; --muted:#58606a; --line:#d2d6db;
-  --focus:#1d5c8f; --warn-bg:#fbe9d0; --warn:#7a4a0c;
+  --tap:#1d5c8f; --tap-ink:#ffffff; --tap-bg:#e3edf6; --guide:#7b3fa8; --warn-bg:#fbe9d0; --warn:#7a4a0c;
   --pop:#1d7a40; --pop-bg:#dcefe2; --subtle:#80630f; --subtle-bg:#f3ead0; --mud:#7a4526; --mud-bg:#f1e1d6;
   --display:"Archivo","Arial Black",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
+  :root{
     color-scheme:dark;
     --bg:#141619; --surface:#1d2024; --surface-2:#25292e; --ink:#eceef0; --muted:#a0a7b0; --line:#343940;
-    --focus:#7fb4e0; --warn-bg:#3a2c16; --warn:#e7b566;
+    --tap:#7fb4e0; --tap-ink:#10202d; --tap-bg:#1f3242; --guide:#c39be6; --warn-bg:#3a2c16; --warn:#e7b566;
     --pop:#6cce8f; --pop-bg:#1c3326; --subtle:#dcb752; --subtle-bg:#3a3118; --mud:#d69a74; --mud-bg:#3a2a20;
   }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#141619; --surface:#1d2024; --surface-2:#25292e; --ink:#eceef0; --muted:#a0a7b0; --line:#343940;
-  --focus:#7fb4e0; --warn-bg:#3a2c16; --warn:#e7b566;
-  --pop:#6cce8f; --pop-bg:#1c3326; --subtle:#dcb752; --subtle-bg:#3a3118; --mud:#d69a74; --mud-bg:#3a2a20;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding:0 16px}
@@ -42,17 +36,17 @@ h1{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:clamp(
 .lede{margin:0;color:var(--muted);max-width:66ch}
 h2{font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;margin:0}
 h3{font-size:15px;margin:0}
-a{color:var(--focus)}
+a{color:var(--tap)}
 .label{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;align-content:start}
 .setup{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:14px}
 @media (max-width:980px){.setup{grid-template-columns:1fr}}
 .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.sw{appearance:none;border:0;padding:0;background:none;cursor:pointer;display:grid;gap:4px;justify-items:center;font:inherit;font-size:12px;color:var(--muted)}
+.sw{appearance:none;border:0;padding:0;background:none;cursor:pointer;display:grid;gap:4px;justify-items:center;font:inherit;font-size:12px;color:var(--tap)}
 .sw i{display:block;width:100%;aspect-ratio:1;max-width:40px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),inset 0 -4px 6px rgba(0,0,0,.12)}
-.sw[aria-pressed="true"] i{outline:3px solid var(--ink);outline-offset:2px}
-.sw[aria-pressed="true"]{color:var(--ink);font-weight:700}
+.sw[aria-pressed="true"] i{outline:3px solid var(--tap);outline-offset:2px}
+.sw[aria-pressed="true"]{font-weight:700}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:2px;cursor:pointer}
 input[type=text],select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);max-width:100%}
@@ -60,16 +54,20 @@ input[type=text].hexin{font-family:var(--mono);width:100px}
 select{min-width:0}
 .selects{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .selects label{display:grid;gap:4px}
-button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
-.btn:hover{border-color:var(--muted)}
-details summary{cursor:pointer;font-weight:700;font-size:14px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--tap);outline-offset:2px}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:6px;border:1px solid var(--tap);background:var(--surface);color:var(--tap);cursor:pointer}
+.btn:hover{background:var(--tap-bg)}
+#photoIn::file-selector-button{appearance:none;font:inherit;font-weight:700;font-size:14px;padding:7px 12px;margin-right:10px;border-radius:6px;border:1px solid var(--tap);background:var(--surface);color:var(--tap);cursor:pointer}
+#photoIn::file-selector-button:hover{background:var(--tap-bg)}
+details summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--tap)}
+details summary::marker{color:var(--tap)}
 .photo{display:grid;gap:8px;margin-top:10px}
 .photo canvas{width:100%;border-radius:6px;cursor:crosshair;display:block}
-.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:fit-content;max-width:100%}
-.seg button{appearance:none;border:0;border-right:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:6px 11px;cursor:pointer}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--tap);border-radius:7px;overflow:hidden;width:fit-content;max-width:100%}
+.seg button{appearance:none;border:0;border-right:1px solid var(--tap);background:var(--surface);color:var(--tap);font:inherit;font-size:13px;font-weight:700;padding:6px 11px;cursor:pointer}
+.seg button:hover{background:var(--tap-bg)}
 .seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button[aria-pressed="true"]{background:var(--tap);color:var(--tap-ink)}
 .rating{display:flex;gap:10px;align-items:flex-start}
 .pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
 .pill.pop,.pill.E{color:var(--pop);background:var(--pop-bg)}
@@ -77,17 +75,18 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .pill.M,.pill.P,.pill.mud{color:var(--mud);background:var(--mud-bg)}
 .pill.none{color:var(--muted);background:var(--surface-2)}
 .check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
-.check input{width:18px;height:18px;accent-color:var(--ink)}
+.check input{width:18px;height:18px}
+input[type=checkbox],input[type=range]{accent-color:var(--tap)}
 .recipe{background:var(--surface-2);border-radius:8px;padding:10px 12px;display:grid;gap:4px;font-size:14px}
 .recipe p{margin:0}
 .layout{display:grid;grid-template-columns:minmax(300px,370px) 1fr;gap:22px;align-items:start}
 @media (max-width:860px){.layout{grid-template-columns:1fr}}
-.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
-@media (max-width:860px){.side{position:static}}
 .stage{display:grid;justify-items:center;gap:12px}
 #disc{width:100%;max-width:280px;aspect-ratio:1;display:block}
 /* ---------- color wheel, dial, pick-on-wheel ---------- */
 #wheelBox{width:100%;display:grid;gap:8px;justify-items:center}
+#wheelEmpty{display:grid;gap:8px;justify-items:center;text-align:center;background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:14px;width:100%}
+#wheelEmpty p{margin:0}
 #wheelWrap,#pickWrap{position:relative;width:100%;max-width:280px;aspect-ratio:1}
 #pickWrap{max-width:240px;margin:8px auto 0}
 /* The wheel is a color map, so it keeps its own white center and hue ring in both themes. */
@@ -103,19 +102,19 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 #dialList{margin-top:6px;font-size:13px}
 #dialList .ptr{margin:8px 0 3px;font-weight:700;color:var(--muted)}
 #dialList .chips{display:flex;flex-wrap:wrap;gap:4px}
-#dialList button.dchip{width:auto;flex:0 0 auto;appearance:none;font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 4px;background:var(--surface);color:var(--ink);cursor:pointer}
+#dialList button.dchip{width:auto;flex:0 0 auto;appearance:none;font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--tap);border-radius:999px;padding:3px 9px 3px 4px;background:var(--surface);color:var(--tap);cursor:pointer}
 #dialList button.dchip i{width:16px;height:16px;border-radius:50%;border:1px solid #0003;flex:none}
-#dialList button.dchip.mud{opacity:.7;text-decoration:line-through}
+#dialList button.dchip.mud{text-decoration:line-through}
 #dialList button.dchip.mud i{opacity:.7}
 #dialList .note{color:var(--muted);margin:4px 0}
 @media (max-width:400px){#wheelWrap{max-width:260px}#pickWrap{max-width:220px}}
 .on{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 10px 3px 4px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 4px 3px 3px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
 .tag i{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
 .num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:700;flex:none}
-.tag{padding-left:3px}
-.tag .tb{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:0 3px;line-height:1}
-.tag .tb:hover{color:var(--ink)}
+.tag .tb,.jarx{appearance:none;border:0;background:var(--tap-bg);color:var(--tap);font:inherit;font-size:17px;font-weight:700;cursor:pointer;position:relative;display:inline-grid;place-items:center;min-width:30px;height:30px;padding:0 6px;border-radius:15px;line-height:1}
+.tag .tb::after,.jarx::after{content:"";position:absolute;inset:-7px -3px}
+.tag .tb:hover,.jarx:hover{box-shadow:inset 0 0 0 1px var(--tap)}
 #onDisc .tag{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 #onDisc .tag .grip{color:var(--muted);font-size:13px;margin-left:2px}
 #onDisc .tag.dragging{opacity:.45;cursor:grabbing}
@@ -123,10 +122,9 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 #onDisc .tag.dropafter{box-shadow:3px 3px 0 var(--ink)}
 .dragghost{position:fixed;z-index:50;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.25);transform:rotate(-2deg)}
 .roles{text-align:center;background:var(--surface-2);border-radius:6px;padding:6px 10px;width:100%}
-.dye{position:relative}
 .dye .num{position:absolute;top:6px;left:6px;box-shadow:0 0 0 2px var(--surface)}
 .slider{display:grid;gap:4px;width:100%}
-.slider input{width:100%;accent-color:var(--ink)}
+.slider input{width:100%}
 .ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
 .touch{display:grid;gap:6px;width:100%;border-top:1px dashed var(--line);padding-top:10px}
 .trow{display:flex;gap:8px;flex-wrap:wrap}
@@ -141,10 +139,19 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .group{display:grid;gap:10px}
 .ghead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .gnote{font-size:13px;color:var(--muted)}
+.shelffold{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.shelffold.unmarked{background:var(--warn-bg);border-color:var(--warn)}
+.shelffold>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px}
+.shelffold>summary::-webkit-details-marker{display:none}
+.shelffold>summary:hover{background:var(--tap-bg)}
+.shelffold>summary:focus-visible,.tcard>summary:focus-visible,.nfold>summary:focus-visible{outline-offset:-3px}
+.shelffold>summary .gnote{margin-left:auto;color:var(--tap);font-weight:700}
+.shelffold[open]>summary{border-bottom:1px solid var(--line)}
+.shelfbody{display:grid;gap:12px;padding:14px 16px 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.dye{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px;display:grid;gap:7px;cursor:pointer;align-content:start}
-.dye:hover{border-color:var(--muted)}
-.dye[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dye{position:relative;appearance:none;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px;display:grid;gap:7px;cursor:pointer;align-content:start}
+.dye:hover{border-color:var(--tap)}
+.dye[aria-pressed="true"]{border-color:var(--tap);box-shadow:0 0 0 1px var(--tap)}
 .pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
 .chipbox{display:grid;gap:3px;justify-items:center;min-width:0}
 .chip{width:100%;height:34px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
@@ -164,9 +171,11 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .shelf{display:grid;gap:12px}
 .fam{display:grid;gap:6px}
 .jars{display:flex;flex-wrap:wrap;gap:6px}
-.jar{appearance:none;font:inherit;font-size:13px;display:inline-flex;gap:7px;align-items:center;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.cfam .jars{row-gap:14px}
+.jar{appearance:none;font:inherit;font-size:13px;display:inline-flex;gap:7px;align-items:center;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid var(--tap);background:var(--surface);color:var(--tap);cursor:pointer}
+.jar:hover{background:var(--tap-bg)}
 .jar i{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
-.jar[aria-pressed="true"]{color:var(--ink);font-weight:700;border-color:var(--ink);background:var(--surface-2)}
+.jar[aria-pressed="true"]{color:var(--tap-ink);font-weight:700;border-color:var(--tap);background:var(--tap)}
 .jar[aria-pressed="true"]::after{content:"✓";font-size:12px}
 .custom{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .custom input[type=text]{width:160px}
@@ -174,8 +183,8 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .info .panel p,.info .panel li{font-size:14px;color:var(--muted);margin:0}
 .info ul{margin:0;padding-left:18px;display:grid;gap:6px}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
-.tabs button{appearance:none;border:0;background:none;font:inherit;font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;color:var(--muted);padding:8px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
-.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs button{appearance:none;border:0;background:none;font:inherit;font-family:var(--display);font-stretch:125%;font-weight:700;font-size:15px;color:var(--tap);padding:8px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--tap)}
 .tabpanel{display:grid;gap:22px}
 .notes{max-width:980px;gap:30px}
 .nhero{display:grid;gap:8px;max-width:72ch}
@@ -185,7 +194,7 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .dotkey span{display:inline-flex;align-items:center;gap:6px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px;flex:none}
 .dot.pc{background:var(--pop)}
-.dot.sc{background:var(--focus)}
+.dot.sc{background:var(--guide)}
 .dot.ai{background:transparent;box-shadow:inset 0 0 0 2px var(--warn)}
 .dotkey .dot{margin-right:0}
 .nsec{display:grid;gap:14px}
@@ -200,19 +209,19 @@ details summary{cursor:pointer;font-weight:700;font-size:14px}
 .rule.safety p{color:var(--ink)}
 .jumprow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .jump{display:flex;flex-wrap:wrap;gap:6px}
-.jump button{appearance:none;font:inherit;font-size:14px;font-weight:700;padding:9px 15px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.jump button:hover{border-color:var(--muted)}
+.jump button{appearance:none;font:inherit;font-size:14px;font-weight:700;padding:9px 15px;border-radius:99px;border:1px solid var(--tap);background:var(--surface);color:var(--tap);cursor:pointer}
+.jump button:hover{background:var(--tap-bg)}
 .tcard,.nfold{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .tcard summary,.nfold summary{list-style:none;cursor:pointer}
 .tcard summary::-webkit-details-marker,.nfold summary::-webkit-details-marker{display:none}
 .tcard summary{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:14px 16px}
-.tcard summary:hover,.nfold summary:hover{background:var(--surface-2)}
+.tcard summary:hover,.nfold summary:hover{background:var(--tap-bg)}
 .thumb{width:84px;height:84px;display:block}
 .tsum{display:grid;gap:2px;min-width:0;font-weight:400}
 .tname{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:18px;line-height:1.15}
 .looks{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.02em}
 .tlede{font-size:14.5px;color:var(--muted);margin-top:2px}
-.chev{width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 6px 6px 0}
+.chev{width:12px;height:12px;border-right:2px solid var(--tap);border-bottom:2px solid var(--tap);transform:rotate(45deg);margin:0 6px 6px 0}
 details[open]>summary .chev{transform:rotate(-135deg);margin:6px 6px 0 0}
 .tbody{padding:4px 18px 18px calc(84px + 32px);display:grid;gap:14px}
 @media (max-width:640px){.tcard summary{grid-template-columns:auto 1fr auto;gap:12px}.thumb{width:60px;height:60px}.tbody{padding:4px 16px 16px}.tlede{display:none}}
@@ -229,9 +238,9 @@ details[open]>summary .chev{transform:rotate(-135deg);margin:6px 6px 0 0}
 .mistakes p{margin:2px 0 0;font-size:14.5px;color:var(--muted)}
 .gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 22px;margin:0}
 .gloss dt{font-weight:700;font-size:15px}
-.gloss dd{margin:2px 0 0;color:var(--muted);font-size:14.5px}.jarwrap{display:inline-flex;align-items:center;gap:2px}
-.jarx{appearance:none;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:6px}
-.jarx:hover{color:var(--mud);background:var(--surface-2)}
+.gloss dd{margin:2px 0 0;color:var(--muted);font-size:14.5px}.jarwrap{display:inline-flex;align-items:center;gap:6px}
+.jarx.armed{color:var(--mud);background:var(--mud-bg);border:1px solid var(--mud);font-size:13px}
+.jarx.armed:hover{box-shadow:none}
 .fgrid .half{grid-column:span 2}
 @media (max-width:520px){.fgrid .half{grid-column:auto}}
 .mytechpick{display:grid;gap:4px}
@@ -285,9 +294,10 @@ img.thumb{border-radius:50%;object-fit:cover;background:var(--surface-2)}
 .basedon{margin:0;font-size:13.5px;color:var(--ink);background:var(--surface-2);border-radius:6px;padding:7px 10px;width:fit-content;max-width:100%}
 .mixmsg{margin:0;font-size:14px;color:var(--pop);font-weight:700}
 .recipe-line{display:block;font-size:12px;color:var(--muted);font-weight:400}
-.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.primary{background:var(--tap);color:var(--tap-ink);border-color:var(--tap)}
 .btn.primary:hover{opacity:.9}
-.btn.danger{color:var(--mud)}
+.btn.danger{color:var(--mud);border-color:var(--mud)}
+.btn.danger:hover{background:var(--mud-bg)}
 .logbox{display:grid;gap:6px;border-top:1px dashed var(--line);padding-top:14px}
 .stamp{text-align:center;border-top:1px dashed var(--line);padding-top:10px;width:100%}
 .mixer{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
@@ -309,7 +319,7 @@ img.thumb{border-radius:50%;object-fit:cover;background:var(--surface-2)}
 .tally .t span{font-size:13px;color:var(--muted)}
 .loglist{display:grid;gap:14px}
 .entry{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px}
-.entry.fresh{box-shadow:0 0 0 2px var(--focus)}
+.entry.fresh{box-shadow:0 0 0 2px var(--pop)}
 .ehead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:baseline}
 .ehead h3{font-family:var(--display);font-stretch:125%;font-size:17px}
 .emeta{font-size:13px;color:var(--muted)}
@@ -339,7 +349,8 @@ body{margin:0}
 img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100%;font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--muted);margin-top:4px}
 .nudge{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);border-radius:10px;padding:10px 14px;font-size:14px}
 .nudge span{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.nudgex{appearance:none;border:0;background:none;font:inherit;font-size:18px;font-weight:700;color:var(--muted);cursor:pointer;padding:0 4px}
+.nudgex{appearance:none;border:0;background:none;font:inherit;font-size:18px;font-weight:700;color:var(--tap);cursor:pointer;padding:0 4px}
+.nudgex:hover{background:var(--tap-bg)}
 .datapanel{max-width:760px}
 .dsec{gap:10px}
 .dsec p{margin:0}
@@ -350,8 +361,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
 .steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:15px}
 .confirm{display:grid;gap:8px;background:var(--warn-bg);border-radius:10px;padding:12px}
 .confirm input[type=text]{width:100%}
-.dsec input[type=text]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--ink);color:var(--surface);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60}
-#updateBar button{appearance:none;font:inherit;font-weight:700;background:var(--surface);color:var(--ink);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.dsec input[type=text]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60}
+#updateBar button{appearance:none;font:inherit;font-weight:700;background:var(--tap);color:var(--tap-ink);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -416,7 +427,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </section>
 
   <div class="layout">
-    <aside class="side panel" aria-label="Preview">
+    <aside class="panel" aria-label="Preview">
       <div class="stage">
         <div class="seg" id="viewSeg" role="group" aria-label="Preview">
           <button type="button" data-view="disc" aria-pressed="true">Disc</button>
@@ -424,7 +435,16 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         </div>
         <canvas id="disc" width="280" height="280" aria-label="Preview of the dyed disc"></canvas>
         <div id="wheelBox" hidden>
-          <div id="wheelWrap"><div class="wring"></div><svg id="wheelSvg" viewBox="0 0 340 340" role="img" aria-label="Color wheel of every dye, in the jar and on your disc"></svg></div>
+          <div class="seg" id="wheelShow" role="group" aria-label="Which dyes the wheel shows">
+            <button type="button" data-show="mine" aria-pressed="true">My dyes</button>
+            <button type="button" data-show="all" aria-pressed="false">All colors</button>
+            <button type="button" data-show="picked" aria-pressed="false">Picked colors</button>
+          </div>
+          <div id="wheelEmpty" hidden>
+            <div id="wheelEmptyMine"><p>You haven't marked any dyes as yours yet. Open My dye shelf and tap the jars you own.</p><button type="button" class="btn small" id="wheelShowAll">Show all colors</button></div>
+            <div id="wheelEmptyPicked"><p>Pick a color to see it here: tap a dye card, or switch to All colors and tap a dot.</p></div>
+          </div>
+          <div id="wheelWrap"><div class="wring"></div><svg id="wheelSvg" viewBox="0 0 340 340" role="img" aria-label="Color wheel of the dyes shown, in the jar and on your disc"></svg></div>
           <details id="dialFold">
             <summary>Find colors that go with...</summary>
             <select id="dialType" aria-label="Kind of match"></select>
@@ -432,14 +452,14 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
             <div id="dialList"></div>
           </details>
           <details class="wfold">
-            <summary>Show</summary>
+            <summary>Dots and arrows</summary>
             <div class="opts">
               <label><input type="checkbox" id="tJar" checked> In the jar</label>
               <label><input type="checkbox" id="tDisc" checked> On your disc</label>
               <label><input type="checkbox" id="tArrow" checked> Arrows</label>
             </div>
           </details>
-          <p class="hint" style="text-align:center">Tap a dot to add that dye. Grey band on the rim: colors that go muddy on this disc.</p>
+          <p class="hint" style="text-align:center" id="wheelHint"><span id="wheelHintLead">The wheel shows your dyes</span>, as the jar color and as it lands on your disc. Tap a dot to add that dye. Tapping between dots does nothing: only these colors exist as dyes. Grey band on the rim: colors that go muddy on this disc.</p>
         </div>
         <div class="seg" id="patSeg" role="group" aria-label="Pattern"></div>
         <div class="on" id="onDisc"></div>
@@ -470,6 +490,35 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
     <main class="main">
       <div class="banner" id="banner"></div>
 
+      <details class="shelffold" id="shelfFold">
+        <summary><h2 id="shelfTitle"></h2><span class="gnote" id="shelfNote"></span><span class="chev" aria-hidden="true"></span></summary>
+        <div class="shelfbody">
+          <p class="hint">Tap the jars you own, then choose "Only my dyes" below. Your shelf and custom dyes are saved on this device, and in your DIPS folder and backup files.</p>
+          <div class="shelf" id="shelf"></div>
+          <div class="mixer">
+            <span class="label">Mix two jars</span>
+            <div class="mixrow">
+              <input type="number" id="mixAp" min="1" max="10" value="2" aria-label="Parts of first dye">
+              <select id="mixA" aria-label="First dye"></select>
+              <span class="plus">+</span>
+              <input type="number" id="mixBp" min="1" max="10" value="1" aria-label="Parts of second dye">
+              <select id="mixB" aria-label="Second dye"></select>
+              <span class="plus">=</span>
+              <i class="mixout" id="mixOut"></i>
+              <button type="button" class="btn" id="mixAdd">Add mix as a dye</button>
+            </div>
+            <p class="mixmsg" id="mixMsg" role="status"></p>
+            <p class="hint">Parts are by volume of powder, e.g. 2 scoops + 1 scoop. The mixed color is estimated from the swatches, so mix a small test batch first. Community recipes: <a href="https://dyersguild.co/colorvault/" target="_blank" rel="noopener">Dyers Guild Color Vault</a>.</p>
+          </div>
+          <div class="custom">
+            <input type="color" id="cdColor" value="#c2185b" aria-label="Custom dye color">
+            <input type="text" id="cdName" placeholder="Name, e.g. Berry mix" aria-label="Custom dye name">
+            <button type="button" class="btn" id="cdAdd">Add custom dye</button>
+          </div>
+          <p class="hint">For another brand, match the color of the dye on a white test disc.</p>
+        </div>
+      </details>
+
       <div class="row">
         <span class="label">Suggest from</span>
         <div class="seg" id="poolSeg" role="group" aria-label="Which dyes to suggest">
@@ -497,32 +546,6 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         <div class="grid" id="g-mud"></div>
       </section>
 
-      <section class="group">
-        <div class="ghead"><h2>My dye shelf</h2><span class="gnote" id="ownedCount"></span></div>
-        <p class="hint">Tap the jars you own, then choose "Only my dyes" above. Your shelf and custom dyes are saved on this device, and in your DIPS folder and backup files.</p>
-        <div class="shelf" id="shelf"></div>
-        <div class="mixer">
-          <span class="label">Mix two jars</span>
-          <div class="mixrow">
-            <input type="number" id="mixAp" min="1" max="10" value="2" aria-label="Parts of first dye">
-            <select id="mixA" aria-label="First dye"></select>
-            <span class="plus">+</span>
-            <input type="number" id="mixBp" min="1" max="10" value="1" aria-label="Parts of second dye">
-            <select id="mixB" aria-label="Second dye"></select>
-            <span class="plus">=</span>
-            <i class="mixout" id="mixOut"></i>
-            <button type="button" class="btn" id="mixAdd">Add mix as a dye</button>
-          </div>
-          <p class="mixmsg" id="mixMsg" role="status"></p>
-          <p class="hint">Parts are by volume of powder, e.g. 2 scoops + 1 scoop. The mixed color is estimated from the swatches, so mix a small test batch first. Community recipes: <a href="https://dyersguild.co/colorvault/" target="_blank" rel="noopener">Dyers Guild Color Vault</a>.</p>
-        </div>
-        <div class="custom">
-          <input type="color" id="cdColor" value="#c2185b" aria-label="Custom dye color">
-          <input type="text" id="cdName" placeholder="Name, e.g. Berry mix" aria-label="Custom dye name">
-          <button type="button" class="btn" id="cdAdd">Add custom dye</button>
-        </div>
-        <p class="hint">For another brand, match the color of the dye on a white test disc.</p>
-      </section>
     </main>
   </div>
 
@@ -800,8 +823,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </div>
 </div>
 
-<script src="combos.js?v=0.2.1"></script>
-<script src="local.js?v=0.2.1"></script>
+<script src="combos.js?v=0.3.0"></script>
+<script src="local.js?v=0.3.0"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
@@ -1190,7 +1213,7 @@ function renderCards(){
         <span class="dname"><strong>${esc(r.dye.name)}</strong><span class="code">${esc(r.dye.code)}</span></span>
         ${k>=0?`<span class="picked">Color ${k+1} on the disc ✓</span>`:""}
         <p class="why">${esc(r.why)}</p></button>`;}).join("")
-      :`<p class="empty">${state.pool==="owned"&&!state.owned.size?"Your shelf is empty. Tap the jars you own in My dye shelf below.":"None for this disc."}</p>`;
+      :`<p class="empty">${state.pool==="owned"&&!state.owned.size?"Your shelf is empty. Open My dye shelf above and tap the jars you own.":"None for this disc."}</p>`;
   });
 }
 const comboIdx={},comboSig={};
@@ -1259,13 +1282,20 @@ function renderTech(){
   $("#patSeg").innerHTML=T.patterns.map(p=>`<button type="button" data-pat="${p}" aria-pressed="${p===state.pattern}">${PATS[p]}</button>`).join("");
   $("#recipe").innerHTML=`<span class="label">${T.custom?`Mix (${esc(T.label)}, your technique)`:`Mix (${esc(T.src)})`}</span><p class="pre">${esc(T.recipe)}</p>${T.note?`<p class="hint">${esc(T.note)}</p>`:""}`;
 }
+function renderShelfHead(){
+  const n=state.owned.size,open=$("#shelfFold").open;
+  $("#shelfTitle").textContent=`My dye shelf (${n})`;
+  $("#shelfFold").classList.toggle("unmarked",n===0);
+  $("#shelfNote").textContent=open?"Tap a jar to mark it as yours":n===0?"Mark the dyes you own":"Open to add or remove dyes";
+}
 function renderShelf(){
   const groups={};state.dyes.forEach(d=>(groups[d.fam]=groups[d.fam]||[]).push(d));
-  $("#shelf").innerHTML=Object.keys(FAMS).filter(f=>groups[f]).map(f=>`<div class="fam"><span class="label">${FAMS[f]}</span><div class="jars">${groups[f].map(d=>
-    `<span class="jarwrap"><button type="button" class="jar" data-jar="${esc(d.id)}" aria-pressed="${state.owned.has(d.id)}"${d.recipe?` title="${esc(recipeText(d.recipe))}"`:""}><i style="background:${d.hex}"></i>${esc(d.name)}</button>${d.fam==="c"?`<button type="button" class="jarx" data-rmjar="${esc(d.id)}" aria-label="Remove ${esc(d.name)}">${rmArm===d.id?"Remove?":"×"}</button>`:""}</span>`).join("")}</div></div>`).join("");
-  $("#ownedCount").textContent=`${state.owned.size} of ${state.dyes.length} on your shelf`;
+  $("#shelf").innerHTML=Object.keys(FAMS).filter(f=>groups[f]).map(f=>`<div class="fam${f==="c"?" cfam":""}"><span class="label">${FAMS[f]}</span><div class="jars">${groups[f].map(d=>
+    `<span class="jarwrap"><button type="button" class="jar" data-jar="${esc(d.id)}" aria-pressed="${state.owned.has(d.id)}"${d.recipe?` title="${esc(recipeText(d.recipe))}"`:""}><i style="background:${d.hex}"></i>${esc(d.name)}</button>${d.fam==="c"?`<button type="button" class="jarx${rmArm===d.id?" armed":""}" data-rmjar="${esc(d.id)}" aria-label="Remove ${esc(d.name)}">${rmArm===d.id?"Remove?":"×"}</button>`:""}</span>`).join("")}</div></div>`).join("");
+  renderShelfHead();
   $("#poolOwned").textContent=`Only my dyes (${state.owned.size})`;
 }
+$("#shelfFold").addEventListener("toggle",renderShelfHead);
 
 /* ---------- disc drawing ---------- */
 function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
@@ -1353,6 +1383,21 @@ function drawDiscOn(cv,fallbackW,base,cols,pattern,blend){
 const WHEEL_C=170,WHEEL_R=158;
 const wheelArcP=(t,rr)=>`${WHEEL_C+rr*Math.sin(t)},${WHEEL_C-rr*Math.cos(t)}`;
 let previewView="disc",dialFromChosen=false; /* not saved: the wheel always opens on Disc */
+let wheelShow="mine"; /* not saved: the wheel always opens on My dyes */
+const WHEEL_LEAD={mine:"The wheel shows your dyes",all:"The wheel shows every dye",picked:"The wheel shows the colors you picked"};
+const NO_MATCH={mine:"None of your dyes end up this color on this disc.",picked:"None of your picked colors end up this color on this disc.",all:"No dye ends up this color on this disc. Dye only darkens the disc, so jars from this part of the wheel turn into another color or go muddy."};
+function wheelResults(){
+  if(wheelShow==="mine")return state.results.filter(r=>state.owned.has(r.dye.id));
+  if(wheelShow==="picked")return state.sel.map(id=>state.byId[id]).filter(Boolean);
+  return state.results;
+}
+function setWheelShow(v){
+  wheelShow=v;
+  document.querySelectorAll("#wheelShow button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.show===v)));
+  drawWheel();
+}
+$("#wheelShow").addEventListener("click",e=>{const b=e.target.closest("[data-show]");if(b)setWheelShow(b.dataset.show);});
+$("#wheelShowAll").addEventListener("click",()=>setWheelShow("all"));
 
 $("#viewSeg").addEventListener("click",e=>{
   const b=e.target.closest("[data-view]");if(!b)return;
@@ -1394,10 +1439,14 @@ function dialStart(){
 const DIAL_KINDS=[["opp","Opposite","complementary"],["next","Next-door","analogous"],["split","Split opposite","split-complementary"],["tri","Triangle","triad"],["sq","Square","tetrad"]];
 const DIAL_NAMES=Object.fromEntries(DIAL_KINDS.map(([k,n])=>[k,n]));
 $("#dialType").innerHTML=DIAL_KINDS.map(([k,n,t])=>`<option value="${k}"${k==="next"?" selected":""}>${n} (${t})</option>`).join("");
-function dialSvgAndHits(){
+function dialSvgAndHits(shown){
   if(!$("#dialFold").open)return{svg:"",hits:null};
   const type=$("#dialType").value,start=dialStart(),list=$("#dialList");
-  const m=dialMatch(state.results,start.rgb,type);
+  if(!shown.length){
+    list.innerHTML=`<p class="note">No colors to match yet. See the message above the wheel.</p>`;
+    return{svg:"",hits:null};
+  }
+  const m=dialMatch(shown,start.rgb,type);
   if(m.neutral){
     list.innerHTML=`<p class="note">${start.name==="your disc"?"Your disc is white, grey or black":esc(start.name)+" is a dark or grey color"}, so it has no place on the dial. Start from a colored dye instead.</p>`;
     return{svg:"",hits:null};
@@ -1410,10 +1459,10 @@ function dialSvgAndHits(){
     svg+=`<line x1="${WHEEL_C}" y1="${WHEEL_C}" x2="${ex}" y2="${ey}" stroke="#111" stroke-width="${offset?3:4}" stroke-dasharray="${offset?"":"7 4"}" pointer-events="none"/>`;
     dyes.forEach(r=>hits.add(r.dye.id));
     html+=`<div class="ptr">${offset?DIAL_NAMES[type]:"Same family as "+esc(start.name)}</div><div class="chips">${dyes.length
-      ?dyes.map(r=>`<button type="button" class="dchip${r.cat==="mud"?" mud":""}" data-add="${esc(r.dye.id)}" aria-pressed="${state.sel.includes(r.dye.id)}" title="${r.cat==="mud"?"Goes muddy on this disc":"Tap to add"}"><i style="background:${rgb2hex(r.res)}"></i>${esc(r.dye.name)}${r.cat==="mud"?" (goes muddy)":""}</button>`).join("")
-      :`<span class="note">No dye ends up this color on this disc. Dye only darkens the disc, so jars from this part of the wheel turn into another color or go muddy.</span>`}</div>`;
+      ?dyes.map(r=>`<button type="button" class="dchip${r.cat==="mud"?" mud":""}" data-add="${esc(r.dye.id)}" aria-pressed="${state.sel.includes(r.dye.id)}" title="${r.cat==="mud"?"Goes muddy on this disc. ":""}${state.sel.includes(r.dye.id)?"Tap to remove":"Tap to add"}"><i style="background:${rgb2hex(r.res)}"></i>${esc(r.dye.name)}${r.cat==="mud"?" (goes muddy)":""}</button>`).join("")
+      :`<span class="note">${NO_MATCH[wheelShow]}</span>`}</div>`;
   });
-  list.innerHTML=`<p class="note">Colors as they land on your disc. Tap one to add it.${type==="opp"||type==="split"?" Opposite colors turn brown where they touch: keep them apart, or separate them with black.":""}</p>`+html;
+  list.innerHTML=`<p class="note">Colors as they land on your disc. ${wheelShow==="picked"?"Tap one to remove it.":"Tap one to add it, or tap a picked one to remove it."}${type==="opp"||type==="split"?" Opposite colors turn brown where they touch: keep them apart, or separate them with black.":""}</p>`+html;
   return{svg,hits};
 }
 $("#dialList").addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(b)toggleDye(b.dataset.add);});
@@ -1421,6 +1470,11 @@ $("#dialList").addEventListener("click",e=>{const b=e.target.closest("[data-add]
 function drawWheel(){
   if(previewView!=="wheel"||!state.results.length)return;
   fillFrom();
+  const shown=wheelResults();
+  $("#wheelEmpty").hidden=shown.length>0;
+  $("#wheelEmptyMine").hidden=wheelShow!=="mine";
+  $("#wheelEmptyPicked").hidden=wheelShow!=="picked";
+  $("#wheelHintLead").textContent=WHEEL_LEAD[wheelShow];
   const jar=$("#tJar").checked,dsc=$("#tDisc").checked,arrow=$("#tArrow").checked;
   const svgEl=$("#wheelSvg"),fontSize=Math.max(15,12*340/(svgEl.clientWidth||280));
   let svg=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" fill="#333"/></marker></defs>`;
@@ -1428,10 +1482,10 @@ function drawWheel(){
     const a0=(h-2.5)*Math.PI/180,a1=(h+2.5)*Math.PI/180;
     svg+=`<path d="M${wheelArcP(a0,WHEEL_R+2)} L${wheelArcP(a0,WHEEL_R+11)} L${wheelArcP(a1,WHEEL_R+11)} L${wheelArcP(a1,WHEEL_R+2)} Z" fill="#6b6f75"/>`;
   });
-  const{svg:dialSvg,hits}=dialSvgAndHits(),num=new Map(state.sel.map((id,k)=>[id,k+1]));
+  const{svg:dialSvg,hits}=dialSvgAndHits(shown),num=new Map(state.sel.map((id,k)=>[id,k+1]));
   svg+=dialSvg;
   let dots="";
-  state.results.forEach(r=>{
+  shown.forEach(r=>{
     const[jx,jy]=wheelPos(r.eff,WHEEL_C,WHEEL_R),[dx,dy]=wheelPos(r.res,WHEEL_C,WHEEL_R),n=num.get(r.dye.id),dim=hits&&!hits.has(r.dye.id)&&!n?.18:1;
     if(arrow&&jar&&dsc&&Math.hypot(dx-jx,dy-jy)>6)svg+=`<line x1="${jx}" y1="${jy}" x2="${dx}" y2="${dy}" stroke="#333" stroke-width="1" opacity="${.5*dim}" marker-end="url(#ah)" pointer-events="none"/>`;
     const t=`<title>${esc(r.dye.name)}${r.cat==="mud"?" (goes muddy)":""}. Tap to ${n?"remove":"add"}.</title>`;

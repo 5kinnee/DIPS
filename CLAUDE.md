@@ -22,7 +22,7 @@ Installable web app (PWA) for planning and logging disc golf disc dye jobs; stat
 | `icons/` | App icons (192, 512, maskable, Apple touch) | Changing app icons |
 | `specs/` | Local link to private project docs (North Star, Doctrine, plans, reference copy of the claude.ai version). Not in git | Starting a session; checking rules before changing behavior. Never commit |
 | `tmp/` | Throwaway scripts (icon generator, one-off port script). Not in git | Regenerating icons, one-off checks |
-| `tests/` | `node:test` checks. `combos.test.js`: the color math against a frozen copy of 0.1.1's, combo variety rules, the wheel/dial, and that `sw.js`'s version stays in step with index.html's script tags. `screen.test.js`: opens the app in installed Edge (computer and phone sizes) and taps real controls. Never referenced by index.html; never in sw.js's FILES | Changing combos.js or anything on screen, verifying a release before bumping VERSION |
+| `tests/` | `node:test` checks. `combos.test.js`: the color math against a frozen copy of 0.1.1's, combo variety rules, the wheel/dial, and that `sw.js`'s version stays in step with index.html's script tags. `screen.test.js`: opens the app in installed Edge (computer, laptop-height, phone and 360px phone sizes) and taps real controls: the Pick on a wheel tap, the dye shelf fold and its count, chip button tap areas and no drag from a button, the wheel filter (default, empty states, hint per filter), the purple source dot, the tap-color tokens in light and dark, and that the Planner's left column scrolls with the page so "Log this dye job" stays reachable. Never referenced by index.html; never in sw.js's FILES | Changing combos.js or anything on screen, verifying a release before bumping VERSION |
 
 ## Build
 
