@@ -46,7 +46,7 @@ Static files only, served by GitHub Pages. No server, no accounts, no build step
 - **Browsers never reveal a folder's full path,** so the user can jot down where the folder lives and DIPS shows that note.
 - **Folder saving is computer-only** (Chromium desktop). Phones get backup and restore, plus a reminder when the last backup is over 14 days old.
 - **Restore and folder import only add;** they never delete or overwrite. Photos deleted in the app are left in the folder as a safety copy. Imported files are checked item by item: a log entry or technique with a damaged field is repaired (that field is reset) and kept; anything else unusable is skipped and counted; one bad item never stops the rest. A custom dye in the file that shares its id with a different dye on this device (older versions numbered custom dyes from 1 on every device) is kept under a new id.
-- **A folder data file DIPS can't read is never overwritten:** DIPS stops and says so, so a damaged copy is never replaced by this device's data. A file DIPS can read is merged in when the folder is chosen and then kept up to date from this device; anything in it this version doesn't know is not kept.
+- **A folder data file DIPS can't read is never overwritten:** DIPS stops and says so, so a damaged copy is never replaced by this device's data. A file DIPS can read is merged in when the folder is chosen and then kept up to date from this device; anything in it this version doesn't know is not kept. Every format DIPS has written is readable: the proof of concept's older data file holds nothing the planner uses, and any notes in it are kept beside it as `data-format1.json` before the first save.
 
 ## Invariants
 

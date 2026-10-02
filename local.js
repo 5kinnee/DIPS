@@ -417,12 +417,30 @@
       folderUI(); nudge();
     }
   }
-  /* null when the folder has no data file yet; throws folder_unreadable when it has one DIPS can't use. */
+  /* null when the folder has no data file yet; throws folder_unreadable when it has one DIPS can't use.
+     Every format DIPS has written is readable. Format 1 ({entries: [...]}) holds nothing the planner uses:
+     it reads as an empty DIPS file, and any notes in it are first kept as data-format1.json beside it so the
+     next save never loses them. If that copy can't be made, nothing is written. */
   async function readFolderData(dir) {
     let fh;
     try { fh = await dir.getFileHandle("data.json"); }
     catch (e) { if (e && e.name === "NotFoundError") return null; throw { code: "folder_unreadable" }; }
-    try { const d = JSON.parse(await (await fh.getFile()).text()); if (isObj(d) && d.app === "DIPS" && Array.isArray(d.docs)) return d; } catch (_) {}
+    let text, d;
+    try { text = await (await fh.getFile()).text(); d = JSON.parse(text); } catch (_) { throw { code: "folder_unreadable" }; }
+    if (!isObj(d) || d.app !== "DIPS") throw { code: "folder_unreadable" };
+    if (Array.isArray(d.docs)) return d;
+    if (d.format === 1 && Array.isArray(d.entries)) {
+      if (d.entries.length) {
+        let kept = true;
+        try { await dir.getFileHandle("data-format1.json"); }
+        catch (e) { if (!e || e.name !== "NotFoundError") throw { code: "folder_unreadable" }; kept = false; }
+        if (!kept) {
+          try { const w = await (await dir.getFileHandle("data-format1.json", { create: true })).createWritable(); await w.write(text); await w.close(); }
+          catch (_) { throw { code: "folder_unreadable" }; }
+        }
+      }
+      return { ...d, docs: [] };
+    }
     throw { code: "folder_unreadable" };
   }
   async function importFolder(dir) {
@@ -439,15 +457,19 @@
      A folder that already is (or already holds) a DIPS folder is reused. */
   async function resolveTarget(h) {
     let data = false; try { await h.getFileHandle("data.json"); data = true; } catch (_) {}
-    if (data || /^dips$/i.test(h.name)) return { dir: h, create: false, label: `"${h.name}"`, where: h.name };
-    try { const sub = await h.getDirectoryHandle("DIPS"); return { dir: sub, create: false, label: `"DIPS" inside "${h.name}"`, where: `${h.name} > DIPS` }; } catch (_) {}
-    return { parent: h, create: true, label: `a new "DIPS" folder inside "${h.name}"`, where: `${h.name} > DIPS` };
+    if (data || /^dips$/i.test(h.name)) return { dir: h, create: false, label: `"${h.name}"` };
+    try { const sub = await h.getDirectoryHandle("DIPS"); return { dir: sub, create: false, label: `"DIPS" inside "${h.name}"` }; } catch (_) {}
+    return { parent: h, create: true, label: `a new "DIPS" folder inside "${h.name}"` };
   }
   async function folderUI() {
     if (!$("#folderSec")) return;
     if (!canFolder) { $("#folderSec").hidden = true; return; }
     $("#folderConfirm").hidden = !picked;
-    const where = await meta.get("folderWhere"), w = where ? ` (${esc(where)})` : "";
+    const where = await meta.get("folderWhere");
+    /* The folder line always shows: its name and where the person noted it is, or that none is chosen. */
+    $("#folderName").textContent = folder ? `"${folder.name}"${where ? " - " + where : " - where it is isn't noted yet"}` : "None chosen yet";
+    $("#folderLocRow").hidden = !folder;
+    if (folder && document.activeElement !== $("#folderLoc")) $("#folderLoc").value = where || "";
     const note = folderNote ? `<span class="errmsg">${esc(folderNote)}</span>` : "";
     const pick = pickNote ? ` <span class="errmsg">${esc(pickNote)}</span>` : "";
     if (!folder) {
@@ -456,11 +478,11 @@
     }
     $("#folderForget").hidden = false;
     if (syncErr === "permission" || !(await perm(folder, false))) {
-      $("#folderState").innerHTML = `DIPS needs your OK to keep saving to "${esc(folder.name)}"${w}.`;
+      $("#folderState").innerHTML = "DIPS needs your OK to keep saving to this folder.";
       $("#folderBtn").textContent = "Allow saving again"; return;
     }
     $("#folderBtn").textContent = "Use a different place";
-    $("#folderState").innerHTML = (note || `<span class="okmsg">Keeping a copy in "${esc(folder.name)}"</span>${w}.` +
+    $("#folderState").innerHTML = (note || `<span class="okmsg">Keeping a copy here automatically.</span>` +
       (syncErr ? ` <span class="errmsg">The last save didn't work: ${esc(syncErr)}</span>` : lastSync ? ` Last saved ${lastSync.toLocaleTimeString()}.` : "")) + pick;
   }
   async function initFolder() {
@@ -481,7 +503,7 @@
         const h = await window.showDirectoryPicker({ id: "dips-data", mode: "readwrite", startIn: "documents" });
         picked = await resolveTarget(h);
         $("#folderConfirmText").innerHTML = `DIPS will keep its copy in ${esc(picked.label)}. Is that right?`;
-        $("#folderWhere").value = picked.where;
+        $("#folderWhere").value = "";
         folderUI();
       } catch (e) {
         if (e && e.code === "folder_unreadable") folderUnreadable(e);
@@ -492,22 +514,34 @@
     $("#folderYes").addEventListener("click", async () => {
       if (!picked) return;
       pickNote = "";
+      let dir = null;
       try {
-        const dir = picked.create ? await picked.parent.getDirectoryHandle("DIPS", { create: true }) : picked.dir;
+        dir = picked.create ? await picked.parent.getDirectoryHandle("DIPS", { create: true }) : picked.dir;
         picked = null;
         const r = await importFolder(dir);
+        /* Re-picking the same folder with the note left empty keeps the note already saved. */
+        const same = !!(folder && (await folder.isSameEntry(dir).catch(() => false))), note = $("#folderWhere").value.trim().slice(0, 200);
         folder = dir; folderChecked = true; syncErr = ""; folderNote = "";
-        await meta.set("folder", dir); await meta.set("folderWhere", $("#folderWhere").value.trim());
+        await meta.set("folder", dir); if (note || !same) await meta.set("folderWhere", note);
         await syncFolder();
         folderBack(r);
       } catch (e) {
         picked = null;
-        if (e && e.code === "folder_unreadable") { pickNote = plain(e); folderUI(); return; }
+        /* The folder already in use: one message about it. A different place: its own, labeled message. */
+        if (e && e.code === "folder_unreadable") {
+          const same = !!(folder && dir && (await folder.isSameEntry(dir).catch(() => false)));
+          if (same) { syncErr = plain(e); folderNote = syncErr; } else pickNote = "The place you just picked: " + plain(e);
+          folderUI(); nudge(); return;
+        }
         $("#folderState").textContent = "DIPS couldn't make its folder there. Try Documents.";
       }
       folderUI();
     });
     $("#folderNo").addEventListener("click", () => { picked = null; folderUI(); $("#folderBtn").click(); });
+    $("#folderLocSave").addEventListener("click", async () => {
+      try { await meta.set("folderWhere", $("#folderLoc").value.trim().slice(0, 200)); $("#folderLoc").blur(); folderUI(); }
+      catch (e) { $("#folderState").textContent = "That note couldn't be saved. " + plain(e); }
+    });
     $("#folderForget").addEventListener("click", async () => {
       await meta.del("folder"); folder = null; folderChecked = false; folderNote = ""; pickNote = ""; syncErr = ""; dirty = false; clearTimeout(syncTimer);
       folderUI(); nudge();

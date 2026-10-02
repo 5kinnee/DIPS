@@ -361,6 +361,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
 .steps{margin:0;padding-left:22px;display:grid;gap:6px;font-size:15px}
 .confirm{display:grid;gap:8px;background:var(--warn-bg);border-radius:10px;padding:12px}
 .confirm input[type=text]{width:100%}
+.folderline{margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+#folderLoc{flex:1;min-width:200px}
 .dsec input[type=text]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}#updateBar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60}
 #updateBar button{appearance:none;font:inherit;font-weight:700;background:var(--tap);color:var(--tap-ink);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
 </style>
@@ -787,11 +789,16 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
 
     <section class="panel dsec" id="folderSec">
       <h3 class="nhead">Keep a copy on this computer</h3>
+      <p class="folderline"><span class="label">Folder</span> <b id="folderName">None chosen yet</b></p>
+      <div class="row" id="folderLocRow" hidden>
+        <label class="hint" for="folderLoc">Where it is on this computer (your browser only tells DIPS the folder's name):</label>
+        <input type="text" id="folderLoc" maxlength="200" placeholder="e.g. OneDrive > Documents > DIPS"><button type="button" class="btn small" id="folderLocSave">Save</button>
+      </div>
       <p id="folderState"></p>
       <div class="confirm" id="folderConfirm" hidden>
         <p id="folderConfirmText"></p>
         <label class="hint" for="folderWhere">Your browser only tells DIPS a folder's name, not where it is. Jot down where it lives so you can find it later:</label>
-        <input type="text" id="folderWhere" maxlength="200" placeholder="e.g. Documents > DIPS">
+        <input type="text" id="folderWhere" maxlength="200" placeholder="e.g. OneDrive > Documents > DIPS">
         <div class="row"><button type="button" class="btn primary" id="folderYes">Yes, keep it there</button><button type="button" class="btn" id="folderNo">Pick again</button></div>
       </div>
       <div class="row"><button type="button" class="btn primary" id="folderBtn">Choose where to keep it</button><button type="button" class="btn" id="folderForget" hidden>Stop keeping a copy</button></div>
@@ -823,8 +830,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </div>
 </div>
 
-<script src="combos.js?v=0.4.0"></script>
-<script src="local.js?v=0.4.0"></script>
+<script src="combos.js?v=0.4.1"></script>
+<script src="local.js?v=0.4.1"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 

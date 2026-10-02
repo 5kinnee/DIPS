@@ -265,7 +265,8 @@ test("D6: an unreadable place picked while a healthy folder is in use is reporte
     await tapEl(page, "computer", "#folderYes");
     await page.waitForFunction(() => /couldn't read the data file/.test(document.querySelector("#folderState").textContent), null, { timeout: 8000 });
     const t = await page.textContent("#folderState");
-    assert.match(t, /Keeping a copy in "DIPS"/, "the folder in use is still healthy and still reported as saving");
+    assert.match(t, /Keeping a copy here/, "the folder in use is still healthy and still reported as saving");
+    assert.match(await page.textContent("#folderName"), /"DIPS"/, "the folder line still names the folder in use");
     assert.doesNotMatch(t, /last save didn't work/);
     assert.strictEqual(await nudgeText(page), "", "a healthy folder must not get the 'isn't saving' reminder");
     assert.strictEqual(await opfsRead(page, "Other", "data.json"), bad, "the unreadable file must not be overwritten");
@@ -491,6 +492,84 @@ test("D18: an incoming dye that matches a local one keeps its id, and a differen
     assert.strictEqual((await getDoc(page, "tests/r1")).dyes[0].id, "custom-3", "the log entry stays with the first dye");
     assert.deepStrictEqual(errors, [], "the page reported script errors");
   } finally { await context.close(); }
+});
+
+test("D19: a folder holding the proof of concept's data file is used and saved to, and any old notes in it are kept", async () => {
+  /* The proof of concept's exact data file (format 1, no entries). */
+  const poc = JSON.stringify({ app: "DIPS", format: 1, savedAt: "2026-09-29T00:14:52.508Z", entries: [] }, null, 2);
+  const a = await openApp("computer");
+  try {
+    await setDoc(a.page, "tests/mine1", { createdAt: "2026-09-01T00:00:00.000Z", date: "2026-09-01", dyes: [] });
+    await opfsWrite(a.page, "DIPS", "data.json", poc);
+    await chooseFolder(a.context, a.page, "computer");
+    await until(async () => { const t = await opfsRead(a.page, "DIPS", "data.json"); return t && /"docs"/.test(t); });
+    const saved = JSON.parse(await opfsRead(a.page, "DIPS", "data.json"));
+    assert.ok(saved.docs.some(d => d.id === "mine1"), "the folder should now hold this device's data");
+    assert.doesNotMatch(await a.page.textContent("#folderState"), /couldn't read/, "a DIPS-made file must not be called unreadable");
+    assert.strictEqual(await a.page.textContent("#folderBtn"), "Use a different place", "the folder should be in use");
+  } finally { await a.context.close(); }
+
+  const b = await openApp("computer");
+  try {
+    /* A proof of concept file that does hold notes: they are kept beside it before the first save. */
+    const withNotes = JSON.stringify({ app: "DIPS", format: 1, savedAt: "2026-09-29T00:14:52.508Z", entries: [{ id: "e1", note: "first test", photoId: null, createdAt: "2026-09-28T00:00:00.000Z" }] });
+    await opfsWrite(b.page, "DIPS", "data.json", withNotes);
+    await chooseFolder(b.context, b.page, "computer");
+    await until(async () => { const t = await opfsRead(b.page, "DIPS", "data.json"); return t && /"docs"/.test(t); });
+    assert.strictEqual(await opfsRead(b.page, "DIPS", "data-format1.json"), withNotes, "the old notes should be kept unchanged");
+  } finally { await b.context.close(); }
+});
+
+test("D20: re-picking the folder in use shows its problem once; a different unreadable place gets its own labeled message", async () => {
+  const bad = "{oops this is not a data file";
+  const count = (t, re) => (t.match(re) || []).length;
+  const a = await openApp("computer");
+  try {
+    await chooseFolder(a.context, a.page, "computer");
+    await until(() => opfsRead(a.page, "DIPS", "data.json"));
+    await opfsWrite(a.page, "DIPS", "data.json", bad);
+    await chooseFolder(a.context, a.page, "computer");
+    await a.page.waitForFunction(() => /couldn't read the data file/.test(document.querySelector("#folderState").textContent), null, { timeout: 8000 });
+    assert.strictEqual(count(await a.page.textContent("#folderState"), /couldn't read the data file/g), 1, "the message should appear once");
+    assert.strictEqual(await opfsRead(a.page, "DIPS", "data.json"), bad, "the unreadable file must not be overwritten");
+
+    await opfsWrite(a.page, "Other", "data.json", bad);
+    await chooseFolder(a.context, a.page, "computer", "Other");
+    await a.page.waitForFunction(() => /The place you just picked:/.test(document.querySelector("#folderState").textContent), null, { timeout: 8000 });
+    assert.strictEqual(count(await a.page.textContent("#folderState"), /The place you just picked:/g), 1, "the new pick should get one labeled message");
+  } finally { await a.context.close(); }
+});
+
+test("D21: the folder line always shows: none chosen, then the folder's name and the location the person noted, even while an error shows", async () => {
+  const bad = "{oops this is not a data file";
+  const a = await openApp("computer");
+  try {
+    await openData(a.page, "computer");
+    assert.strictEqual(await a.page.textContent("#folderName"), "None chosen yet");
+    assert.ok(await a.page.locator("#folderLocRow").isHidden(), "no location to note without a folder");
+
+    await chooseFolder(a.context, a.page, "computer");
+    await until(() => opfsRead(a.page, "DIPS", "data.json"));
+    await a.page.waitForFunction(() => /"DIPS"/.test(document.querySelector("#folderName").textContent));
+    assert.match(await a.page.textContent("#folderName"), /isn't noted yet/, "with no note, the line says so");
+    assert.strictEqual(await a.page.getAttribute("#folderLoc", "placeholder"), "e.g. OneDrive > Documents > DIPS");
+
+    await a.page.fill("#folderLoc", "OneDrive > Documents > DIPS");
+    await tapEl(a.page, "computer", "#folderLocSave");
+    await a.page.waitForFunction(() => /OneDrive > Documents > DIPS/.test(document.querySelector("#folderName").textContent));
+
+    /* Re-picking the same folder without typing a note keeps the note. */
+    await chooseFolder(a.context, a.page, "computer");
+    await until(async () => /Keeping a copy here/.test(await a.page.textContent("#folderState")));
+    assert.match(await a.page.textContent("#folderName"), /OneDrive > Documents > DIPS/, "re-picking the same folder must not wipe the note");
+
+    /* An error on the folder in use: the folder line is still there, above the message. */
+    await opfsWrite(a.page, "DIPS", "data.json", bad);
+    await chooseFolder(a.context, a.page, "computer");
+    await a.page.waitForFunction(() => /couldn't read the data file/.test(document.querySelector("#folderState").textContent), null, { timeout: 8000 });
+    assert.match(await a.page.textContent("#folderName"), /"DIPS" - OneDrive > Documents > DIPS/, "the folder line stays visible while an error shows");
+    assert.ok(await a.page.locator("#folderName").isVisible());
+  } finally { await a.context.close(); }
 });
 
 test("D9: the overdue backup reminder shows even when the install tip applies", async () => {
