@@ -15,7 +15,7 @@ DIPS is a planner and logbook for dyeing disc golf discs. It predicts how PRO Ch
 - **iPhone or iPad:** open https://5kinnee.github.io/DIPS/ in Safari, tap Share, then Add to Home Screen.
 - **Firefox:** works as a normal website, but can't be installed.
 
-Use the installed app rather than a browser tab. The two keep separate data, and Safari can clear data from sites you haven't opened in 7 days.
+Use the installed app rather than a browser tab. On computers and Android the two share the same data (open both at once and each keeps up with the other). On iPhone they keep separate data, and Safari can clear data from sites you haven't opened in 7 days.
 
 ## Architecture
 
@@ -23,10 +23,10 @@ Static files only, served by GitHub Pages. No server, no accounts, no build step
 
 - `index.html` is the app: the Planner, Cliff Notes, Test log, My techniques and the "Your data" tab, with its styles and code inline. It was first built as a claude.ai page and still calls storage through `window.claude.use("db" | "assets" | "user" | "downloads")`.
 - `combos.js` holds all the color, combo-picker and color-wheel math (moved out of `index.html` so it can be checked by script): classify a dye against a disc, build the ranked combo types, and the wheel/dial geometry. Loaded as a classic script before `local.js`, so its functions are globals that `index.html` calls directly; it also exports the same functions as CommonJS so `tests/` can run against it with Node, outside the browser.
-- `tests/` holds `node:test` checks. `combos.test.js` covers `combos.js`: the new color math against a frozen copy of 0.1.1's (so a refactor can't silently change a prediction), the combo picker's variety rules, the color wheel's dial, and that `sw.js`'s version stays in step with `index.html`'s script tags. `screen.test.js` opens the app in the installed Microsoft Edge (via `playwright-core`) as a computer and as a phone and taps real controls, so a layer covering a control fails a check. Not part of the app; never referenced by `index.html` or listed in `sw.js`'s `FILES`.
+- `tests/` holds `node:test` checks. `combos.test.js` covers `combos.js`: the new color math against a frozen copy of 0.1.1's (so a refactor can't silently change a prediction), the combo picker's variety rules, the color wheel's dial, and that `sw.js`'s version stays in step with `index.html`'s script tags. `screen.test.js` (Planner screens), `planner.test.js` (Planner behavior and wording) and `data.test.js` (saving, backups, restore, the DIPS folder, reminders, install) open the app in the installed Microsoft Edge (via `playwright-core`) as a computer and as a phone and tap real controls, so a layer covering a control fails a check; `harness.js` is their shared setup (a local server for the app's own files, a fresh browser profile per check, real taps). Not part of the app; never referenced by `index.html` or listed in `sw.js`'s `FILES`.
 - `package.json` exists only for the test tooling (`playwright-core`, a dev dependency, in `node_modules/`, which git ignores). The app itself has no packages and no build step.
 - `local.js` answers those calls from this device, so the planner code runs unchanged:
-  - **db:** collections of documents (`tests`, `techniques`) held in memory and written through to IndexedDB (database `dips`, store `docs`), with live listeners.
+  - **db:** collections of documents (`tests`, `techniques`) stored in IndexedDB (database `dips`, store `docs`), the source of truth: each save is written there first, then to the in-memory copy that live listeners read. Other open windows hear about each save (BroadcastChannel) and reload that document; the shelf and custom dyes follow other windows through the browser's storage event. Backups and the folder copy are built from IndexedDB, never from one window's memory.
   - **assets:** photos, shrunk to 1600 px JPEG and stored as Blobs (store `blobs`). The planner renders them as `<img data-blob="id">`; a MutationObserver fills in the image.
   - **user:** a local profile id plus the name set on the "Your data" tab.
   - **downloads:** a normal download on computers, the share sheet on phones.
@@ -45,7 +45,8 @@ Static files only, served by GitHub Pages. No server, no accounts, no build step
 - **DIPS makes its own folder** inside the place the user picks, so it never scatters files through Documents. The user confirms the folder before anything is written, because the Windows picker can hand back a highlighted neighbor folder.
 - **Browsers never reveal a folder's full path,** so the user can jot down where the folder lives and DIPS shows that note.
 - **Folder saving is computer-only** (Chromium desktop). Phones get backup and restore, plus a reminder when the last backup is over 14 days old.
-- **Restore and folder import only add;** they never delete or overwrite. Photos deleted in the app are left in the folder as a safety copy.
+- **Restore and folder import only add;** they never delete or overwrite. Photos deleted in the app are left in the folder as a safety copy. Imported files are checked item by item: a log entry or technique with a damaged field is repaired (that field is reset) and kept; anything else unusable is skipped and counted; one bad item never stops the rest. A custom dye in the file that shares its id with a different dye on this device (older versions numbered custom dyes from 1 on every device) is kept under a new id.
+- **A folder data file DIPS can't read is never overwritten:** DIPS stops and says so, so a damaged copy is never replaced by this device's data. A file DIPS can read is merged in when the folder is chosen and then kept up to date from this device; anything in it this version doesn't know is not kept.
 
 ## Invariants
 

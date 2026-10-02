@@ -389,7 +389,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
       <div class="swatches" id="swatches"></div>
       <div class="row">
         <input type="color" id="basePick" aria-label="Exact disc color">
-        <input type="text" class="hexin" id="baseHex" aria-label="Disc color hex code" spellcheck="false">
+        <input type="text" class="hexin" id="baseHex" aria-label="Disc color code" spellcheck="false">
         <span class="hint" id="baseName"></span>
       </div>
       <details id="pickFold">
@@ -402,7 +402,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         <div class="photo">
           <input type="file" id="photoIn" accept="image/*">
           <canvas id="photoCv" hidden></canvas>
-          <p class="hint" id="photoHint">Photo the disc in daylight, upload it, then tap a clean, unstamped spot.</p>
+          <p class="hint" id="photoHint">Photo the disc in daylight, choose the photo here, then tap a clean, unstamped spot.</p>
         </div>
       </details>
     </div>
@@ -676,7 +676,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
 
       <div class="mytech" id="myTechSec">
         <div class="myhead"><h4 class="subhead">My techniques</h4><button type="button" class="btn primary small" id="myTechAdd">Add a technique</button></div>
-        <p class="hint" id="myTechStatus" role="status">Your own methods and mixes, shared with everyone who uses this page. To start from a built-in card, open it and use "Make my version."</p>
+        <p class="hint" id="myTechStatus" role="status">Your own methods and mixes, saved on this device. To start from a built-in card, open it and use "Make my version."</p>
         <div class="logtools techtools" id="techTools" role="search" aria-label="Search and filter my techniques">
           <label class="wide"><span class="label">Search</span><input type="search" id="tfQ" placeholder="Name, mix, plastics, dyes, notes…"></label>
           <label><span class="label">Sort</span><select id="tfSort"><option value="name">Name A-Z</option><option value="new">Newest first</option><option value="updated">Recently updated</option></select></label>
@@ -807,7 +807,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
 
     <section class="panel dsec">
       <h3 class="nhead">Your name</h3>
-      <p class="hint">Shown as "logged by" on your log entries and techniques, including in backup files you share with friends.</p>
+      <p class="hint">Shown as "logged by" on your log entries and techniques, including in your backup files.</p>
       <div class="row"><input type="text" id="myName" maxlength="40" placeholder="e.g. Sean" aria-label="Your name"><button type="button" class="btn" id="myNameSave">Save</button><span class="hint" id="myNameMsg" role="status"></span></div>
     </section>
 
@@ -823,8 +823,8 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </div>
 </div>
 
-<script src="combos.js?v=0.3.0"></script>
-<script src="local.js?v=0.3.0"></script>
+<script src="combos.js?v=0.4.0"></script>
+<script src="local.js?v=0.4.0"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
@@ -879,7 +879,7 @@ DGD882|Pansy|#7f379a
 DGD885|Lilac|#522b57
 DGD888|Neon Royal Purple|#621187`;
 const FAMS={"1":"Yellows","2":"Oranges","3":"Reds & pinks","4":"Blues","5":"Browns","6":"Blacks & greys","7":"Greens","8":"Purples","c":"Custom dyes and mixes"};
-let customN=0,rmArm=null,pendingTech=null;
+let rmArm=null,pendingTech=null,techLoaded=false;
 
 /* Disc Golf Dyers Guild acceptability chart (dyeability). E Excellent, G Good, M Moderate, P Poor, - not rated. */
 const PLASTICS=`ABC|Platinum|E
@@ -1155,13 +1155,15 @@ const TECH={
     recipe:"1 tsp dye + 16 oz water, heated.",
     note:"ProChem says keep the disc at 120°F or below. Some guides use hotter water; this tool follows ProChem.",src:"ProChem disc directions"}
 };
-/* One lookup for built-in techniques and the user's own ("my:<id>", from the shared techniques collection).
+/* One lookup for built-in techniques and the user's own ("my:<id>", from the techniques collection).
    A user technique borrows its base's patterns and combo type; its own preview style comes first. */
 function techInfo(key){
   if(TECH[key]){const T=TECH[key];return{key,label:T.label,patterns:T.patterns,recipe:T.recipe,note:T.note,src:T.src,base:key,custom:false};}
   if(typeof key==="string"&&key.startsWith("my:")&&typeof myTechDocs!=="undefined"){
     const s=myTechDocs.find(x=>x.id===key.slice(3));if(!s)return null;
     const t=s.data(),base=TECH[t.base]?t.base:null;
+    /* A technique whose text fields are not text is treated as not there. */
+    if([t.name,t.mix,t.description,t.heat,t.setTime].some(v=>v!=null&&typeof v!=="string"))return null;
     const patterns=[...new Set([PATS[t.pattern]?t.pattern:null,...(base?TECH[base].patterns:Object.keys(PATS))].filter(Boolean))];
     return{key,label:t.name||"My technique",patterns,recipe:t.mix||"No mix recorded for this technique yet.",
       note:[t.heat&&`Heat: ${t.heat}`,t.setTime&&`Set: ${t.setTime}`].filter(Boolean).join(" · ")||t.description||"",src:"your technique",base,custom:true};
@@ -1171,6 +1173,8 @@ function techInfo(key){
 const techOr=key=>techInfo(key)||techInfo("floetrol");
 const techLabelOf=d=>TECH[d.tech]?.label||techInfo(d.tech)?.label||d.techName||"Dye job";
 const PATS={spin:"Spin rings",offcenter:"Off-center spin",lollipop:"Lollipop",cells:"Cells",swirl:"Swirl",river:"River / marble",starburst:"Starburst",full:"Full dip",doubledip:"Double dip",dipfade:"Dip fade",stencil:"Stencil"};
+/* Stored values are looked up in these tables, so they have no inherited keys ("constructor", "__proto__" never match). */
+[RATING,TECH,PATS].forEach(o=>Object.setPrototypeOf(o,null));
 
 const $=s=>document.querySelector(s);
 function loadOwned(){try{return JSON.parse(localStorage.getItem("discdye.owned")||"[]");}catch(e){return[];}}
@@ -1193,6 +1197,8 @@ function currentSetup(){
 
 /* ---------- rendering ---------- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+/* One stored item with an unexpected shape must never blank a tab: its code runs inside tryOr and falls back to a default. */
+const tryOr=(f,dflt)=>{try{return f();}catch(_){return dflt;}};
 function chipBox(hex,caption){return`<span class="chipbox"><span class="chip" style="background:${hex}"></span><small>${caption}</small></span>`;}
 function touchHtml(list,pattern){
   const pairs=comboTouchPairs(pattern,list.length);
@@ -1275,7 +1281,7 @@ function renderTech(){
   const T=techOr(state.tech);
   if(!T.patterns.includes(state.pattern))state.pattern=T.patterns[0];
   $("#techSeg").innerHTML=Object.entries(TECH).map(([k,v])=>`<button type="button" data-tech="${k}" aria-pressed="${k===state.tech}">${v.label}</button>`).join("");
-  const mine=typeof myTechDocs!=="undefined"?myTechDocs.map(s=>({id:s.id,name:s.data().name||"Untitled"})).sort((a,b)=>a.name.localeCompare(b.name)):[];
+  const mine=typeof myTechDocs!=="undefined"?myTechDocs.filter(s=>techInfo("my:"+s.id)).map(s=>({id:s.id,name:s.data().name||"Untitled"})).sort((a,b)=>a.name.localeCompare(b.name)):[];
   $("#myTechPickWrap").hidden=!mine.length;
   $("#myTechPick").innerHTML=opt("","Choose one…",!T.custom)+mine.map(m=>opt("my:"+m.id,m.name,state.tech==="my:"+m.id)).join("");
   $("#myTechPick").classList.toggle("on",T.custom);
@@ -1538,24 +1544,48 @@ const cleanRecipe=r=>Array.isArray(r)?r.filter(p=>p&&typeof p.name==="string").m
 function loadCustom(){
   let list=[];try{list=JSON.parse(localStorage.getItem("discdye.custom")||"[]");}catch(e){}
   list.forEach(d=>{if(/^#[0-9a-f]{6}$/i.test(d.hex)&&!state.dyes.some(x=>x.id===d.id))state.dyes.push({id:d.id,code:d.code||"Custom",name:String(d.name),hex:d.hex,rgb:hex2rgb(d.hex),fam:"c",recipe:cleanRecipe(d.recipe)});});
-  customN=Math.max(0,...state.dyes.map(d=>+(/^custom-(\d+)$/.exec(d.id)||[0,0])[1]));
 }
+/* Random ids: two windows adding a dye at once never pick the same one. */
+function newCustomId(){
+  let id;
+  do{id="custom-"+[...crypto.getRandomValues(new Uint8Array(4))].map(b=>b.toString(16).padStart(2,"0")).join("");}
+  while(state.dyes.some(d=>d.id===id));
+  return id;
+}
+/* A default dye name that no dye on the shelf already has: "Custom berry", then "Custom berry 2", 3... */
+function freeDyeName(base){
+  let name=base,n=1;
+  while(state.dyes.some(d=>d.name===name))name=`${base} ${++n}`;
+  return name;
+}
+/* Another window changed the shelf or the custom dyes: take its version, so this window never saves the old one back over it. */
+window.addEventListener("storage",e=>{
+  if(e.storageArea!==localStorage||(e.key!=="discdye.owned"&&e.key!=="discdye.custom"))return;
+  state.dyes=state.dyes.filter(d=>d.fam!=="c");
+  loadCustom();
+  state.owned=new Set(loadOwned());
+  rmArm=null;fillMixers();render();
+});
 function addCustomDye(name,hex,code,recipe){
-  const id="custom-"+(++customN);
+  const id=newCustomId();
   state.dyes.push({id,code,name,hex,rgb:hex2rgb(hex),fam:"c",recipe:cleanRecipe(recipe)});state.owned.add(id);saveOwned();saveCustom();fillMixers();
   return id;
 }
 const recipeText=r=>r&&r.length?r.map(p=>`${p.parts} ${p.name}${p.code?" ("+p.code+")":""}`).join(" + "):"";
 function addToDisc(id){state.sel=state.sel.filter(x=>x!==id);state.sel.push(id);if(state.sel.length>3)state.sel.shift();return state.sel.indexOf(id)+1;}
-/* Apply a saved or logged setup: only values this page recognises are taken. */
+/* Apply a saved or logged setup: only values this page recognises are taken.
+   Returns true when its technique no longer exists and the Planner fell back to Floetrol bed. */
 function applySetup(s){
-  if(!s)return;
+  if(!s)return false;
+  let fellBack=false;
+  pendingTech=null;
   if(PLASTICS.some(p=>p.brand===s.brand&&p.name===s.plastic)){state.brand=s.brand;state.plastic=s.plastic;}
   if(typeof s.translucent==="boolean")state.translucent=s.translucent;
   const ti=techInfo(s.tech);
   if(ti){state.tech=s.tech;state.pattern=ti.patterns.includes(s.pattern)?s.pattern:ti.patterns[0];}
   /* User techniques load a moment after the page; remember the choice and apply it when they arrive. */
-  else if(typeof s.tech==="string"&&s.tech.startsWith("my:"))pendingTech={tech:s.tech,pattern:s.pattern};
+  else if(typeof s.tech==="string"&&s.tech.startsWith("my:")&&!techLoaded)pendingTech={tech:s.tech,pattern:s.pattern};
+  else if(s.tech){state.tech="floetrol";state.pattern=TECH.floetrol.patterns[0];fellBack=true;}
   if(s.blend==="multiply"||s.blend==="darken")state.blend=s.blend;
   if(typeof s.depth==="number"&&s.depth>=.3&&s.depth<=1)state.depth=s.depth;
   if(s.pool==="all"||s.pool==="owned")state.pool=s.pool;
@@ -1567,6 +1597,7 @@ function applySetup(s){
   const hex=/^#[0-9a-f]{6}$/i.test(s.base||"")?s.base:state.base;
   const preset=DISCS.find(([,h])=>h===hex.toLowerCase());
   setBase(hex,s.baseName&&preset?preset[0]:null);
+  return fellBack;
 }
 
 /* ---------- mix two jars ---------- */
@@ -1581,7 +1612,7 @@ function currentMix(){
   const A=state.dyes.find(d=>d.id===$("#mixA").value),B=state.dyes.find(d=>d.id===$("#mixB").value),[pa,pb]=mixParts();
   return{A,B,pa,pb,hex:rgb2hex(mixRgb(A.rgb,pa,B.rgb,pb))};
 }
-function updateMix(){const m=currentMix();$("#mixOut").style.background=m.hex;$("#mixOut").title=`Estimated mix ${m.hex}`;}
+function updateMix(){const m=currentMix();$("#mixOut").style.background=m.hex;$("#mixOut").title=`Estimated mix: ${nameColor(hex2rgb(m.hex))}`;}
 ["#mixA","#mixB","#mixAp","#mixBp"].forEach(s=>$(s).addEventListener("input",updateMix));
 $("#mixAdd").addEventListener("click",()=>{
   const m=currentMix(),msg=$("#mixMsg");
@@ -1606,7 +1637,14 @@ $("#basePick").addEventListener("input",e=>setBase(e.target.value));
 $("#baseHex").addEventListener("change",e=>{const v=e.target.value.trim();if(/^#?[0-9a-f]{6}$/i.test(v))setBase(v[0]==="#"?v:"#"+v);else e.target.value=state.base;});
 
 let photoImg=null;
-$("#photoIn").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{photoImg=img;drawPhoto();};img.src=URL.createObjectURL(f);});
+const PHOTO_HINT=$("#photoHint").textContent;
+$("#photoIn").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{URL.revokeObjectURL(url);photoImg=img;$("#photoHint").textContent=PHOTO_HINT;drawPhoto();};
+  img.onerror=()=>{URL.revokeObjectURL(url);$("#photoHint").textContent="That photo couldn't be opened. Try a JPG or PNG.";};
+  img.src=url;
+});
 function drawPhoto(mark){
   const cv=$("#photoCv"),ctx=cv.getContext("2d"),w=Math.min(photoImg.naturalWidth,700);
   cv.width=w;cv.height=Math.round(photoImg.naturalHeight*w/photoImg.naturalWidth);
@@ -1694,7 +1732,7 @@ document.querySelector(".main").addEventListener("click",e=>{
   const j=e.target.closest(".jar");if(j){const id=j.dataset.jar;state.owned.has(id)?state.owned.delete(id):state.owned.add(id);saveOwned();render();}
 });
 $("#cdAdd").addEventListener("click",()=>{
-  const hex=$("#cdColor").value,name=$("#cdName").value.trim()||"Custom "+hex;
+  const hex=$("#cdColor").value,name=$("#cdName").value.trim()||freeDyeName("Custom "+nameColor(hex2rgb(hex)));
   $("#cdName").value="";addToDisc(addCustomDye(name,hex,"Custom"));render();
 });
 function drawStage(){previewView==="disc"?drawDisc():drawWheel();}
@@ -1706,13 +1744,13 @@ function showTab(t){
   if(t==="planner")drawStage();else if(t==="notes")drawThumbs();else if(t==="log")renderLog();else if(window.dipsData)window.dipsData.render();
 }
 
-/* ---------- test log (shared: db + assets + user capabilities) ---------- */
+/* ---------- test log (db + assets + user capabilities, answered by local.js) ---------- */
 let db=null,assets=null,userCap=null,logDocs=[],freshId=null,pendingLogRender=false,delArm=null,logReady=false,editId=null,editDraft=null;
 function setLogStatus(t){$("#logStatus").textContent=t||"";}
 function noLog(){
   logReady=true;
   $("#logList").innerHTML=`<p class="empty">This browser can't save DIPS data. Try Chrome, Edge or Safari. The Planner and Cliff Notes still work.</p>`;
-  $("#tally").innerHTML="";$("#logBtn").disabled=true;$("#logAdd").disabled=true;$("#logBtnHint").textContent="Logging isn't available in this view.";
+  $("#tally").innerHTML="";$("#logBtn").disabled=true;$("#logAdd").disabled=true;$("#logBtnHint").textContent="Logging isn't available in this browser.";
   initTechniques();
 }
 async function initLog(){
@@ -1723,7 +1761,7 @@ async function initLog(){
   try{userCap=await c.use("user");}catch(e){userCap=null;}
   try{assets=await c.use("assets");}catch(e){assets=null;}
   initTechniques();
-  db.collection("tests").orderBy("createdAt","desc").limit(300).onSnapshot(
+  db.collection("tests").orderBy("createdAt","desc").onSnapshot(
     s=>{logDocs=s.docs;logReady=true;renderLog();},
     ()=>setLogStatus("The log stopped updating. Reload the page to reconnect."));
 }
@@ -1731,7 +1769,9 @@ const strengthFor=(depth,r,transl)=>depth*(RATING[r]||RATING["-"]).f*(transl?.7:
 const dyeRecord=d=>({id:d.id,code:d.code,name:d.name,hex:d.hex,recipe:d.recipe||null});
 function withPredictions(e){
   const s=strengthFor(e.depth,e.plastic.rating,e.plastic.translucent),hx=e.dyes.map(d=>d.hex);
-  e.predicted={multiply:predictHexes(e.disc.hex,s,hx,"multiply"),darken:predictHexes(e.disc.hex,s,hx,"darken")};
+  /* A logged dye without a usable color predicts null (it shows blank). */
+  const pred=mode=>hx.map(h=>/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(h||"")?predictHexes(e.disc.hex,s,[h],mode)[0]:null);
+  e.predicted={multiply:pred("multiply"),darken:pred("darken")};
   return e;
 }
 function entryFromPlanner(){
@@ -1748,9 +1788,18 @@ async function addEntry(e){
   let by=null;try{by=userCap?await userCap.id():null;}catch(_){}
   return db.collection("tests").add(withPredictions({...e,createdAt:new Date().toISOString(),by}));
 }
+/* local.js throws invalid_argument (entry gone), quota_exceeded (device storage full) or unavailable (storage failed). */
 function saveErr(err){
   return err&&err.code==="invalid_argument"?"Couldn't save that. Try again."
-    :err&&err.code==="quota_exceeded"?"The log is full. Delete old entries to make room.":"Couldn't save. Try again in a moment.";
+    :err&&err.code==="quota_exceeded"?"This device is out of space for DIPS. Delete old entries or photos to make room, then try again."
+    :"Couldn't save. Try again in a moment.";
+}
+/* local.js throws unsupported_type (not a readable image), quota_exceeded or unavailable for photos. */
+function uploadErr(err){
+  const c=err&&err.code;
+  return c==="unsupported_type"?"Use a JPG, PNG or WebP photo. iPhone HEIC photos need converting first."
+    :c==="quota_exceeded"?"This device is out of space for DIPS. Delete old photos to make room."
+    :"Couldn't add the photo. Try again.";
 }
 $("#logBtn").addEventListener("click",async e=>{
   const btn=e.currentTarget,hint=$("#logBtnHint");
@@ -1775,13 +1824,13 @@ const opt=(v,l,sel)=>`<option value="${esc(v)}"${sel?" selected":""}>${esc(l)}</
 function plasticOptions(brand,name){return PLASTICS.filter(p=>p.brand===brand).map(p=>opt(p.name,`${p.name} (${RATING[p.r].label})`,p.name===name)).join("");}
 function patternOptions(tech,pat){return techOr(tech).patterns.map(p=>opt(p,PATS[p],p===pat)).join("");}
 function techOptions(cur,curName){
-  const mine=myTechDocs.map(s=>["my:"+s.id,(s.data().name||"Untitled")+" (mine)"]).sort((a,b)=>a[1].localeCompare(b[1]));
+  const mine=myTechDocs.filter(s=>techInfo("my:"+s.id)).map(s=>["my:"+s.id,(s.data().name||"Untitled")+" (mine)"]).sort((a,b)=>a[1].localeCompare(b[1]));
   const known=TECH[cur]||mine.some(([k])=>k===cur);
   return Object.entries(TECH).map(([k,v])=>opt(k,v.label,k===cur)).join("")+mine.map(([k,l])=>opt(k,l,k===cur)).join("")
     +(cur&&!known?opt(cur,(curName||"Deleted technique")+" (as logged)",true):"");
 }
 function dyeOptions(e,i){
-  const cur=e.dyes[i],inState=cur&&state.dyes.some(d=>d.id===cur.id&&d.hex===cur.hex);
+  const cur=dyesOf(e)[i],inState=cur&&state.dyes.some(d=>d.id===cur.id&&d.hex===cur.hex);
   return opt("","None",!cur)+(cur&&!inState?opt("entry:"+i,`${cur.name} (as logged)`,true):"")
     +state.dyes.map(d=>opt(d.id,d.fam==="c"?d.name:`${d.name} (${d.code})`,inState&&cur.id===d.id)).join("");
 }
@@ -1789,7 +1838,7 @@ function formHtml(id,e){
   const pl=e.plastic||{},brand=PLASTICS.some(p=>p.brand===pl.brand)?pl.brand:"Innova";
   return`<form class="eform" data-form="${esc(id)}">
     <div class="fgrid">
-      <label><span class="label">Date</span><input type="date" name="date" value="${esc(e.date||(e.createdAt||"").slice(0,10))}"></label>
+      <label><span class="label">Date</span><input type="date" name="date" value="${esc(entryDate(e))}"></label>
       <label><span class="label">Disc color</span><span class="row"><input type="color" name="discHex" value="${esc(e.disc?.hex||"#ffffff")}"><input type="text" name="discName" value="${esc(e.disc?.name||"")}" placeholder="e.g. yellow" aria-label="Disc color name" data-auto="${!e.disc?.name||e.disc.name===discNameFor(e.disc.hex||"#ffffff")?1:0}"></span></label>
       <label><span class="label">Brand</span><select name="brand" data-ef="brand">${[...new Set(PLASTICS.map(p=>p.brand))].map(b=>opt(b,b,b===brand)).join("")}</select></label>
       <label><span class="label">Plastic</span><select name="plastic">${plasticOptions(brand,pl.name)}</select></label>
@@ -1821,7 +1870,7 @@ function readForm(f,orig){
   const tech=keep||techInfo(picked)?picked:"floetrol",pats=keep?Object.keys(PATS):techOr(tech).patterns;
   const pat=pats.includes(v("pattern"))?v("pattern"):pats[0];
   const techName=keep?orig.techName:techOr(tech).label;
-  const dyes=[0,1,2].map(i=>{const x=v("dye"+i);if(!x)return null;if(x.startsWith("entry:"))return orig.dyes[+x.slice(6)]||null;const d=state.dyes.find(y=>y.id===x);return d?dyeRecord(d):null;}).filter(Boolean);
+  const dyes=[0,1,2].map(i=>{const x=v("dye"+i);if(!x)return null;if(x.startsWith("entry:"))return dyesOf(orig)[+x.slice(6)]||null;const d=state.dyes.find(y=>y.id===x);return d?dyeRecord(d):null;}).filter(Boolean);
   const hex=/^#[0-9a-f]{6}$/i.test(v("discHex"))?v("discHex").toLowerCase():"#ffffff";
   return{date:/^\d{4}-\d{2}-\d{2}$/.test(v("date"))?v("date"):new Date().toISOString().slice(0,10),
     disc:{hex,name:v("discName").trim().slice(0,60)||discNameFor(hex)},
@@ -1831,17 +1880,19 @@ function readForm(f,orig){
 }
 
 /* ----- list ----- */
+/* A stored color reaches a style attribute only as a 6-digit hex color. */
+const hexOr=v=>/^#[0-9a-f]{6}$/i.test(v)?v:"transparent";
 function viewHtml(d){
   const dyes=Array.isArray(d.dyes)?d.dyes:[],pm=d.predicted?.multiply||[],pd=d.predicted?.darken||[],pl=d.plastic||{};
   const photo=d.photo&&/^[0-9a-f]{32}$/i.test(d.photo)?`<img data-blob="${d.photo}" alt="Photo of the finished disc">`:"";
   const up=assets?`<label class="btn">${photo?"Replace photo":"Add photo"}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo hidden></label>`
-    :(photo?"":`<p class="hint">People with edit access can add a photo.</p>`);
+    :"";
   return`
-    <div class="discrow"><i style="background:${esc(d.disc?.hex||"#fff")}"></i>${esc(d.disc?.name||"")} disc, ${esc(pl.brand||"")} ${esc(pl.name||"")} (${esc((RATING[pl.rating]||RATING["-"]).label)})${pl.translucent?", translucent":""}, depth ${Math.round((d.depth||0)*100)}%</div>
+    <div class="discrow"><i style="background:${hexOr(d.disc?.hex)}"></i>${esc(d.disc?.name||"")} disc, ${esc(pl.brand||"")} ${esc(pl.name||"")} (${esc((RATING[pl.rating]||RATING["-"]).label)})${pl.translucent?", translucent":""}, depth ${Math.round((d.depth||0)*100)}%</div>
     ${d.mix?`<p class="mixused"><span class="label">Mix used</span> ${esc(d.mix)}</p>`:""}
     <div class="ebody">
       <div class="ptable"><span></span><span class="h">In the jar</span><span class="h">Multiply</span><span class="h">Darken</span>
-        ${dyes.map((y,i)=>`<span class="n">${i+1}. ${esc(y.name)} <span class="code">${esc(y.code||"")}</span>${y.recipe&&y.recipe.length?`<span class="recipe-line">= ${esc(recipeText(y.recipe))}</span>`:""}</span><i class="c" style="background:${esc(y.hex)}"></i><i class="c" style="background:${esc(pm[i]||"transparent")}"></i><i class="c" style="background:${esc(pd[i]||"transparent")}"></i>`).join("")}
+        ${dyes.map((y,i)=>`<span class="n">${i+1}. ${esc(y.name)} <span class="code">${esc(y.code||"")}</span>${y.recipe&&y.recipe.length?`<span class="recipe-line">= ${esc(recipeText(y.recipe))}</span>`:""}</span><i class="c" style="background:${hexOr(y.hex)}"></i><i class="c" style="background:${hexOr(pm[i])}"></i><i class="c" style="background:${hexOr(pd[i])}"></i>`).join("")}
       </div>
       <div class="ephoto">${photo}${up}</div>
     </div>
@@ -1863,7 +1914,7 @@ function renderLog(force){
   if(!force&&(editId||(act&&$("#logList").contains(act)&&act.matches("input[type=text],textarea")))){pendingLogRender=true;return;}
   const all=logDocs.map(s=>({id:s.id,...s.data()}));
   fillFilterOptions(all);
-  const rows=sortLog(all.filter(passesFilter));
+  const rows=sortLog(all.filter(d=>tryOr(()=>passesFilter(d),!filterIsActive())));
   const active=filterIsActive();
   $("#lfCount").textContent=all.length?(active?`Filters on (${activeFilterText()}): showing ${rows.length} of ${all.length} entries. The tally counts only these.`:`${all.length} entries`):"";
   $("#lfCount").classList.toggle("lfon",active);
@@ -1872,8 +1923,10 @@ function renderLog(force){
   const cnt=k=>rows.filter(r=>r.closer===k).length;
   $("#tally").innerHTML=[[rows.length,active?"Discs shown":"Discs logged"],[cnt("multiply"),"Multiply closer"],[cnt("darken"),"Darken closer"],[cnt("neither"),"Neither close"]]
     .map(([n,l])=>`<div class="t"><b>${n}</b><span>${l}</span></div>`).join("");
-  const head=d=>`<div class="ehead"><h3>${esc(techLabelOf(d))}: ${esc(PATS[d.pattern]||d.pattern||"")}</h3><span class="emeta">${fmtDate(d)}${d.by?` · logged by <span data-by="${esc(d.by)}">someone</span>`:""}</span></div>`;
-  const cards=rows.map(d=>`<article class="entry${d.id===freshId?" fresh":""}" data-id="${esc(d.id)}">${head(d)}${editId===d.id?formHtml(d.id,editDraft||d):viewHtml(d)}</article>`);
+  const head=d=>`<div class="ehead"><h3>${esc(techLabelOf(d))}: ${esc(PATS[d.pattern]||d.pattern||"")}</h3><span class="emeta">${fmtDate(d)} ${d.by?`<span data-by="${esc(d.by)}" data-lead="· logged by"></span>`:""}</span></div>`;
+  /* An entry that can't be drawn shows as a small card that can still be deleted. */
+  const badCard=id=>`<article class="entry" data-id="${esc(id)}"><p class="empty">This entry couldn't be shown.</p><div class="row"><button type="button" class="btn danger" data-del>${delArm===id?"Tap again to delete":"Delete"}</button></div></article>`;
+  const cards=rows.map(d=>tryOr(()=>`<article class="entry${d.id===freshId?" fresh":""}" data-id="${esc(d.id)}">${head(d)}${editId===d.id?formHtml(d.id,editDraft||d):viewHtml(d)}</article>`,badCard(d.id)));
   if(editId==="new")cards.unshift(`<article class="entry fresh" data-id="new"><div class="ehead"><h3>New entry</h3></div>${formHtml("new",editDraft)}</article>`);
   $("#logList").innerHTML=cards.length?cards.join("")
     :all.length?`<p class="empty">No entries match these filters. Use "Clear filters" to see all ${all.length}.</p>`
@@ -1906,7 +1959,7 @@ function colorFamily(hex){
   const n=nameColor(hex2rgb(hex)).replace(/^(light|deep|drab|muddy|dark|slate|near) /,"");
   return n==="charcoal"?"black":n;
 }
-const entryDate=d=>d.date||(d.createdAt||"").slice(0,10);
+const entryDate=d=>String(d.date||String(d.createdAt||"").slice(0,10));
 const plasticKey=d=>d.plastic?`${d.plastic.brand} ${d.plastic.name}`:"";
 const dyesOf=d=>Array.isArray(d.dyes)?d.dyes:[];
 function passesFilter(d){
@@ -1928,12 +1981,12 @@ function passesFilter(d){
   return true;
 }
 function sortLog(rows){
-  const byNew=(a,b)=>entryDate(b).localeCompare(entryDate(a))||(b.createdAt||"").localeCompare(a.createdAt||"");
-  const discKey=d=>{const hx=d.disc?.hex;if(!/^#[0-9a-f]{6}$/i.test(hx||""))return 999;const l=lab(hex2rgb(hx));return l.C<12?400+(100-l.L):hue(hex2rgb(hx));};
+  const byNew=(a,b)=>entryDate(b).localeCompare(entryDate(a))||String(b.createdAt||"").localeCompare(String(a.createdAt||""));
+  const discKey=d=>{const hx=String(d.disc?.hex);if(!/^#[0-9a-f]{6}$/i.test(hx||""))return 999;const l=lab(hex2rgb(hx));return l.C<12?400+(100-l.L):hue(hex2rgb(hx));};
   const cmp={new:byNew,old:(a,b)=>-byNew(a,b),
     disc:(a,b)=>discKey(a)-discKey(b)||byNew(a,b),
     plastic:(a,b)=>plasticKey(a).localeCompare(plasticKey(b))||byNew(a,b),
-    tech:(a,b)=>techLabelOf(a).localeCompare(techLabelOf(b))||byNew(a,b)}[lf.sort]||byNew;
+    tech:(a,b)=>String(techLabelOf(a)).localeCompare(String(techLabelOf(b)))||byNew(a,b)}[lf.sort]||byNew;
   return rows.slice().sort(cmp);
 }
 function filterIsActive(){return Object.keys(LF_DEFAULT).some(k=>k!=="sort"&&lf[k]!==LF_DEFAULT[k]);}
@@ -1944,11 +1997,13 @@ function fillSel(el,opts,cur,allLabel){
 }
 function fillFilterOptions(all){
   const uniq=(arr)=>[...new Map(arr.filter(([v])=>v).map(x=>[x[0],x])).values()];
-  fillSel($("#lfPlastic"),uniq(all.map(d=>[plasticKey(d),plasticKey(d)])).sort((a,b)=>a[1].localeCompare(b[1])),lf.plastic,"Any plastic");
-  fillSel($("#lfDisc"),uniq(all.map(d=>{const f=colorFamily(d.disc?.hex);return[f,f];})).sort((a,b)=>a[1].localeCompare(b[1])),lf.disc,"Any disc color");
-  fillSel($("#lfDye"),uniq(all.flatMap(d=>dyesOf(d).map(y=>[`${y.name}|${y.code||""}`,y.code&&y.code!=="Mix"&&y.code!=="Custom"?`${y.name} (${y.code})`:y.name]))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dye,"Any dye");
-  fillSel($("#lfDyeFam"),uniq(all.flatMap(d=>dyesOf(d).map(y=>{const f=colorFamily(y.hex);return[f,f];}))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dyeFam,"Any dye color");
-  fillSel($("#lfTech"),uniq(all.map(d=>[d.tech,techLabelOf(d)])),lf.tech,"Any technique");
+  /* An entry that can't be read adds nothing to the lists. */
+  const each=f=>all.flatMap(d=>tryOr(()=>f(d),[]));
+  fillSel($("#lfPlastic"),uniq(each(d=>[[plasticKey(d),plasticKey(d)]])).sort((a,b)=>a[1].localeCompare(b[1])),lf.plastic,"Any plastic");
+  fillSel($("#lfDisc"),uniq(each(d=>{const f=colorFamily(d.disc?.hex);return[[f,f]];})).sort((a,b)=>a[1].localeCompare(b[1])),lf.disc,"Any disc color");
+  fillSel($("#lfDye"),uniq(each(d=>dyesOf(d).map(y=>[`${y.name}|${y.code||""}`,y.code&&y.code!=="Mix"&&y.code!=="Custom"?`${y.name} (${y.code})`:String(y.name)]))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dye,"Any dye");
+  fillSel($("#lfDyeFam"),uniq(each(d=>dyesOf(d).map(y=>{const f=colorFamily(y.hex);return[f,f];}))).sort((a,b)=>a[1].localeCompare(b[1])),lf.dyeFam,"Any dye color");
+  fillSel($("#lfTech"),uniq(each(d=>[[d.tech&&String(d.tech),String(techLabelOf(d))]])),lf.tech,"Any technique");
   fillSel($("#lfCloser"),[["multiply","Multiply"],["darken","Darken"],["neither","Neither"],["none","Not decided yet"]],lf.closer,"Any");
   $("#lfQ").value=lf.q;$("#lfSort").value=lf.sort;$("#lfFrom").value=lf.from;$("#lfTo").value=lf.to;$("#lfPhoto").checked=lf.photo;
   ["#lfQ","#lfFrom","#lfTo"].forEach(s=>$(s).classList.toggle("on",!!$(s).value));
@@ -1966,7 +2021,8 @@ async function fillNames(){
   if(!userCap)return;
   const els=[...document.querySelectorAll("[data-by]")],ids=[...new Set(els.map(e=>e.dataset.by))];
   if(!ids.length)return;
-  try{const ps=await userCap.profiles(ids);els.forEach(e=>{e.textContent=(ps&&ps[e.dataset.by]&&ps[e.dataset.by].name)||"someone";});}catch(_){}
+  /* Only a real name is shown: with no name, or just "you", the line stays empty. */
+  try{const ps=await userCap.profiles(ids);els.forEach(e=>{const n=ps&&ps[e.dataset.by]&&ps[e.dataset.by].name;e.textContent=n&&n!=="you"?`${e.dataset.lead} ${n}`:"";});}catch(_){}
 }
 async function updateEntry(id,patch){
   try{await db.doc("tests/"+id).update(patch);return true;}
@@ -1985,27 +2041,20 @@ $("#logList").addEventListener("change",async e=>{
   if(t.dataset.f){updateEntry(id,{[t.dataset.f]:t.value.slice(0,2000)});return;}
   const d=entryById(id)||{};
   if(t.matches("[data-photo]")&&t.files[0]&&assets){
-    const f=t.files[0];setLogStatus("Uploading photo…");
+    const f=t.files[0];setLogStatus("Adding photo…");
     try{
       const r=await assets.upload(f,["image/jpeg","image/png","image/webp"].includes(f.type)?undefined:{type:"image/jpeg"});
       if(await updateEntry(id,{photo:r.id})){if(d.photo&&d.photo!==r.id)assets.delete(d.photo).catch(()=>{});setLogStatus("Photo added.");}
-    }catch(err){
-      const c=err&&err.code;
-      setLogStatus(c==="too_large"?"That photo is over 20 MB. Try a smaller one."
-        :c==="unsupported_type"?"Use a JPG, PNG or WebP photo. iPhone HEIC photos need converting first."
-        :c==="rate_limited"?"Too many uploads at once. Wait a moment and try again."
-        :c==="quota_or_state"?"Photo storage for this page is full. Delete old entries with photos to make room."
-        :"Couldn't upload the photo. Try again.");
-    }
+    }catch(err){setLogStatus(uploadErr(err));}
   }
 });
 $("#logList").addEventListener("submit",async e=>{
   e.preventDefault();
   const f=e.target,id=f.dataset.form,btn=f.querySelector("[type=submit]");
   const orig=id==="new"?editDraft:(entryById(id)||editDraft);
-  const entry=withPredictions(readForm(f,orig));
   btn.disabled=true;
   try{
+    const entry=withPredictions(readForm(f,orig));
     if(id==="new"){const ref=await addEntry(entry);freshId=ref.id;setLogStatus("Entry added."+revealNew(entry));}
     else{await db.doc("tests/"+id).update(entry);freshId=id;setLogStatus("Changes saved."+revealNew(entry));}
     editId=null;editDraft=null;renderLog(true);
@@ -2061,7 +2110,7 @@ $("#sheetFold").addEventListener("toggle",renderSheet);
 $("#sheetPrefill").addEventListener("change",renderSheet);
 $("#sheetCopy").addEventListener("click",()=>{
   const t=sheetText($("#sheetPrefill").checked),msg=$("#sheetMsg");renderSheet();
-  const selectIt=()=>{const r=document.createRange();r.selectNodeContents($("#sheetPre"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Copying isn't allowed here. The sheet text is selected; press Ctrl+C.";};
+  const selectIt=()=>{const r=document.createRange();r.selectNodeContents($("#sheetPre"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Couldn't copy it automatically. The sheet text is selected: "+(matchMedia("(pointer:coarse)").matches?"touch and hold the selected text, then tap Copy.":"press Ctrl and C together.");};
   try{navigator.clipboard.writeText(t).then(()=>msg.textContent="Copied. Paste it into Notepad and print.",selectIt);}catch(_){selectIt();}
 });
 let downloadsCap=null;
@@ -2073,7 +2122,7 @@ async function initDownloads(){
 $("#sheetDl").addEventListener("click",async()=>{
   const msg=$("#sheetMsg");if(!downloadsCap)return;
   try{await downloadsCap.save({filename:"disc-dye-sheet.txt",data:sheetText($("#sheetPrefill").checked)});msg.textContent="Saved. Open it in Notepad and print.";}
-  catch(err){const c=err&&err.code;msg.textContent=c==="declined"?"Download canceled.":c==="rate_limited"?"A save prompt is already open.":"Downloading isn't available here. Use Copy sheet text instead.";}
+  catch(err){const c=err&&err.code;msg.textContent=c==="declined"?"Download canceled.":"Downloading isn't available here. Use Copy sheet text instead.";}
 });
 
 function loadEntry(d){
@@ -2082,8 +2131,9 @@ function loadEntry(d){
     const same=state.dyes.find(x=>x.fam==="c"&&x.name===y.name&&x.hex===y.hex);
     return same?same.id:(/^#[0-9a-f]{6}$/i.test(y.hex)?addCustomDye(String(y.name),y.hex,y.code==="Mix"?"Mix":"Custom",y.recipe):null);
   }).filter(Boolean);
-  applySetup({base:d.disc?.hex,baseName:null,brand:d.plastic?.brand,plastic:d.plastic?.name,translucent:!!d.plastic?.translucent,tech:d.tech,pattern:d.pattern,depth:d.depth,sel:ids});
+  const fellBack=applySetup({base:d.disc?.hex,baseName:null,brand:d.plastic?.brand,plastic:d.plastic?.name,translucent:!!d.plastic?.translucent,tech:d.tech,pattern:d.pattern,depth:d.depth,sel:ids});
   showTab("planner");window.scrollTo({top:0});
+  if(fellBack)$("#logBtnHint").textContent=`That technique was deleted, so DIPS used ${TECH.floetrol.label}.`;
 }
 /* Cliff Notes thumbnails: sample ProChem colors (Caribbean, Neon Hot Orange, Dandelion) on a white disc. */
 function drawThumbs(){
@@ -2095,7 +2145,7 @@ $("#techJump").addEventListener("click",e=>{
   const b=e.target.closest("[data-jump]");if(!b)return;
   const d=document.getElementById(b.dataset.jump);d.open=true;d.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 });
-/* ---------- My techniques (shared db collection "techniques"; photos in assets) ---------- */
+/* ---------- My techniques (db collection "techniques"; photos in assets) ---------- */
 let myTechDocs=[],techEdit=null,techDraft=null,techDelArm=null,techPending=false,techUploads=[];
 const TECH_FIELDS=[["base","Base"],["plastics","Plastics"],["dyes","Dyes"],["how","How"],["mix","Mix"],["heat","Heat"],["setTime","Set"],["notes","Notes"]];
 const baseLabel2=k=>k?(TECH[k]?.label||"Other"):"";
@@ -2113,14 +2163,17 @@ function techPasses(t){
   return true;
 }
 function techSort(rows){
-  const c={name:(a,b)=>(a.name||"").localeCompare(b.name||""),new:(a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""),updated:(a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||"")}[tf.sort]||((a,b)=>(a.name||"").localeCompare(b.name||""));
+  const s=(t,k)=>String(t[k]||"");
+  const c={name:(a,b)=>s(a,"name").localeCompare(s(b,"name")),new:(a,b)=>s(b,"createdAt").localeCompare(s(a,"createdAt")),updated:(a,b)=>s(b,"updatedAt").localeCompare(s(a,"updatedAt"))}[tf.sort]||((a,b)=>s(a,"name").localeCompare(s(b,"name")));
   return rows.slice().sort(c);
 }
 function fillTechFilters(all){
   const uniqPairs=a=>[...new Map(a.filter(([v])=>v).map(x=>[x[0],x])).values()].sort((x,y)=>x[1].localeCompare(y[1]));
-  fillSel($("#tfBase"),uniqPairs(all.map(t=>[t.base||"other",baseLabel2(t.base)||"Other"])),tf.base,"Any base");
-  fillSel($("#tfPat"),uniqPairs(all.map(t=>[t.pattern,PATS[t.pattern]||t.pattern])),tf.pat,"Any style");
-  fillSel($("#tfTag"),uniqPairs(all.flatMap(t=>tagsOf(t).map(x=>[x.toLowerCase(),x]))),tf.tag,"Any tag");
+  /* A technique that can't be read adds nothing to the lists. */
+  const each=f=>all.flatMap(t=>tryOr(()=>f(t),[]));
+  fillSel($("#tfBase"),uniqPairs(each(t=>[[String(t.base||"other"),baseLabel2(t.base)||"Other"]])),tf.base,"Any base");
+  fillSel($("#tfPat"),uniqPairs(each(t=>[[t.pattern&&String(t.pattern),String(PATS[t.pattern]||t.pattern)]])),tf.pat,"Any style");
+  fillSel($("#tfTag"),uniqPairs(each(t=>tagsOf(t).map(x=>[x.toLowerCase(),x]))),tf.tag,"Any tag");
   $("#tfQ").value=tf.q;$("#tfSort").value=tf.sort;$("#tfQ").classList.toggle("on",!!tf.q);
 }
 let tfTimer=null;
@@ -2133,11 +2186,13 @@ $("#tfClear").addEventListener("click",()=>{Object.assign(tf,{...TF_DEFAULT,sort
 const techStatus=t=>{$("#myTechStatus").textContent=t;};
 function initTechniques(){
   if(!db){$("#myTechAdd").disabled=true;techStatus("This browser can't save techniques. Try Chrome, Edge or Safari.");return;}
-  db.collection("techniques").orderBy("name").limit(200).onSnapshot(
+  db.collection("techniques").orderBy("name").onSnapshot(
     s=>{
       myTechDocs=s.docs;renderMyTech();
-      /* Keep the Planner in step: apply a remembered user technique once it has loaded, and refresh the picker. */
-      if(pendingTech&&techInfo(pendingTech.tech)){state.tech=pendingTech.tech;const ps=techOr(state.tech).patterns;state.pattern=ps.includes(pendingTech.pattern)?pendingTech.pattern:ps[0];pendingTech=null;}
+      /* Keep the Planner in step: apply a remembered user technique once it has loaded, and refresh the picker.
+         One that is not among the loaded techniques was deleted, so it is dropped and renderTech falls back to the default. */
+      if(pendingTech&&techInfo(pendingTech.tech)){state.tech=pendingTech.tech;const ps=techOr(state.tech).patterns;state.pattern=ps.includes(pendingTech.pattern)?pendingTech.pattern:ps[0];}
+      techLoaded=true;pendingTech=null;
       renderTech();renderRoles();render();
       if(!$("#tab-log").hidden)renderLog();
     },
@@ -2169,7 +2224,7 @@ function techFormHtml(id,t){
       <div class="wide"><span class="label">Photo</span>
         <div class="photorow"><span data-photoprev>${photo?`<img data-blob="${t.photo}" alt="Technique photo">`:`<span class="hint">No photo yet.</span>`}</span>
           ${assets?`<label class="btn">${photo?"Replace photo":"Add photo"}<input type="file" accept="image/jpeg,image/png,image/webp" data-techphoto hidden></label>${photo?`<button type="button" class="btn" data-techphotorm>Remove photo</button>`:""}`
-            :`<span class="hint">People with edit access can add a photo.</span>`}</div></div>
+            :""}</div></div>
     </div>
     <div class="row"><button type="submit" class="btn primary">${id==="new"?"Add technique":"Save changes"}</button><button type="button" class="btn" data-techcancel>Cancel</button></div>
   </form></div>`;
@@ -2180,7 +2235,7 @@ function techViewHtml(t,open){
   return`<details class="tcard" id="mt-${esc(t.id)}"${open?" open":""}>
     <summary>${techThumb(t)}<span class="tsum"><span class="tname">${esc(t.name)}</span>${t.looks?`<span class="looks">${esc(t.looks)}</span>`:""}${t.description?`<span class="tlede">${esc(t.description)}</span>`:""}${tags.length?`<span class="techtags">${tags.map(x=>`<span>${esc(x)}</span>`).join("")}</span>`:""}</span><span class="chev" aria-hidden="true"></span></summary>
     <div class="tbody">${facts?`<dl class="facts">${facts}</dl>`:`<p class="hint">No details yet. Use Edit to add how, mix, heat and set time.</p>`}
-      <div class="tfoot"><span class="hint">${t.by?`Added by <span data-by="${esc(t.by)}">someone</span>`:""}</span>
+      <div class="tfoot"><span class="hint">${t.by?`<span data-by="${esc(t.by)}" data-lead="Added by"></span>`:""}</span>
         <span class="row"><button type="button" class="btn" data-tedit="${esc(t.id)}">Edit</button><button type="button" class="btn danger" data-tdel="${esc(t.id)}">${techDelArm===t.id?"Tap again to delete":"Delete"}</button></span></div>
     </div></details>`;
 }
@@ -2190,12 +2245,14 @@ function renderMyTech(force){
   const all=myTechDocs.map(s=>({id:s.id,...s.data()}));
   fillTechFilters(all);
   /* The entry being edited always stays visible, even if it no longer matches the filters. */
-  const rows=techSort(all.filter(t=>t.id===techEdit||techPasses(t)));
   const on=Object.keys(TF_DEFAULT).some(k=>k!=="sort"&&tf[k]!==TF_DEFAULT[k]);
+  const rows=techSort(all.filter(t=>t.id===techEdit||tryOr(()=>techPasses(t),!on)));
   $("#techTools").hidden=all.length<2&&!on;
   $("#tfCount").textContent=on?`Filters on: showing ${rows.length} of ${all.length} techniques.`:`${all.length} techniques`;
   $("#tfCount").classList.toggle("lfon",on);$("#tfClear").hidden=!on;
-  const cards=rows.map(t=>techEdit===t.id?techFormHtml(t.id,techDraft||t):techViewHtml(t,openIds.has("mt-"+t.id)));
+  /* A technique that can't be drawn shows as a small card that can still be deleted. */
+  const badCard=id=>`<div class="tcard"><p class="empty">This technique couldn't be shown.</p><div class="row"><button type="button" class="btn danger" data-tdel="${esc(id)}">${techDelArm===id?"Tap again to delete":"Delete"}</button></div></div>`;
+  const cards=rows.map(t=>tryOr(()=>techInfo("my:"+t.id)?(techEdit===t.id?techFormHtml(t.id,techDraft||t):techViewHtml(t,openIds.has("mt-"+t.id))):badCard(t.id),badCard(t.id)));
   if(techEdit==="new")cards.unshift(techFormHtml("new",techDraft));
   $("#myTechList").innerHTML=cards.join("")||(all.length?`<p class="empty">No techniques match these filters.</p>`:`<p class="empty">No techniques of your own yet.</p>`);
   document.querySelectorAll("#myTechList canvas.thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
@@ -2249,17 +2306,13 @@ $("#myTechList").addEventListener("click",async e=>{
 });
 $("#myTechList").addEventListener("change",async e=>{
   const t=e.target;if(!t.matches("[data-techphoto]")||!t.files[0]||!assets)return;
-  const f=t.files[0];techStatus("Uploading photo…");
+  const f=t.files[0];techStatus("Adding photo…");
   try{
     const r=await assets.upload(f,["image/jpeg","image/png","image/webp"].includes(f.type)?undefined:{type:"image/jpeg"});
     techUploads.push(r.id);techDraft.photo=r.id;
     t.closest("form").querySelector("[data-photoprev]").innerHTML=`<img src="${esc(r.url)}" alt="Technique photo">`;
     techStatus("Photo ready. It's saved when you save the technique.");
-  }catch(err){
-    const c=err&&err.code;
-    techStatus(c==="too_large"?"That photo is over 20 MB. Try a smaller one.":c==="unsupported_type"?"Use a JPG, PNG or WebP photo. iPhone HEIC photos need converting first."
-      :c==="quota_or_state"?"Photo storage for this page is full.":"Couldn't upload the photo. Try again.");
-  }
+  }catch(err){techStatus(uploadErr(err));}
 });
 $("#myTechList").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -2297,15 +2350,21 @@ initLog();initDownloads();
 </script>
 <script>
 if("serviceWorker" in navigator){
+  /* Read before registering: true only when an older worker already runs this page (a return visit). */
+  const hadController=!!navigator.serviceWorker.controller;
+  let accepted=false,waiting=null;
+  /* Tapping Reload on the update bar accepts the update: the new worker is told to take over and the page reloads when it does. */
+  document.addEventListener("click",e=>{if(e.target.closest("#updateBtn")){accepted=true;if(waiting)waiting.postMessage("SKIP_WAITING");}});
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
     /* A new version installed in the background: offer a reload instead of switching under the user. */
-    const offer=w=>{const el=document.getElementById("updateBar");el.hidden=false;document.getElementById("updateBtn").onclick=()=>w.postMessage("SKIP_WAITING");};
+    const offer=w=>{waiting=w;document.getElementById("updateBar").hidden=false;};
     if(reg.waiting&&navigator.serviceWorker.controller)offer(reg.waiting);
     reg.addEventListener("updatefound",()=>{const w=reg.installing;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)offer(w);});});
     setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
   });
   let reloaded=false;
-  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload();}});
+  /* A first visit's worker taking over needs no reload; an update the user accepted does, even in a tab opened on a first visit. */
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if((hadController||accepted)&&!reloaded){reloaded=true;location.reload();}});
 }
 </script>
 <div id="updateBar" hidden><span>A new version of DIPS is ready.</span><button type="button" id="updateBtn">Reload</button></div>
