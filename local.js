@@ -176,6 +176,12 @@
       const u = urls.get(id); if (u) { URL.revokeObjectURL(u); urls.delete(id); }
       changed();
       return { deleted: true };
+    },
+    /* The address of a stored photo for drawing it, or "" when the photo is not on this device
+       (an own photo pattern restored without its picture). */
+    async url(id) {
+      if (typeof id !== "string" || !PHOTO_ID.test(id)) return "";
+      try { return await blobURL(id); } catch (_) { return ""; }
     }
   };
   /* The planner renders photos as <img data-blob="id">; fill in their sources as they appear. */
@@ -264,7 +270,7 @@
     return {
       date: strOr(d.date), disc: { hex: colorOk(disc.hex) ? disc.hex : null, name: strOr(disc.name) },
       plastic: { brand: strOr(pl.brand), name: strOr(pl.name), rating: strOr(pl.rating) || "-", translucent: pl.translucent === true },
-      tech: strOr(d.tech), techName: strOr(d.techName), pattern: strOr(d.pattern), depth: Number.isFinite(d.depth) ? d.depth : 0.8,
+      tech: strOr(d.tech), techName: strOr(d.techName), pattern: strOr(d.pattern), patternName: strOr(d.patternName), depth: Number.isFinite(d.depth) ? d.depth : 0.8,
       dyes, predicted: { multiply: pred("multiply"), darken: pred("darken") },
       mix: strOr(d.mix), setTime: strOr(d.setTime), notes: strOr(d.notes), closer: CLOSERS.has(d.closer) ? d.closer : "",
       photo: photoOr(d.photo), by: strOrNull(d.by), createdAt: strOr(d.createdAt)
@@ -279,7 +285,14 @@
       createdAt: strOr(d.createdAt), updatedAt: strOr(d.updatedAt)
     };
   }
-  const CLEANERS = new Map([["tests", cleanLogEntry], ["techniques", cleanTechnique]]);
+  /* An own photo pattern is a name and its photo; one with no usable photo reference is nothing, so it
+     is skipped (null) and counted. */
+  function cleanPattern(d) {
+    const photo = photoOr(d.photo);
+    if (!photo) return null;
+    return { name: strOr(d.name).slice(0, 40) || "My photo", photo, by: strOrNull(d.by), createdAt: strOr(d.createdAt) };
+  }
+  const CLEANERS = new Map([["tests", cleanLogEntry], ["techniques", cleanTechnique], ["patterns", cleanPattern]]);
   const count = n => `${n} item${n === 1 ? "" : "s"}`;
   const skipped = bad => bad ? ` ${count(bad)} couldn't be restored.` : "";
   async function importData(data, getBlob) {
@@ -318,6 +331,7 @@
         if (await getOne("docs", d.col + "/" + d.id)) continue;
         const clean = CLEANERS.get(d.col);
         const entry = clean ? clean(d.data) : d.data;
+        if (!entry) { bad++; continue; }
         const pid = entry.photo;
         if (!clean && pid && (typeof pid !== "string" || !PHOTO_ID.test(pid))) { bad++; continue; }
         const doc = idMap.size && Array.isArray(entry.dyes) ? { ...entry, dyes: remapDyes(entry.dyes) } : entry;

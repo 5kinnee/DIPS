@@ -91,45 +91,16 @@ function classify(dye,setup){
 
 const touchRgb=(a,b,mode)=>blendRgb(a.res,b.eff,mode);
 
-/* The one dye cap: how many dyes a disc can carry, everywhere in the app (Story 0.5.0 AC-34). */
-const MAX_DYES=8;
-/* "As now" covers 2-3 dyes, so larger combos start here. */
-const MIN_PER_COMBO=4;
-
-/* Photo patterns: the shipped ones ("photo-...") and the dyer's own ("own:<id>"). */
-const isPhotoPattern=key=>typeof key==="string"&&(key.startsWith("photo-")||key.startsWith("own:"));
-
-/* ---------- which colors touch, per pattern (Story 0.2.0 AC-7, Story 0.5.0 AC-51/52) ----------
-   Pairs follow the picture for any number of dyes (Gate 4 Decision A). Photo patterns ask
-   photoTouch(k), supplied by the page, for the color groups that border each other in the photo;
-   until the photo is ready it gives nothing. An unknown name falls back to rings. */
-const TOUCH_KIND=Object.setPrototypeOf({spin:"ring",offcenter:"ring",lollipop:"ring",swirl:"ring",river:"ring",starburst:"ring",
-  cells:"cells",full:"full",doubledip:"double",dipfade:"chain",stencil:"stencil"},null);
-/* The combo picker asks for pairs thousands of times per tap; built-in lists are made once per
-   (kind, k) and shared. Callers only read them; they are not frozen because frozen lists slow the picker's reads. */
-const TOUCH_CACHE=Object.setPrototypeOf({},null);
-function comboTouchPairs(pattern,n,photoTouch){
-  const k=Math.max(0,n|0);
-  let kind=TOUCH_KIND[pattern];
-  if(!kind){
-    if(isPhotoPattern(pattern)){
-      const p=typeof photoTouch==="function"?photoTouch(k):null;
-      return Array.isArray(p)?p.filter(([a,b])=>a<k&&b<k):[];
-    }
-    kind="ring";
-  }
-  const byK=TOUCH_CACHE[kind]||(TOUCH_CACHE[kind]=[]);
-  return byK[k]||(byK[k]=touchPairsFor(kind,k));
-}
-function touchPairsFor(kind,k){
-  const chain=()=>Array.from({length:Math.max(0,k-1)},(_,j)=>[j,j+1]);
-  let pairs;
-  if(kind==="ring")pairs=k>=3?chain().concat([[k-1,0]]):chain();
-  else if(kind==="cells")pairs=Array.from({length:Math.max(0,k-1)},(_,j)=>[0,j+1]);
-  else if(kind==="chain"||kind==="full")pairs=chain();
-  else if(kind==="double"){pairs=[[0,1],[2,0],[2,1]];for(let j=3;j<k;j++)pairs.push([j,0],[j,1],[j,j-1]);}
-  else{pairs=[[0,1]];for(let j=2;j<k;j++)pairs.push([j,0],[j,j-1]);}
-  return pairs.filter(([a,b])=>a<k&&b<k);
+/* ---------- which colors touch, per pattern (Story 0.2.0 AC-7) ---------- */
+function comboTouchPairs(pattern,n){
+  const kind={spin:"ring",offcenter:"ring",lollipop:"ring",swirl:"ring",river:"ring",starburst:"ring",
+    cells:"cells",full:"none",doubledip:"double",dipfade:"chain",stencil:"first"}[pattern]||"ring";
+  const pairs=kind==="cells"?[[0,1],[0,2]]
+    :kind==="ring"?[[0,1],[1,2],[2,0]]
+    :kind==="double"?[[0,1],[2,0],[2,1]]
+    :kind==="chain"?[[0,1],[1,2]]
+    :kind==="first"?[[0,1]]:[];
+  return pairs.filter(([a,b])=>a<n&&b<n);
 }
 
 /* ---------- combo picker ---------- */
@@ -167,7 +138,6 @@ function pickVaried(cands,it,k=8){
    card still shows them, so a touch on black or dark brown reads "muddy" (Blueprint 0.2.0 answer 2,
    Story AC-8). Adding muddy() to those scores would undo that decision. */
 function buildCombos(pool,setup){
-  if(setup.perCombo>=MIN_PER_COMBO)return buildCombosN(pool,setup,setup.perCombo);
   const it=pool.filter(r=>r.cat!=="mud").map(r=>{
     const l=lab(r.res),H=hue(r.res);
     return{r,l,L:l.L,C:l.C,H,dark:r.darkDye,pop:r.cat==="pop",
@@ -185,7 +155,7 @@ function buildCombos(pool,setup){
   }
   const hd=(i,j)=>hueDist(it[i].H,it[j].H);
   const distinct=s=>s.every((a,x)=>s.every((b,y)=>y<=x||dist[a][b]>=DISTINCT));
-  const muddy=(s,pattern)=>comboTouchPairs(pattern,s.length,setup.photoTouch).filter(([a,b])=>mud[s[a]][s[b]]).length;
+  const muddy=(s,pattern)=>comboTouchPairs(pattern,s.length).filter(([a,b])=>mud[s[a]][s[b]]).length;
   const avgVis=s=>s.reduce((t,i)=>t+it[i].vis,0)/s.length;
   const sep=s=>{let m=99;s.forEach((a,x)=>s.forEach((b,y)=>{if(y>x)m=Math.min(m,dist[a][b]);}));return Math.min(1,m/40);};
 
@@ -298,186 +268,6 @@ function buildCombos(pool,setup){
   return types.filter(t=>t.options.length);
 }
 
-/* ---------- Dyes per combo (Story 0.5.0 AC-46..AC-50, Blueprint 0.5.0 §5) ----------
-   The tables buildCombos computes, for buildCombosN. buildCombos keeps its own inline copy so the
-   "As now" path stays exactly 0.4.1's (Blueprint 0.5.0 §5.2; T21 compares it with the frozen copy). */
-function comboTables(pool,setup){
-  const it=pool.filter(r=>r.cat!=="mud").map(r=>{
-    const l=lab(r.res),H=hue(r.res);
-    return{r,l,L:l.L,C:l.C,H,dark:r.darkDye,pop:r.cat==="pop",
-      fam:r.darkDye?"dark":l.C<12?"neutral":hueName(H),
-      vis:Math.max(0,Math.min(1,(r.score-20)/90))};
-  });
-  const n=it.length,mud=[],dist=[];
-  for(let i=0;i<n;i++){
-    mud[i]=[];dist[i]=[];
-    for(let j=0;j<n;j++){
-      mud[i][j]=i!==j&&isMud(blendRgb(it[i].r.res,it[j].r.eff,setup.blend));
-      dist[i][j]=dE(it[i].l,it[j].l);
-    }
-  }
-  const idx=[...Array(n).keys()],pops=idx.filter(i=>it[i].pop&&!it[i].dark);
-  return{it,mud,dist,idx,pops,chrom:pops.filter(i=>it[i].C>=15),darks:idx.filter(i=>it[i].pop&&it[i].dark)};
-}
-
-/* Options of exactly N dyes, one color at a time: from every eligible first color, each step keeps only
-   the BEAM best partial sets for that first color, so it never tries every combination (C(49,8) is
-   about 450 million). Every added color is DISTINCT from all before it; the pool already leaves out
-   dyes that go muddy on the disc; pickVaried applies the unchanged variety rules. A type with no
-   N-dye option is left out. What N dyes means per type is Blueprint 0.5.0 §5.3 (Decision F). */
-const BEAM=3;
-function buildCombosN(pool,setup,N){
-  N=Math.max(2,Math.min(MAX_DYES,N|0));
-  const{it,mud,dist,idx,pops,chrom,darks}=comboTables(pool,setup);
-  const P=setup.pattern,hd=(i,j)=>hueDist(it[i].H,it[j].H);
-  const muddy=(s,pattern)=>comboTouchPairs(pattern,s.length,setup.photoTouch).filter(([a,b])=>mud[s[a]][s[b]]).length;
-  const sd=(a,b)=>((it[b].H-it[a].H+540)%360)-180; /* signed hue step from a to b */
-  const avg=nd=>nd.vis/nd.s.length,sepq=nd=>Math.min(1,nd.minD/40),last=nd=>nd.s[nd.s.length-1];
-  /* A node is a partial set {s, vis (sum), minD (closest pair), q}. */
-  function grow(starts,cands,len,ok,q){
-    const out=[];
-    for(const a of starts){
-      let beam=[{s:[a],vis:it[a].vis,minD:99}];
-      for(let step=1;step<len&&beam.length;step++){
-        const next=[];
-        for(const nd of beam) for(const c of cands){
-          if(nd.s.includes(c)||!ok(nd,c))continue;
-          let m=nd.minD;
-          for(const x of nd.s){if(dist[x][c]<DISTINCT){m=-1;break;}if(dist[x][c]<m)m=dist[x][c];}
-          if(m<0)continue;
-          const k={s:nd.s.concat(c),vis:nd.vis+it[c].vis,minD:m};k.q=q(k);
-          if(next.length<BEAM||k.q>next[next.length-1].q){next.push(k);next.sort((x,y)=>y.q-x.q);if(next.length>BEAM)next.pop();}
-        }
-        beam=next;
-      }
-      for(const nd of beam)if(nd.s.length===len)out.push(nd);
-    }
-    return out;
-  }
-  /* Steps of lo-hi degrees around the wheel, all the same way round, never coming back to the start. */
-  const around=(nd,c,lo,hi)=>{
-    const s=nd.s,st=sd(last(nd),c);
-    if(Math.abs(st)<lo||Math.abs(st)>hi)return false;
-    if(s.length<2)return true;
-    if(Math.sign(st)!==Math.sign(sd(s[0],s[1])))return false;
-    let span=st;for(let i=1;i<s.length;i++)span+=sd(s[i-1],s[i]);
-    return Math.abs(span)<=300;
-  };
-  const withDark=(prefixes)=>{
-    const out=[];
-    for(const nd of prefixes) for(const d of darks){
-      if(nd.s.some(x=>dist[x][d]<DISTINCT))continue;
-      out.push({s:nd.s.concat(d),q:0.6*avg(nd)+0.4*Math.min(1,(it[nd.s[0]].L-it[d].L)/50)});
-    }
-    return out;
-  };
-
-  const types=[],tb=setup.techBase;
-  if(tb==="floetrol"){
-    /* Color 1 the background; the rest all lighter, or all darker, by a clear step. */
-    const L=i=>it[i].L;
-    const sets=grow(idx.filter(i=>it[i].pop),pops,N,
-      (nd,c)=>{const bg=nd.s[0],d=L(c)-L(bg);return Math.abs(d)>=20&&(nd.s.length<2||Math.sign(d)===Math.sign(L(nd.s[1])-L(bg)));},
-      nd=>{let gap=99;for(let i=1;i<nd.s.length;i++)gap=Math.min(gap,Math.abs(L(nd.s[i])-L(nd.s[0])));return 0.35*Math.min(1,gap/45)+0.35*avg(nd)+0.15*sepq(nd);});
-    types.push({key:"cells",title:"Background + cells",options:pickVaried(sets.map(nd=>({s:nd.s,q:nd.q-0.2*muddy(nd.s,"cells")})),it),touch:"cells",
-      blurb:o=>lab(o[1].res).L>lab(o[0].res).L
-        ?`Color 1 is a darker background. Colors 2 to ${o.length} are lighter cells that stand out against it.`
-        :`Color 1 is a lighter background. Colors 2 to ${o.length} are darker cells that stand out against it.`});
-  }else if(tb==="spin"){
-    const sets=grow(chrom,chrom,N,(nd,c)=>around(nd,c,20,70),nd=>0.55*avg(nd)+0.2*sepq(nd)+0.2);
-    types.push({key:"rainbow",title:"Rainbow progression",options:pickVaried(sets.map(nd=>({s:nd.s,q:nd.q-0.3*muddy(nd.s,P)})),it),touch:P,
-      blurb:()=>"Colors stepping around the color wheel, in ring order, so neighboring rings blend cleanly."});
-  }else if(tb==="hotdip"){
-    /* Color 1 the dip, then colors close to it on the wheel, and a dark color last for the rim. */
-    const c=withDark(grow(chrom,chrom,N-1,(nd,x)=>hd(nd.s[0],x)<=60,avg));
-    types.push({key:"solidrim",title:"Solid + rim",options:pickVaried(c,it),touch:P,
-      blurb:o=>`Color 1 is the dip, and the colors after it sit close to it on the color wheel. Use ${o[o.length-1].dye.name} for a dark rim or a last, partial dip.`});
-  }else{
-    /* One color family, each color clearly darker than the one before. */
-    const fam=idx.filter(i=>!it[i].dark&&it[i].C>=20);
-    const sets=grow(fam,fam,N,
-      (nd,c)=>{const g=it[last(nd)].L-it[c].L;return hueDist(it[nd.s[0]].H,it[c].H)<30&&g>=12&&(nd.s.length>1||g<=30);},
-      nd=>0.6*avg(nd)+0.2);
-    types.push({key:"lightdark",title:"Light to dark",options:pickVaried(sets.map(nd=>({s:nd.s,q:nd.q-0.3*muddy(nd.s,P)})),it),touch:P,
-      blurb:()=>"One color family from light to dark. Swirls and marbling read as depth instead of mud."});
-  }
-
-  /* Close together on the wheel, in order; a muddy touch between neighbors ends the set, and the
-     finished set has no muddy touch at all, as in the 0.4.1 Neighbors. */
-  const nb=grow(chrom,chrom,N,(nd,c)=>!mud[last(nd)][c]&&around(nd,c,20,70),nd=>0.55*avg(nd)+0.2*sepq(nd)+0.2);
-  types.push({key:"neighbors",title:"Neighbors",options:pickVaried(nb.filter(nd=>!muddy(nd.s,P)).map(nd=>({s:nd.s,q:nd.q})),it),touch:P,
-    blurb:()=>"Close together on the color wheel, so where they bleed into each other they stay clean."});
-
-  /* Colors alternating between two far-apart sides of the wheel. */
-  const ct=grow(chrom,chrom,N,
-    (nd,c)=>{const s=nd.s,len=s.length;return hd(s[len-1],c)>=100&&(len<2||hd(s[len%2],c)<=60);},
-    nd=>{let m=180;for(let i=1;i<nd.s.length;i++)m=Math.min(m,hd(nd.s[i-1],nd.s[i]));return 0.5*m/180+0.5*avg(nd);});
-  types.push({key:"contrast",title:"High contrast",options:pickVaried(ct.map(nd=>({s:nd.s,q:nd.q-0.15*muddy(nd.s,P)})),it),touch:P,
-    blurb:o=>o.some((r,i)=>i&&isMud(blendRgb(o[i-1].res,r.eff,setup.blend)))
-      ?"Big contrast: each color sits across the wheel from the one before. Leave a gap where neighbors go muddy."
-      :"Big contrast: each color sits across the wheel from the one before, and even where they touch it stays usable."});
-
-  /* Bold colors stepping around the wheel, then a dark accent last. */
-  const bd=withDark(grow(chrom,chrom,N-1,(nd,c)=>!mud[last(nd)][c]&&around(nd,c,20,60),avg));
-  types.push({key:"bolddark",title:"Bold + dark accent",options:pickVaried(bd,it),touch:P,
-    blurb:o=>`Use ${o[o.length-1].dye.name} for crisp lines, the rim, or the outer ring.`});
-
-  return types.filter(t=>t.options.length);
-}
-
-/* ---------- pictures: cell colors and photo color groups (Blueprint 0.5.0 §3.5-3.6) ---------- */
-/* Cell i: fill color (never color 1, the background; -1 with one dye) and outline, which cycles
-   through all colors in order (Story 0.5.0 AC-10). */
-const cellRoles=(i,n)=>({fill:n>1?1+i%(n-1):-1,outline:n>0?(i+1)%n:-1});
-
-/* A photo's colors sorted into k groups, largest first (Story 0.5.0 AC-16). px: flat r,g,b list in
-   0..1. Centers start at luminance quantiles, 12 rounds, ties go to the lower index, so the same
-   photo always gives the same groups. Returns centers and counts by size, and a label per pixel. */
-function photoGroups(px,k){
-  const m=Math.floor(px.length/3),labels=new Int16Array(m).fill(-1);
-  k=Math.max(0,k|0);
-  if(!k||!m)return{centers:Array.from({length:k},()=>[0,0,0]),counts:new Array(k).fill(0),labels};
-  const lum=i=>.299*px[3*i]+.587*px[3*i+1]+.114*px[3*i+2];
-  const order=[...Array(m).keys()].sort((a,b)=>lum(a)-lum(b)||a-b);
-  let C=Array.from({length:k},(_,j)=>{const i=order[Math.min(m-1,Math.floor((j+.5)/k*m))];return[px[3*i],px[3*i+1],px[3*i+2]];});
-  const assign=()=>{
-    const cnt=new Array(k).fill(0),sum=C.map(()=>[0,0,0]);
-    for(let i=0;i<m;i++){
-      const r=px[3*i],g=px[3*i+1],b=px[3*i+2];let best=0,bd=Infinity;
-      for(let j=0;j<k;j++){const d=(r-C[j][0])**2+(g-C[j][1])**2+(b-C[j][2])**2;if(d<bd){bd=d;best=j;}}
-      labels[i]=best;cnt[best]++;sum[best][0]+=r;sum[best][1]+=g;sum[best][2]+=b;
-    }
-    return{cnt,sum};
-  };
-  for(let round=0;round<12;round++){const{cnt,sum}=assign();C=C.map((c,j)=>cnt[j]?sum[j].map(v=>v/cnt[j]):c);}
-  const{cnt}=assign();
-  const rank=[...Array(k).keys()].sort((a,b)=>cnt[b]-cnt[a]||a-b),pos=new Array(k);
-  rank.forEach((j,p)=>{pos[j]=p;});
-  for(let i=0;i<m;i++)labels[i]=pos[labels[i]];
-  return{centers:rank.map(j=>C[j]),counts:rank.map(j=>cnt[j]),labels};
-}
-
-/* Which color groups border each other in a photo (Sean's Decision 2): labels is an S x S map, -1
-   outside the disc. A 3x3 majority smooth drops single-pixel specks; a pair counts when its border is
-   at least 6 pixel edges and 1% of all borders. Returns [a,b] pairs, a < b, sorted. */
-function groupTouchPairs(labels,S,k){
-  const sm=new Int16Array(labels.length).fill(-1),cnt=new Array(k).fill(0);
-  for(let y=0;y<S;y++)for(let x=0;x<S;x++){
-    const i=y*S+x,own=labels[i];if(own<0||own>=k)continue;
-    cnt.fill(0);
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-      const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=S||Y>=S)continue;
-      const l=labels[Y*S+X];if(l>=0&&l<k)cnt[l]++;
-    }
-    let best=own,bc=cnt[own];for(let j=0;j<k;j++)if(cnt[j]>bc){bc=cnt[j];best=j;}
-    sm[i]=best;
-  }
-  const edges=new Map();let total=0;
-  const add=(a,b)=>{if(a<0||b<0||a===b)return;const key=a<b?a*k+b:b*k+a;edges.set(key,(edges.get(key)||0)+1);total++;};
-  for(let y=0;y<S;y++)for(let x=0;x<S;x++){const i=y*S+x;if(x+1<S)add(sm[i],sm[i+1]);if(y+1<S)add(sm[i],sm[i+S]);}
-  return[...edges].filter(([,c])=>c>=6&&c>=.01*total).map(([key])=>[Math.floor(key/k),key%k]).sort((p,q)=>p[0]-q[0]||p[1]-q[1]);
-}
-
 /* ---------- color wheel and dial ---------- */
 function hsvToRgb(h,s,v){const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1));};return[f(5),f(3),f(1)].map(x=>Math.round(x*255));}
 
@@ -521,6 +311,5 @@ function mudRimHues(setup,step=5){
 if(typeof module==="object"&&module&&module.exports)module.exports={
   hex2rgb,rgb2hex,lab,dE,hue,hueDist,hueName,nameColor,isMud,soakRgb,mixRgb,
   blendRgb,predictHexes,dyesFromText,classify,touchRgb,comboTouchPairs,
-  DISTINCT,pickVaried,buildCombos,hsvToRgb,wheelPos,wheelPointToRgb,DIAL,dialMatch,mudRimHues,
-  MAX_DYES,MIN_PER_COMBO,isPhotoPattern,buildCombosN,cellRoles,photoGroups,groupTouchPairs
+  DISTINCT,pickVaried,buildCombos,hsvToRgb,wheelPos,wheelPointToRgb,DIAL,dialMatch,mudRimHues
 };

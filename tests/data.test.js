@@ -625,3 +625,209 @@ test("D10: the log filter setting is kept in backups and restored", async () => 
     assert.strictEqual(await b.page.evaluate(() => localStorage.getItem("discdye.logfilter")), filter);
   } finally { await b.context.close(); }
 });
+
+/* ---------- 0.5.0: own photo patterns, 8+ dye entries, 0.4.1 data (Story 0.5.0 AC-30..AC-32, AC-41, AC-60, AC-72..AC-74) ---------- */
+/* An own photo pattern stored the way the app stores one (a photo in assets, then the pattern doc). */
+const seedOwnPattern = (page, name) => page.evaluate(async name => {
+  const db = await window.claude.use("db"), assets = await window.claude.use("assets");
+  const c = document.createElement("canvas"); c.width = c.height = 96;
+  const x = c.getContext("2d"); x.fillStyle = "#d02020"; x.fillRect(0, 0, 96, 48); x.fillStyle = "#2040d0"; x.fillRect(0, 48, 96, 48);
+  const ph = await assets.upload(await new Promise(r => c.toBlob(r, "image/png")));
+  const ref = await db.collection("patterns").add({ name, photo: ph.id, by: null, createdAt: new Date().toISOString() });
+  return { id: ref.id, key: "own:" + ref.id, photo: ph.id };
+}, name);
+const smallPhotoDataURL = page => page.evaluate(() => { const c = document.createElement("canvas"); c.width = c.height = 32; const x = c.getContext("2d"); x.fillStyle = "#e0a000"; x.fillRect(0, 0, 32, 32); return c.toDataURL("image/png"); });
+
+test("D22 (AC-30, P0): an own photo pattern and a log entry using it survive backup, clearing everything, and restore, with the photo showing", async () => {
+  const a = await openApp("computer");
+  let body, own;
+  try {
+    await a.page.waitForFunction(() => !document.querySelector("#ownAdd").hidden);
+    own = await seedOwnPattern(a.page, "Sunset disc");
+    await a.page.waitForFunction(k => patKnown(k), own.key);
+    await a.page.evaluate(k => { state.pattern = k; render(); }, own.key);
+    await tapEl(a.page, "computer", "#logBtn");
+    await a.page.waitForFunction(() => document.querySelectorAll("#logList .entry").length === 1);
+    body = await saveBackup(a.page, "computer");
+    assert.ok(body.docs.some(d => d.col === "patterns" && d.id === own.id && d.data.photo === own.photo), "the backup should hold the pattern");
+    assert.match(body.photos[own.photo] || "", /^data:image\//, "the backup should hold the pattern's photo");
+  } finally { await a.context.close(); }
+
+  /* A fresh profile is a device with all site data cleared. */
+  const b = await openApp("computer");
+  try {
+    await restoreWith(b.page, backupFile(null, JSON.stringify(body)));
+    assert.match(await nudgeText(b.page), /Restored 2 items\./, "the pattern and the entry");
+    await b.page.waitForFunction(k => patKnown(k), own.key);
+    assert.strictEqual(await b.page.evaluate(k => patLabel(k), own.key), "Sunset disc");
+    await b.page.waitForFunction(k => DiscPreview.photoState(k) !== "loading", own.key);
+    assert.strictEqual(await b.page.evaluate(k => DiscPreview.photoState(k), own.key), "ready", "the restored pattern's photo should be there to draw");
+    const entry = await b.page.evaluate(() => window.claude.use("db").then(db => db.collection("tests").get()).then(s => s.docs[0].data()));
+    assert.deepStrictEqual([entry.pattern, entry.patternName], [own.key, "Sunset disc"], "the entry keeps its pattern and its name");
+    await tapEl(b.page, "computer", "#tabbtn-log");
+    await b.page.waitForFunction(() => /Sunset disc/.test(document.querySelector("#logList").textContent));
+  } finally { await b.context.close(); }
+});
+
+test("D23 (AC-30): the DIPS folder copy holds the own photo pattern and its photo file", async () => {
+  const { context, page } = await openApp("computer");
+  try {
+    await chooseFolder(context, page, "computer");
+    await until(() => opfsRead(page, "DIPS", "data.json"));
+    await page.waitForFunction(() => !document.querySelector("#ownAdd").hidden);
+    const own = await seedOwnPattern(page, "Folder photo");
+    await until(async () => { try { return JSON.parse(await opfsRead(page, "DIPS", "data.json")).docs.some(d => d.col === "patterns" && d.id === own.id && d.data.photo === own.photo); } catch (_) { return false; } });
+    const size = await until(() => page.evaluate(async id => {
+      try { const f = await (await (await (await (await navigator.storage.getDirectory()).getDirectoryHandle("DIPS")).getDirectoryHandle("photos")).getFileHandle(id + ".jpg")).getFile(); return f.size; }
+      catch (_) { return 0; }
+    }, own.photo));
+    assert.ok(size > 0, "the pattern's photo file should be in the folder's photos");
+  } finally { await context.close(); }
+});
+
+test("D24 (AC-31, AC-74): damaged own photo patterns in a backup are rebuilt or skipped and counted, never break a tab, and photos come only from the file", async () => {
+  const { context, page, errors } = await openApp("computer");
+  try {
+    const requests = [];
+    page.on("request", r => requests.push(r.url()));
+    const url = await smallPhotoDataURL(page), p1 = "1".repeat(32), p2 = "2".repeat(32), p6 = "6".repeat(32);
+    const cssName = "<img src=x onerror=window.__hit=1><style>body{display:none}</style>" + "x".repeat(40);
+    await restoreWith(page, backupFile({
+      docs: [
+        { col: "patterns", id: "p1", data: { name: 7, photo: p1, by: 5, createdAt: [] } },
+        { col: "patterns", id: "p2", data: { name: cssName, photo: p2 } },
+        { col: "patterns", id: "p3", data: { name: "No photo at all" } },
+        { col: "patterns", id: "p4", data: { name: "Bad photo id", photo: "../../steal" } },
+        { col: "patterns", id: "p5", data: "just text" },
+        { col: "patterns", id: "p6", data: { name: "Photo from the web", photo: p6 } }
+      ],
+      photos: { [p1]: url, [p2]: url, [p6]: "https://example.com/evil.png" }
+    }));
+    const msg = await nudgeText(page);
+    assert.match(msg, /Restored 3 items/, "the two repairable patterns and the one whose photo isn't in the file");
+    assert.match(msg, /3 items couldn't be restored/, "no photo reference, a bad photo id and a non-object are skipped and counted");
+    const d1 = await getDoc(page, "patterns/p1");
+    assert.deepStrictEqual(d1, { name: "My photo", photo: p1, by: null, createdAt: "" }, "each field rebuilt with the type the app writes");
+    assert.strictEqual((await getDoc(page, "patterns/p2")).name.length, 40, "a name is at most 40 characters");
+    for (const id of ["p3", "p4", "p5"]) assert.strictEqual(await getDoc(page, "patterns/" + id), null, `${id} should be skipped`);
+    assert.deepStrictEqual(requests.filter(u => u.includes("example.com")), [], "a photo link that isn't an embedded image must never be fetched");
+    await page.waitForFunction(() => document.querySelectorAll("#ownPats .ownrow").length === 3);
+    assert.strictEqual(await page.evaluate(() => window.__hit || 0), 0, "a name must never run as page code");
+    assert.strictEqual(await page.locator("#ownPats img, #ownPats style").count(), 0, "a name must show as text");
+    for (const tab of ["planner", "notes", "log", "data"]) {
+      await tapEl(page, "computer", `#tabbtn-${tab}`);
+      await page.locator(`#tab-${tab}`).waitFor({ state: "visible" });
+    }
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally { await context.close(); }
+});
+
+test("D25 (AC-32): an own photo pattern added in one window appears in a second window", async () => {
+  const { context, page } = await openApp("computer");
+  try {
+    const page2 = await context.newPage();
+    await page2.goto(page.url());
+    await ready(page2);
+    await page2.waitForFunction(() => patsLoaded);
+    await page.waitForFunction(() => !document.querySelector("#ownAdd").hidden);
+    const own = await seedOwnPattern(page, "Shared photo");
+    await page2.waitForFunction(k => !!document.querySelector(`#ownPats [data-pat="${k}"]`) && DiscPreview.photoState(k) !== "loading", own.key);
+    assert.strictEqual(await page2.evaluate(k => DiscPreview.photoState(k), own.key), "ready", "the second window can draw it");
+    await page.evaluate(async o => { await (await window.claude.use("db")).doc("patterns/" + o.id).delete(); }, own);
+    await page2.waitForFunction(k => !document.querySelector(`#ownPats [data-pat="${k}"]`), own.key);
+  } finally { await context.close(); }
+});
+
+test("D26 (AC-60): restored log entries made with photo patterns keep their pattern names", async () => {
+  const { context, page, errors } = await openApp("computer");
+  try {
+    await restoreWith(page, backupFile({ docs: [
+      { col: "tests", id: "ph1", data: fullEntry({ createdAt: "2026-01-02T00:00:00.000Z", pattern: "photo-flames", patternName: "Flames photo" }) },
+      { col: "tests", id: "ph2", data: fullEntry({ createdAt: "2026-01-03T00:00:00.000Z", pattern: "own:gone123", patternName: "Old favorite" }) },
+      { col: "tests", id: "ph3", data: fullEntry({ createdAt: "2026-01-04T00:00:00.000Z", pattern: "own:gone456", patternName: 9 }) }] }));
+    assert.match(await nudgeText(page), /Restored 3 items\./);
+    assert.strictEqual((await getDoc(page, "tests/ph2")).patternName, "Old favorite", "the restore must keep the logged pattern name");
+    assert.strictEqual((await getDoc(page, "tests/ph3")).patternName, "", "a name that isn't text takes the default");
+    await tapEl(page, "computer", "#tabbtn-log");
+    await page.waitForFunction(() => document.querySelectorAll(".entry").length === 3);
+    const heads = await page.$$eval(".entry .ehead h3", hs => hs.map(h => h.textContent));
+    assert.ok(heads.includes("Floetrol bed: Flames photo") && heads.includes("Floetrol bed: Old favorite"), `heads: ${heads}`);
+    assert.ok(heads.includes("Floetrol bed: Deleted photo"), "a deleted photo with no name left says so in words");
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally { await context.close(); }
+});
+
+test("D27 (AC-41, P0): a restored entry with 10 dyes keeps all 10, in order, when edited and saved", async () => {
+  const { context, page, errors } = await openApp("computer");
+  try {
+    const mine = await page.evaluate(() => state.dyes.slice(0, 8).map(d => ({ id: d.id, code: d.code, name: d.name, hex: d.hex, recipe: null })));
+    const dyes = [...mine, { id: "custom-gone0001", code: "Custom", name: "Gone A", hex: "#123456", recipe: null }, { id: "custom-gone0002", code: "Mix", name: "Gone B", hex: "#654321", recipe: null }];
+    await restoreWith(page, backupFile({ docs: [{ col: "tests", id: "ten", data: fullEntry({ dyes }) }] }));
+    await tapEl(page, "computer", "#tabbtn-log");
+    await page.waitForFunction(() => document.querySelectorAll(".entry").length === 1);
+    assert.strictEqual(await page.locator(".entry .ptable .n").count(), 10, "the entry view shows all 10 dyes (AC-42)");
+    await tapEl(page, "computer", ".entry [data-edit]");
+    await page.locator(".eform").waitFor({ state: "visible" });
+    assert.strictEqual(await page.locator(".eform select[data-dyeslot]").count(), 10, "one slot per dye and no empty one past the limit");
+    await tapEl(page, "computer", '.eform [type="submit"]');
+    await page.waitForFunction(() => /Changes saved/.test(document.querySelector("#logStatus").textContent));
+    const doc = await getDoc(page, "tests/ten");
+    assert.deepStrictEqual(doc.dyes.map(d => [d.id, d.name, d.hex]), dyes.map(d => [d.id, d.name, d.hex]), "all 10 dyes, in order, as logged");
+    assert.strictEqual(doc.predicted.multiply.length, 10);
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally { await context.close(); }
+});
+
+test("D28 (AC-72, P0): data saved by 0.4.1 (setup, shelf, custom mix, 3-dye log entries, a technique) loads unchanged", async () => {
+  const { context, page, errors } = await openApp("computer");
+  try {
+    const mix = { id: "custom-1a2b3c4d", code: "Mix", name: "2 Caribbean + 1 Royal", hex: "#0a6fc8", recipe: [{ id: "DGD401", code: "DGD401", name: "Caribbean", parts: 2 }, { id: "DGD408", code: "DGD408", name: "Royal", parts: 1 }] };
+    const setup = { base: "#86c6ea", baseName: "Light blue", brand: "Discraft", plastic: "ESP", translucent: false, tech: "glue", pattern: "river", blend: "darken", depth: 0.65, pool: "owned", sel: ["DGD401", "DGD408", mix.id] };
+    const dye = (id, code, name, hex) => ({ id, code, name, hex, recipe: null });
+    /* Log entries exactly as 0.4.1 wrote them: no patternName, 3 dyes. */
+    const e1 = { date: "2026-09-20", createdAt: "2026-09-20T10:00:00.000Z", disc: { hex: "#f5f5f1", name: "white" }, plastic: { brand: "Innova", name: "Star / Shimmer", rating: "E", translucent: false },
+      tech: "floetrol", pattern: "cells", depth: 0.8, techName: "Floetrol bed", dyes: [dye("DGD401", "DGD401", "Caribbean", "#03a4c1"), dye("DGD201", "DGD201", "Neon Hot Orange", "#e75001"), { ...mix }],
+      predicted: { multiply: ["#03a1bd", "#e24e01", "#0a6dc4"], darken: ["#03a4c1", "#e75001", "#0a6fc8"] }, mix: "½ tsp dye + 1 tsp hot water + 4 oz Floetrol. Add 3-4 drops of silicone oil for cells.",
+      setTime: "3 hr", notes: "first try", closer: "darken", photo: null, by: null };
+    const e2 = { ...e1, date: "2026-09-21", createdAt: "2026-09-21T10:00:00.000Z", tech: "hotdip", techName: "Hot dip", pattern: "stencil", closer: "", notes: "" };
+    const tech = { name: "Lazy wave", looks: "Soft waves", description: "", base: "floetrol", plastics: "Star", dyes: "DGD401", tags: ["favorite"], how: "", mix: "", heat: "Heat lamp, under 120°F", setTime: "3 hr", notes: "", pattern: "cells", photo: null, by: null, createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z" };
+    /* The documents first: their arrival re-renders this window, which saves its own setup; the 0.4.1 setup
+       is written after that, right before the reload. */
+    await setDoc(page, "tests/e1", e1); await setDoc(page, "tests/e2", e2); await setDoc(page, "techniques/t1", tech);
+    await page.waitForTimeout(300);
+    await page.evaluate(({ setup, mix }) => {
+      localStorage.setItem("discdye.setup", JSON.stringify(setup));
+      localStorage.setItem("discdye.owned", JSON.stringify(["DGD401", "DGD408", "DGD101", mix.id]));
+      localStorage.setItem("discdye.custom", JSON.stringify([mix]));
+    }, { setup, mix });
+    await page.reload(); await ready(page);
+    await page.waitForFunction(() => techLoaded && patsLoaded);
+    const s = await page.evaluate(() => ({ base: state.base, tech: state.tech, pattern: state.pattern, blend: state.blend, depth: state.depth, pool: state.pool, sel: state.sel.slice(), perCombo: state.perCombo,
+      perComboShown: document.querySelector("#perCombo").value, brand: state.brand, plastic: state.plastic, shelf: document.querySelector("#shelfTitle").textContent,
+      mix: state.dyes.find(d => d.id === "custom-1a2b3c4d") }));
+    assert.deepStrictEqual([s.base, s.tech, s.pattern, s.blend, s.depth, s.pool, s.brand, s.plastic], ["#86c6ea", "glue", "river", "darken", 0.65, "owned", "Discraft", "ESP"]);
+    assert.deepStrictEqual(s.sel, setup.sel, "the 3 picked colors, in order");
+    assert.deepStrictEqual([s.perCombo, s.perComboShown], [0, "0"], "a 0.4.x setup opens on As now");
+    assert.strictEqual(s.shelf, "My dye shelf (4)");
+    assert.deepStrictEqual(s.mix && s.mix.recipe, mix.recipe, "the custom mix keeps its recipe");
+
+    await tapEl(page, "computer", "#tabbtn-log");
+    await page.waitForFunction(() => document.querySelectorAll(".entry").length === 2);
+    const heads = await page.$$eval(".entry .ehead h3", hs => hs.map(h => h.textContent));
+    assert.deepStrictEqual(heads, ["Hot dip: Stencil", "Floetrol bed: Cells"]);
+    assert.deepStrictEqual(await page.$$eval(".entry .ptable", ts => ts.map(t => t.querySelectorAll(".n").length)), [3, 3]);
+    await tapEl(page, "computer", '.entry[data-id="e1"] [data-edit]');
+    await page.locator(".eform").waitFor({ state: "visible" });
+    assert.deepStrictEqual(await page.$$eval(".eform select[data-dyeslot]", ss => ss.map(x => x.value)), ["DGD401", "DGD201", "custom-1a2b3c4d", ""]);
+    assert.strictEqual(await page.$eval('.eform select[name="pattern"]', x => x.value), "cells");
+    await tapEl(page, "computer", ".eform [data-cancel]");
+    assert.deepStrictEqual(await getDoc(page, "tests/e1"), e1, "viewing must not change a stored entry");
+
+    await tapEl(page, "computer", "#tabbtn-notes");
+    await page.waitForFunction(() => document.querySelectorAll("#myTechList details.tcard").length === 1);
+    assert.match(await page.locator("#myTechList").textContent(), /Lazy wave/);
+    assert.strictEqual(await page.getAttribute("#mt-t1 canvas.thumb", "data-pattern"), "cells");
+    assert.deepStrictEqual(await getDoc(page, "techniques/t1"), tech, "viewing must not change a stored technique");
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally { await context.close(); }
+});

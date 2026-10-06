@@ -3,7 +3,7 @@
   "private": true,
   "description": "Test tooling only. The app itself has no packages: GitHub Pages serves the files as they are.",
   "scripts": {
-    "test": "node --test \"tests/*.test.js\""
+    "test": "node --test --test-concurrency=2 \"tests/*.test.js\""
   },
   "devDependencies": {
     "playwright-core": "^1.63.0"

@@ -108,7 +108,28 @@ input[type=checkbox],input[type=range]{accent-color:var(--tap)}
 #dialList button.dchip.mud i{opacity:.7}
 #dialList .note{color:var(--muted);margin:4px 0}
 @media (max-width:400px){#wheelWrap{max-width:260px}#pickWrap{max-width:220px}}
-.on{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px}
+.on{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px;max-width:100%}
+.morepats{width:100%;text-align:center}
+.morepats>summary{padding:10px 4px}
+.morepats .seg{margin:4px auto 8px}
+#patMore button{min-height:40px}
+/* More patterns wraps onto several rows: separate outlined buttons, so no row ends in a stray divider. */
+.morepats #patMore{border:0;border-radius:0;overflow:visible;gap:6px;justify-content:center}
+.morepats #patMore button{border:1px solid var(--tap);border-radius:7px}
+/* Own photo patterns: each row is its pattern button and Delete; the line-up panel shows the photo with the disc circle. */
+.ownpats{display:grid;gap:8px;justify-items:center;margin-bottom:8px}
+.ownpats:empty{display:none}
+.ownrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:100%}
+.ownrow .seg{margin:0}
+.ownrow .seg button,.ownrow .btn,.ownadd,.lineact .btn{min-height:40px}
+.ownadd{display:inline-flex;align-items:center}
+.lineup{display:grid;gap:10px;justify-items:center;margin-top:10px}
+#lineCv{width:100%;max-width:360px;aspect-ratio:1;display:block;touch-action:none;cursor:grab;border-radius:8px;background:var(--surface-2)}
+.lineact{justify-content:center}
+.ownname{display:grid;gap:4px;width:100%;max-width:360px;text-align:left}
+.ownname input[type=text]{width:100%;min-height:40px}
+.percombo{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#perCombo{min-height:40px}
 .tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 4px 3px 3px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
 .tag i{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
 .num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:700;flex:none}
@@ -128,6 +149,8 @@ input[type=checkbox],input[type=range]{accent-color:var(--tap)}
 .ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
 .touch{display:grid;gap:6px;width:100%;border-top:1px dashed var(--line);padding-top:10px}
 .trow{display:flex;gap:8px;flex-wrap:wrap}
+.tclean>summary{display:flex;align-items:center;min-height:40px}
+.tclean>.trow{margin-top:4px}
 .tchip{display:flex;gap:8px;align-items:center;font-size:13px;line-height:1.3}
 .tchip i{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
 .tchip em{font-style:normal;font-size:12px;font-weight:700}
@@ -167,6 +190,7 @@ input[type=checkbox],input[type=range]{accent-color:var(--tap)}
 .combo{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;align-content:start}
 .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .strip.two{grid-template-columns:repeat(2,1fr)}
+.strip.four{grid-template-columns:repeat(4,1fr)}
 .combo p{margin:0;font-size:13.5px;color:var(--muted)}
 .shelf{display:grid;gap:12px}
 .fam{display:grid;gap:6px}
@@ -385,6 +409,35 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </nav>
 
   <div id="tab-planner" role="tabpanel" aria-labelledby="tabbtn-planner" class="tabpanel">
+  <details class="shelffold" id="shelfFold">
+    <summary><h2 id="shelfTitle"></h2><span class="gnote" id="shelfNote"></span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="shelfbody">
+      <p class="hint">Tap the jars you own, then choose "Only my dyes" below. Your shelf and custom dyes are saved on this device, and in your DIPS folder and backup files.</p>
+      <div class="shelf" id="shelf"></div>
+      <div class="mixer">
+        <span class="label">Mix two jars</span>
+        <div class="mixrow">
+          <input type="number" id="mixAp" min="1" max="10" value="2" aria-label="Parts of first dye">
+          <select id="mixA" aria-label="First dye"></select>
+          <span class="plus">+</span>
+          <input type="number" id="mixBp" min="1" max="10" value="1" aria-label="Parts of second dye">
+          <select id="mixB" aria-label="Second dye"></select>
+          <span class="plus">=</span>
+          <i class="mixout" id="mixOut"></i>
+          <button type="button" class="btn" id="mixAdd">Add mix as a dye</button>
+        </div>
+        <p class="mixmsg" id="mixMsg" role="status"></p>
+        <p class="hint">Parts are by volume of powder, e.g. 2 scoops + 1 scoop. The mixed color is estimated from the swatches, so mix a small test batch first. Community recipes: <a href="https://dyersguild.co/colorvault/" target="_blank" rel="noopener">Dyers Guild Color Vault</a>.</p>
+      </div>
+      <div class="custom">
+        <input type="color" id="cdColor" value="#c2185b" aria-label="Custom dye color">
+        <input type="text" id="cdName" placeholder="Name, e.g. Berry mix" aria-label="Custom dye name">
+        <button type="button" class="btn" id="cdAdd">Add custom dye</button>
+      </div>
+      <p class="hint">For another brand, match the color of the dye on a white test disc.</p>
+    </div>
+  </details>
+
   <section class="setup" aria-label="Setup">
     <div class="panel">
       <span class="label">Disc color</span>
@@ -464,9 +517,24 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
           <p class="hint" style="text-align:center" id="wheelHint"><span id="wheelHintLead">The wheel shows your dyes</span>, as the jar color and as it lands on your disc. Tap a dot to add that dye. Tapping between dots does nothing: only these colors exist as dyes. Grey band on the rim: colors that go muddy on this disc.</p>
         </div>
         <div class="seg" id="patSeg" role="group" aria-label="Pattern"></div>
+        <details class="morepats" id="morePats">
+          <summary>More patterns</summary>
+          <div class="seg" id="patMore" role="group" aria-label="More patterns"></div>
+          <p class="hint" id="patCredits"></p>
+          <div class="ownpats" id="ownPats" role="group" aria-label="My photos"></div>
+          <label class="btn ownadd" id="ownAdd" hidden>Add my own photo<input type="file" id="ownIn" accept="image/*" hidden></label>
+          <p class="hint" id="ownMsg" role="status"></p>
+          <div class="lineup" id="lineup" hidden>
+            <p class="hint">Drag the photo so your disc fills the circle. Pinch, scroll or use the buttons to zoom.</p>
+            <canvas id="lineCv" aria-label="Your photo with a circle to line the disc up in"></canvas>
+            <div class="row lineact"><button type="button" class="btn" id="lineOut">Zoom out</button><button type="button" class="btn" id="lineIn">Zoom in</button></div>
+            <label class="ownname"><span class="label">Name</span><input type="text" id="ownName" maxlength="40"></label>
+            <div class="row lineact"><button type="button" class="btn primary" id="lineUse">Use this</button><button type="button" class="btn" id="lineCancel">Cancel</button></div>
+          </div>
+        </details>
         <div class="on" id="onDisc"></div>
         <p class="hint roles" id="roles"></p>
-        <p class="hint" style="text-align:center">Tap dye cards to add up to 3 colors, in order. Drag a color to reorder it, or use ← and ×.</p>
+        <p class="hint" style="text-align:center" id="selHint"></p>
         <div class="touch" id="touchNow" hidden></div>
         <p class="hint stamp"><b>Stamp tip:</b> put a light stamp over a dark part of the bed and a dark stamp over a light part.</p>
       </div>
@@ -492,41 +560,13 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
     <main class="main">
       <div class="banner" id="banner"></div>
 
-      <details class="shelffold" id="shelfFold">
-        <summary><h2 id="shelfTitle"></h2><span class="gnote" id="shelfNote"></span><span class="chev" aria-hidden="true"></span></summary>
-        <div class="shelfbody">
-          <p class="hint">Tap the jars you own, then choose "Only my dyes" below. Your shelf and custom dyes are saved on this device, and in your DIPS folder and backup files.</p>
-          <div class="shelf" id="shelf"></div>
-          <div class="mixer">
-            <span class="label">Mix two jars</span>
-            <div class="mixrow">
-              <input type="number" id="mixAp" min="1" max="10" value="2" aria-label="Parts of first dye">
-              <select id="mixA" aria-label="First dye"></select>
-              <span class="plus">+</span>
-              <input type="number" id="mixBp" min="1" max="10" value="1" aria-label="Parts of second dye">
-              <select id="mixB" aria-label="Second dye"></select>
-              <span class="plus">=</span>
-              <i class="mixout" id="mixOut"></i>
-              <button type="button" class="btn" id="mixAdd">Add mix as a dye</button>
-            </div>
-            <p class="mixmsg" id="mixMsg" role="status"></p>
-            <p class="hint">Parts are by volume of powder, e.g. 2 scoops + 1 scoop. The mixed color is estimated from the swatches, so mix a small test batch first. Community recipes: <a href="https://dyersguild.co/colorvault/" target="_blank" rel="noopener">Dyers Guild Color Vault</a>.</p>
-          </div>
-          <div class="custom">
-            <input type="color" id="cdColor" value="#c2185b" aria-label="Custom dye color">
-            <input type="text" id="cdName" placeholder="Name, e.g. Berry mix" aria-label="Custom dye name">
-            <button type="button" class="btn" id="cdAdd">Add custom dye</button>
-          </div>
-          <p class="hint">For another brand, match the color of the dye on a white test disc.</p>
-        </div>
-      </details>
-
       <div class="row">
         <span class="label">Suggest from</span>
         <div class="seg" id="poolSeg" role="group" aria-label="Which dyes to suggest">
           <button type="button" data-pool="all" aria-pressed="true">All ProChem colors</button>
           <button type="button" data-pool="owned" aria-pressed="false" id="poolOwned">Only my dyes</button>
         </div>
+        <label class="percombo"><span class="label">Dyes per combo</span><select id="perCombo"></select></label>
       </div>
 
       <section class="group">
@@ -562,7 +602,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
       <ul>
         <li>Wear a dust mask when handling dye powder, plus gloves and eye protection.</li>
         <li>Acetone is highly flammable, dissolves stamps, and can soften plastic. Work with ventilation and away from flames.</li>
-        <li>ProChem says keep the disc at 120°F or below when using heat.</li>
+        <li>With heat, aim for 120°F at the disc, working range 115-125°F (DIPS's own range). Measure the disc's temperature with your own thermometer. <b>Heads up:</b> ProChem says 120°F or below, so 125°F is above ProChem's figure.</li>
         <li>Don't pour Floetrol down the drain.</li>
       </ul>
     </div>
@@ -598,7 +638,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         <div class="rule"><b>Start with a white or light disc</b><p>Dye only darkens. On a red disc, nearly every dye reads as red or black.</p><i class="dot sc" title="Published guides"></i></div>
         <div class="rule"><b>Expect it paler than the bed</b><p>The finished disc comes out lighter than the dye bed looks. A longer set gives deeper color.</p><i class="dot sc" title="Published guides"></i></div>
         <div class="rule"><b>Test on a scrap disc first</b><p>Powder color varies from lot to lot, and every plastic takes dye differently. Record results in the Test log.</p><i class="dot pc" title="ProChem"></i></div>
-        <div class="rule safety"><b>Stay safe</b><p>Dust mask for dye powder, gloves, eye protection, ventilation. Acetone is flammable and dissolves stamps. Keep the disc at 120°F or below.</p><span class="dots"><i class="dot pc" title="ProChem"></i><i class="dot sc" title="Published guides"></i></span></div>
+        <div class="rule safety"><b>Stay safe</b><p>Dust mask for dye powder, gloves, eye protection, ventilation. Acetone is flammable and dissolves stamps. With heat, aim for 120°F at the disc (DIPS's own range 115-125°F) and measure the disc yourself. Heads up: ProChem says 120°F or below.</p><span class="dots"><i class="dot pc" title="ProChem"></i><i class="dot sc" title="Published guides"></i></span></div>
       </div>
     </section>
 
@@ -629,11 +669,11 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
         <div class="tbody">
           <dl class="facts">
             <dt>How</dt><dd><i class="dot ai"></i>Pour a background color, pour oiled accent colors beside or over it, then lay plastic wrap or a card on top and drag it across. The oiled colors break through and open into cells.</dd>
-            <dt>Mix</dt><dd><i class="dot pc"></i><b>Solid color:</b> ¼ tsp dye + 1-2 tsp hot water + 2 oz Floetrol. Dissolve the powder in the water first.<br><i class="dot pc"></i><b>Cell color:</b> the same, plus 3-4 drops of silicone oil added last. <i class="dot ai"></i>Stir only briefly, or you get tiny dots instead of big cells.</dd>
-            <dt>Heat</dt><dd><i class="dot sc"></i>A heat lamp speeds setting. <i class="dot pc"></i>Keep the disc at 120°F or below.</dd>
-            <dt>Set</dt><dd><i class="dot sc"></i>90 minutes to 4 hours under a heat lamp, 24-48 hours without.</dd>
+            <dt>Mix</dt><dd><i class="dot pc"></i><b>Solid color:</b> ¼ tsp dye + 1-2 tsp hot water + 2 oz Floetrol. Dissolve the powder in the water first.<br><i class="dot pc"></i><b>Cell color:</b> the same, plus silicone oil added last.<br><b>Silicone oil:</b> 3-6 drops (DIPS's own range). <i class="dot ai"></i>Stir only briefly, or you get tiny dots instead of big cells.</dd>
+            <dt>Heat</dt><dd><i class="dot sc"></i>A heat lamp speeds setting.<br>Lamp 12-18 inches above the bed (DIPS's own range). Aim for 120°F at the disc, working range 115-125°F (DIPS's own range). Measure the disc's temperature with your own thermometer.</dd>
+            <dt>Set</dt><dd>2-4 hours under a heat lamp (DIPS's own range). <i class="dot sc"></i>24-48 hours without a lamp.</dd>
           </dl>
-          <p class="heads"><b>Heads up:</b> the AI chat says Floetrol <i>requires</i> 120-125°F heat. ProChem caps the disc at 120°F and UDisc says heat is optional, so stay at or under 120°F. Don't pour Floetrol down the drain.</p>
+          <p class="heads"><b>Heads up:</b> ProChem says keep the disc at 120°F or below and use 3-4 drops of silicone oil. DIPS's own ranges go a little past that (up to 125°F, up to 6 drops). To follow ProChem exactly, stay at or under 120°F and use 4 drops. Don't pour Floetrol down the drain.</p>
         </div>
       </details>
 
@@ -644,7 +684,7 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
             <dt>How</dt><dd><i class="dot ai"></i>Pour clear school glue into a tray. Drip dye mixed in acetone onto it with a dropper; each drop spreads flat and the acetone flashes off. Drag with a toothpick or skewer to swirl.</dd>
             <dt>Mix</dt><dd><i class="dot pc"></i>½ tsp dye + 2 oz acetone, in a glass jar (acetone eats many plastic cups). <i class="dot ai"></i>Shake 30 seconds, let it settle 10 minutes, and draw from the top.<br><i class="dot sc"></i><b>Or, a community glue-bed recipe:</b> 3 oz clear glue + 1 oz Floetrol + ¼ tsp dye + a splash of acetone.</dd>
             <dt>Neons</dt><dd><i class="dot ai"></i>½ tsp neon dye + 1.5 oz acetone + 0.5 oz 70%+ isopropyl alcohol. Unconfirmed; try it on a scrap disc.</dd>
-            <dt>Heat</dt><dd><i class="dot sc"></i>A little heat helps.</dd>
+            <dt>Heat</dt><dd><i class="dot sc"></i>A little heat helps.<br>Measure the disc's temperature with your own thermometer.</dd>
             <dt>Set</dt><dd><i class="dot ai"></i>12-24 hours at room temperature.</dd>
           </dl>
           <p class="heads"><b>Heads up:</b> acetone dissolves stamps. Cover the stamp first.</p>
@@ -670,9 +710,10 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
           <dl class="facts">
             <dt>How</dt><dd><i class="dot sc"></i>Stick on a stencil, float the disc face-down in the dye, then rinse. For a fade, dip part of the disc and pull it out slowly.</dd>
             <dt>Mix</dt><dd><i class="dot pc"></i>1 tsp dye + 16 oz water, heated.</dd>
-            <dt>Heat</dt><dd><i class="dot pc"></i>Keep the disc at 120°F or below. Some guides use hotter water; follow ProChem.</dd>
+            <dt>Heat</dt><dd>Aim for 120°F at the disc, working range 115-125°F (DIPS's own range). Measure the disc's temperature with your own thermometer.</dd>
             <dt>Set</dt><dd><i class="dot sc"></i>Minutes, not hours (5-10 is typical).</dd>
           </dl>
+          <p class="heads"><b>Heads up:</b> ProChem says keep the disc at 120°F or below, so 125°F is above ProChem's figure. Some guides use hotter water.</p>
         </div>
       </details>
 
@@ -830,8 +871,9 @@ img{max-width:100%}.h1sub{display:block;font-family:var(--body);font-stretch:100
   </div>
 </div>
 
-<script src="combos.js?v=0.4.1"></script>
-<script src="local.js?v=0.4.1"></script>
+<script src="combos.js?v=0.5.0"></script>
+<script src="preview.js?v=0.5.0"></script>
+<script src="local.js?v=0.5.0"></script>
 <script>
 const DISCS=[["White","#f5f5f1"],["Yellow","#f2dc3c"],["Orange","#f28a2e"],["Pink","#f290b8"],["Red","#d23a3e"],["Lime","#b9dd4c"],["Green","#43ac5a"],["Light blue","#86c6ea"],["Blue","#2d6cc0"],["Purple","#7b4cb2"],["Grey","#a0a3a6"],["Black","#26272a"]];
 
@@ -1150,17 +1192,17 @@ const TECH={
     recipe:"½ tsp dye + 1 tsp hot water + 2 oz of 90%+ alcohol or lotion.",
     note:"Brush or swab the mix onto the disc while it spins.",src:"ProChem disc directions"},
   floetrol:{label:"Floetrol bed",patterns:["cells","swirl","river"],
-    recipe:"½ tsp dye + 1 tsp hot water + 4 oz Floetrol. Add 3-4 drops of silicone oil for cells.",
-    note:"The bed looks much brighter than the finished disc. A heat lamp speeds setting; keep the disc at 120°F or below.",src:"ProChem disc directions"},
+    recipe:"½ tsp dye + 1 tsp hot water + 4 oz Floetrol. Add 3-6 drops of silicone oil for cells (DIPS's own range; ProChem says 3-4).",
+    note:"The bed looks much brighter than the finished disc. A heat lamp 12-18 inches above the bed sets it in 2-4 hours (DIPS's own range). Aim for 120°F at the disc, working range 115-125°F (DIPS's own range), and measure the disc's temperature yourself. Heads up: ProChem says 120°F or below.",src:"ProChem disc directions"},
   glue:{label:"Glue bed",patterns:["swirl","river","starburst"],
     recipe:"ProChem: ½ tsp dye + 2 oz acetone, worked into the bed. Community glue-bed recipe: 3 oz clear school glue + 1 oz Floetrol + ¼ tsp dye + a splash of acetone.",
-    note:"Works best with a little heat. Acetone helps the dye bite but can dissolve stamps.",src:"ProChem disc directions, community guides"},
+    note:"Works best with a little heat; measure the disc's temperature yourself. Acetone helps the dye bite but can dissolve stamps.",src:"ProChem disc directions, community guides"},
   cream:{label:"Shaving cream / lotion",patterns:["swirl","starburst","river"],
     recipe:"ProChem lotion paint: ½ tsp dye + 1 tsp hot water + 2 oz lotion. ProChem gives no shaving cream recipe.",
     note:"Drip or sprinkle dye on the bed, swirl it (or drag a skewer outward for a starburst), press the disc in, and let it set 8-24 hours. Longer set gives deeper color.",src:"ProChem disc directions, community guides"},
   hotdip:{label:"Hot dip",patterns:["full","doubledip","dipfade","stencil"],
     recipe:"1 tsp dye + 16 oz water, heated.",
-    note:"ProChem says keep the disc at 120°F or below. Some guides use hotter water; this tool follows ProChem.",src:"ProChem disc directions"}
+    note:"Aim for 120°F at the disc, working range 115-125°F (DIPS's own range), and measure the disc's temperature yourself. Heads up: ProChem says 120°F or below, and some guides use hotter water.",src:"ProChem disc directions"}
 };
 /* One lookup for built-in techniques and the user's own ("my:<id>", from the techniques collection).
    A user technique borrows its base's patterns and combo type; its own preview style comes first. */
@@ -1171,7 +1213,7 @@ function techInfo(key){
     const t=s.data(),base=TECH[t.base]?t.base:null;
     /* A technique whose text fields are not text is treated as not there. */
     if([t.name,t.mix,t.description,t.heat,t.setTime].some(v=>v!=null&&typeof v!=="string"))return null;
-    const patterns=[...new Set([PATS[t.pattern]?t.pattern:null,...(base?TECH[base].patterns:Object.keys(PATS))].filter(Boolean))];
+    const patterns=[...new Set([patKnown(t.pattern)?t.pattern:null,...(base?TECH[base].patterns:BUILTIN_PATS)].filter(Boolean))];
     return{key,label:t.name||"My technique",patterns,recipe:t.mix||"No mix recorded for this technique yet.",
       note:[t.heat&&`Heat: ${t.heat}`,t.setTime&&`Set: ${t.setTime}`].filter(Boolean).join(" · ")||t.description||"",src:"your technique",base,custom:true};
   }
@@ -1180,15 +1222,44 @@ function techInfo(key){
 const techOr=key=>techInfo(key)||techInfo("floetrol");
 const techLabelOf=d=>TECH[d.tech]?.label||techInfo(d.tech)?.label||d.techName||"Dye job";
 const PATS={spin:"Spin rings",offcenter:"Off-center spin",lollipop:"Lollipop",cells:"Cells",swirl:"Swirl",river:"River / marble",starburst:"Starburst",full:"Full dip",doubledip:"Double dip",dipfade:"Dip fade",stencil:"Stencil"};
+/* The 11 drawn patterns (Cliff Notes pictures, and every pattern for a technique with no base). */
+const BUILTIN_PATS=Object.keys(PATS);
+/* Photo patterns shipped in photos/ (Story 0.5.0 AC-14, AC-15). Their credit shows in More patterns
+   and in the roles line, never on the disc. */
+const PHOTO_PATS={"photo-cells":{label:"Cells photo",file:"photos/cells.jpg",credit:"Photo: Dyes by Redd"},
+  "photo-flames":{label:"Flames photo",file:"photos/flames.jpg",credit:"Photo found online"},
+  "photo-spoked":{label:"Spoked starburst photo",file:"photos/spoked-starburst.jpg",credit:"Photo found online"}};
+Object.keys(PHOTO_PATS).forEach(k=>{PATS[k]=PHOTO_PATS[k].label;});
 /* Stored values are looked up in these tables, so they have no inherited keys ("constructor", "__proto__" never match). */
-[RATING,TECH,PATS].forEach(o=>Object.setPrototypeOf(o,null));
+[RATING,TECH,PATS,PHOTO_PATS].forEach(o=>Object.setPrototypeOf(o,null));
+/* The dyer's own photo patterns ("own:<id>"), from the patterns collection; empty until that
+   collection is read (Blueprint 0.5.0 §7.4). Every site reads patterns through the helpers below. */
+let ownPatDocs=[];
+const isOwnPattern=k=>typeof k==="string"&&k.startsWith("own:"),ownId=k=>k.slice(4),ownKey=id=>"own:"+id;
+const ownPat=key=>isOwnPattern(key)?ownPatDocs.find(s=>s.id===ownId(key))||null:null;
+function patLabel(key){if(PATS[key])return PATS[key];const o=ownPat(key);return o?String(o.data().name||"My photo"):null;}
+const patKnown=key=>!!patLabel(key);
+const patCredit=key=>PHOTO_PATS[key]?PHOTO_PATS[key].credit:ownPat(key)?"Your photo":"";
+/* Every pattern that is not one of the bed's usual ones: the other drawn patterns in their usual order,
+   then the photos, then the dyer's own photos by name (Story 0.5.0 AC-55). */
+const extraPatterns=usual=>[...BUILTIN_PATS,...Object.keys(PHOTO_PATS),
+  ...ownPatDocs.map(s=>ownKey(s.id)).sort((a,b)=>patLabel(a).localeCompare(patLabel(b)))].filter(p=>!usual.includes(p));
+/* Touching color groups for a photo pattern, for comboTouchPairs; null for every other pattern. */
+const photoTouchFor=key=>isPhotoPattern(key)?(k=>DiscPreview.photoTouch(key,k)):null;
+/* Own photos' addresses (doc id -> address, "" when the photo is not on this device), found before a
+   pattern joins ownPatDocs, because the drawing reads a photo once and keeps the result. */
+const ownPatUrls=new Map();
+DiscPreview.source=key=>PHOTO_PATS[key]?PHOTO_PATS[key].file:ownPat(key)?ownPatUrls.get(ownId(key))||"":"";
+/* patsLoaded: the patterns collection has been read. pendingPat: an own photo pattern asked for
+   (saved setup, Load in planner, a photo just added) before it was known; applied when it is. */
+let patsLoaded=false,pendingPat=null,ownDelArm=null;
 
 const $=s=>document.querySelector(s);
 function loadOwned(){try{return JSON.parse(localStorage.getItem("discdye.owned")||"[]");}catch(e){return[];}}
 function saveOwned(){try{localStorage.setItem("discdye.owned",JSON.stringify([...state.owned]));}catch(e){}}
 
 const state={base:"#f2dc3c",baseName:"Yellow",depth:.8,blend:"multiply",tech:"floetrol",pattern:"cells",
-  brand:"Innova",plastic:"Star / Shimmer",translucent:false,pool:"all",sel:[],owned:new Set(loadOwned()),
+  brand:"Innova",plastic:"Star / Shimmer",translucent:false,pool:"all",perCombo:0,sel:[],owned:new Set(loadOwned()),
   dyes:dyesFromText(PROCHEM),
   results:[],byId:{},combos:[]};
 
@@ -1199,7 +1270,7 @@ function baseLabel(){return state.baseName?state.baseName.toLowerCase():nameColo
 function currentSetup(){
   return{base:hex2rgb(state.base),baseText:baseLabel(),blend:state.blend,
     strength:strengthFor(state.depth,curPlastic().r,state.translucent),
-    techBase:techOr(state.tech).base,pattern:state.pattern};
+    techBase:techOr(state.tech).base,pattern:state.pattern,perCombo:state.perCombo,photoTouch:photoTouchFor(state.pattern)};
 }
 
 /* ---------- rendering ---------- */
@@ -1207,14 +1278,23 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 /* One stored item with an unexpected shape must never blank a tab: its code runs inside tryOr and falls back to a default. */
 const tryOr=(f,dflt)=>{try{return f();}catch(_){return dflt;}};
 function chipBox(hex,caption){return`<span class="chipbox"><span class="chip" style="background:${hex}"></span><small>${caption}</small></span>`;}
+/* The same pairs that rank the combos (Story 0.2.0 AC-7). A photo pattern, or any list of more than 3
+   pairs, shows the muddy ones first, each group in pattern order (Gate 4 Decision E). */
 function touchHtml(list,pattern){
-  const pairs=comboTouchPairs(pattern,list.length);
+  const pairs=comboTouchPairs(pattern,list.length,photoTouchFor(pattern)).map(([i,j])=>{const a=list[i],b=list[j],t=touchRgb(a,b,state.blend);return{a,b,t,m:isMud(t)};});
   if(!pairs.length)return"";
-  return`<span class="label">Where they touch</span><div class="trow">${pairs.map(([i,j])=>{
-    const a=list[i],b=list[j],t=touchRgb(a,b,state.blend),m=isMud(t);
-    return`<span class="tchip"><i style="background:${rgb2hex(t)}"></i><span>${esc(a.dye.name)} + ${esc(b.dye.name)}<br><em class="${m?"bad":"ok"}">${m?"muddy":"clean"}: ${nameColor(t)}</em></span></span>`;
-  }).join("")}</div>`;
+  if(isPhotoPattern(pattern)||pairs.length>3)pairs.sort((x,y)=>y.m-x.m);
+  const chip=({a,b,t,m})=>`<span class="tchip"><i style="background:${rgb2hex(t)}"></i><span>${esc(a.dye.name)} + ${esc(b.dye.name)}<br><em class="${m?"bad":"ok"}">${m?"muddy":"clean"}: ${nameColor(t)}</em></span></span>`;
+  /* A photo's color areas nearly all touch each other, so its clean pairs fold under one line and the
+     muddy ones stay in view (Sean, 2026-10-05). The fold remembers being opened across redraws. */
+  const clean=isPhotoPattern(pattern)?pairs.filter(p=>!p.m):[];
+  if(!clean.length)return`<span class="label">Where they touch</span><div class="trow">${pairs.map(chip).join("")}</div>`;
+  const muddy=pairs.filter(p=>p.m);
+  return`<span class="label">Where they touch</span>${muddy.length?`<div class="trow">${muddy.map(chip).join("")}</div>`:""}`
+    +`<details class="tclean"${touchCleanOpen?" open":""}><summary>${clean.length} clean ${clean.length===1?"pair":"pairs"}</summary><div class="trow">${clean.map(chip).join("")}</div></details>`;
 }
+let touchCleanOpen=false;
+document.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("tclean"))touchCleanOpen=e.target.open;},true);
 function poolResults(){return state.pool==="owned"?state.results.filter(r=>state.owned.has(r.dye.id)):state.results;}
 function renderCards(){
   const pool=poolResults();
@@ -1230,21 +1310,44 @@ function renderCards(){
   });
 }
 const comboIdx={},comboSig={};
+/* Combos are worked out again only when something they depend on changes (disc, plastic, depth, mixing math,
+   technique, pattern, which dyes are allowed, Dyes per combo, a photo's color groups becoming ready), not on
+   every render: putting dyes on the disc never changes them (Sean, 2026-10-04, with 8 dyes per combo ~50 ms). */
+let comboKey="",comboEmpty="";
+function combosFor(pool,setup){
+  const{photoTouch,...rest}=setup,key=JSON.stringify(rest)+"|"+(photoTouch?DiscPreview.photoState(setup.pattern):"")+"|"+pool.map(r=>r.dye.id+r.dye.hex).join(",");
+  if(key===comboKey)return state.combos;
+  const combos=buildCombos(pool,setup);
+  comboEmpty=combos.length?"":noCombosText(pool,setup);
+  comboKey=key;
+  return combos;
+}
 function comboOption(t){const i=Math.min(comboIdx[t.key]||0,t.options.length-1);return[i,t.options[i]];}
 function renderCombos(){
   const p=curPlastic(),n=poolResults().length,bn=baseLabel();
-  $("#basedOn").textContent=`Based on: ${bn[0].toUpperCase()+bn.slice(1)} disc, ${p.brand} ${p.name}${state.translucent?" (translucent)":""}, ${state.pool==="owned"?`your ${n} dyes`:`all ${n} colors`}, ${techOr(state.tech).label}, ${state.blend==="darken"?"Darken":"Multiply"} math, ${Math.round(state.depth*100)}% depth.`;
+  $("#basedOn").textContent=`Based on: ${bn[0].toUpperCase()+bn.slice(1)} disc, ${p.brand} ${p.name}${state.translucent?" (translucent)":""}, ${state.pool==="owned"?`your ${n} dyes`:`all ${n} colors`}, ${techOr(state.tech).label}, ${state.blend==="darken"?"Darken":"Multiply"} math, ${Math.round(state.depth*100)}% depth${state.perCombo?`, ${state.perCombo} dyes per combo`:""}.`;
   const el=$("#combos");
-  if(!state.combos.length){el.innerHTML=`<p class="empty">No clean combos with these dyes on this disc. A lighter disc or more dyes on your shelf opens up more options.</p>`;return;}
+  if(!state.combos.length){el.innerHTML=`<p class="empty">${esc(comboEmpty)}</p>`;return;}
   el.innerHTML=state.combos.map(t=>{
     const[i,o]=comboOption(t);
     return`<div class="combo">
     <div class="chead"><h3>${esc(t.title)}</h3>${t.options.length>1?`<button type="button" class="btn small" data-next="${t.key}" aria-label="Next ${esc(t.title)} option">Next (${i+1} of ${t.options.length})</button>`:""}</div>
-    <div class="strip${o.length===2?" two":""}">${o.map((r,k)=>chipBox(rgb2hex(r.res),`${k+1}. ${esc(r.dye.name)}<br>${esc(r.dye.code)}`)).join("")}</div>
+    <div class="strip${o.length===2?" two":o.length>=4?" four":""}">${o.map((r,k)=>chipBox(rgb2hex(r.res),`${k+1}. ${esc(r.dye.name)}<br>${esc(r.dye.code)}`)).join("")}</div>
     <p>${esc(t.blurb(o))}</p>
     <div class="touch">${touchHtml(o,t.touch)}</div>
     <button type="button" class="btn" data-combo="${t.key}">Show on disc</button></div>`;
   }).join("");
+}
+/* No combos: with a Dyes per combo number, say why in plain words and what would work (Story 0.5.0 AC-48).
+   The extra tries run only in this empty case, and only when combosFor works the combos out. */
+function noCombosText(pool,setup){
+  const none="No clean combos with these dyes on this disc. A lighter disc or more dyes on your shelf opens up more options.";
+  const N=setup.perCombo;
+  if(!N)return none;
+  const k=pool.filter(r=>r.cat!=="mud").length;
+  if(k<N)return`Only ${k} of these dyes ${k===1?"stays":"stay"} clean on this disc, so there are no combos of ${N}. Choose ${k<MIN_PER_COMBO?"As now":"a smaller number"} in Dyes per combo${state.pool==="owned"?", or add dyes to your shelf":""}.`;
+  for(let m=N-1;m>=MIN_PER_COMBO;m--)if(buildCombos(pool,{...setup,perCombo:m}).length)return`No combos of ${N} work here. ${m} dyes per combo does.`;
+  return buildCombos(pool,{...setup,perCombo:0}).length?`No combos of ${N} work here. As now does.`:none;
 }
 function renderBanner(){
   const l=lab(hex2rgb(state.base)),bn=baseLabel(),cap=bn[0].toUpperCase()+bn.slice(1),p=curPlastic(),el=$("#banner");
@@ -1264,20 +1367,35 @@ function renderOnDisc(){
   const t=$("#touchNow");t.innerHTML=touchHtml(sel,state.pattern);t.hidden=sel.length<2;
   renderRoles();
 }
-const ROLES={
-  spin:"Color 1 is the center ring. Rings then repeat 1, 2, 3 outward.",
-  offcenter:"Color 1 is the center ring, set off-center. Rings repeat 1, 2, 3 outward.",
-  lollipop:"Thin, even rings repeating 1, 2, 3 from the center out.",
-  starburst:"Color 1 is the center. Spokes cycle 1, 2, 3 around the disc.",
-  cells:"Color 1 is the background. Colors 2 and 3 fill the cells, and cell outlines cycle through all colors.",
-  swirl:"Spiral arms alternate 1, 2, 3.",
-  river:"Bands alternate 1, 2, 3 across the disc.",
-  full:"Uses color 1 only.",
-  doubledip:"Color 1 is the bottom dip, color 2 the top dip (they overlap in the middle), color 3 the rim.",
-  dipfade:"Color 1 at the bottom edge, fading through 2 and 3 to undyed at the top.",
-  stencil:"Color 1 fills around the star stencil. Color 2 is the rim ring."
-};
-function renderRoles(){$("#roles").textContent=`${PATS[state.pattern]}: ${ROLES[state.pattern]}`;}
+/* What each color does in a pattern, for the n colors on the disc (Story 0.5.0 AC-37). Every color is
+   named or covered by "in order"; no text leaves a chosen color out. With no colors it speaks generally. */
+function rolesText(pattern,n){
+  const seq=(from,to)=>Array.from({length:to-from+1},(_,i)=>from+i).join(", ");
+  const all=n>=2?seq(1,n):"your colors in order";
+  const more=first=>n<first?"":n===first?` Color ${first} is a ring just inside the rim.`:` Colors ${first} to ${n} are rings just inside the rim, in order.`;
+  /* A photo that can't be found draws your colors as Swirl (Decision C), and the line says so. */
+  if(isPhotoPattern(pattern)&&DiscPreview.photoState(pattern)==="missing")return ownPat(pattern)
+    ?"This pattern's photo is missing, so the disc shows Swirl. Delete it and add the photo again."
+    :"This photo couldn't be opened, so the disc shows Swirl.";
+  if(isPhotoPattern(pattern))return`Color 1 fills the biggest area of the photo, color 2 the next, and so on. Change the order to swap areas. ${patCredit(pattern)}.`;
+  switch(pattern){
+    case"spin":return n===1?"Rings of color 1 from the center out.":`Color 1 is the center ring. Rings then repeat ${all} outward.`;
+    case"offcenter":return n===1?"Rings of color 1, set off-center, from the center out.":`Color 1 is the center ring, set off-center. Rings then repeat ${all} outward.`;
+    case"lollipop":return n===1?"Thin, even rings of color 1 from the center out.":`Thin, even rings repeating ${all} from the center out.`;
+    case"starburst":return n===1?"Color 1 is the center and every spoke.":`Color 1 is the center. Spokes cycle ${all} around the disc.`;
+    case"cells":return n===1?"Color 1 is the background; the cells stay the disc color, outlined in color 1."
+      :`Color 1 is the background. ${n===2?"Color 2 fills":n>2?`Colors 2 to ${n} fill`:"The other colors fill"} the cells, and cell outlines cycle through all colors.`;
+    case"swirl":return n===1?"Spiral arms of color 1.":`Spiral arms alternate ${all}.`;
+    case"river":return n===1?"Bands of color 1 across the disc.":`Bands alternate ${all} across the disc.`;
+    case"full":return n<=1?"Color 1 fills the whole disc.":`Even bands from the bottom up: color 1 at the bottom, color ${n} at the top.`;
+    case"doubledip":return n===1?"Color 1 is the bottom dip.":n===2?"Color 1 is the bottom dip, color 2 the top dip (they overlap in the middle)."
+      :"Color 1 is the bottom dip, color 2 the top dip (they overlap in the middle), color 3 the rim."+more(4);
+    case"dipfade":return`Color 1 at the bottom edge, fading ${n===1?"":n>=2?`through ${seq(2,n)} `:"through your other colors "}to undyed at the top.`;
+    case"stencil":return"Color 1 fills around the star stencil. Color 2 is the rim ring."+more(3);
+  }
+  return"";
+}
+function renderRoles(){$("#roles").textContent=`${patLabel(state.pattern)}: ${rolesText(state.pattern,state.sel.filter(id=>state.byId[id]).length)}`;}
 function renderPlastic(){
   const p=curPlastic(),R=RATING[p.r];
   $("#rating").innerHTML=`<span class="pill ${p.r==="-"?"none":p.r}">${R.label}</span><span class="hint">${esc(R.text)}${state.translucent?" Translucent plastic takes dye less readily, so the preview is paler, but it bleeds and fades least.":""}</span>`;
@@ -1286,13 +1404,22 @@ function renderTech(){
   /* A selected user technique that was deleted falls back to the default. */
   if(!techInfo(state.tech)){state.tech="floetrol";state.pattern="cells";}
   const T=techOr(state.tech);
-  if(!T.patterns.includes(state.pattern))state.pattern=T.patterns[0];
+  /* Any known pattern is kept on any bed (Doctrine Part 4); only one that no longer exists resets. */
+  if(!patKnown(state.pattern))state.pattern=T.patterns[0];
   $("#techSeg").innerHTML=Object.entries(TECH).map(([k,v])=>`<button type="button" data-tech="${k}" aria-pressed="${k===state.tech}">${v.label}</button>`).join("");
   const mine=typeof myTechDocs!=="undefined"?myTechDocs.filter(s=>techInfo("my:"+s.id)).map(s=>({id:s.id,name:s.data().name||"Untitled"})).sort((a,b)=>a.name.localeCompare(b.name)):[];
   $("#myTechPickWrap").hidden=!mine.length;
   $("#myTechPick").innerHTML=opt("","Choose one…",!T.custom)+mine.map(m=>opt("my:"+m.id,m.name,state.tech==="my:"+m.id)).join("");
   $("#myTechPick").classList.toggle("on",T.custom);
-  $("#patSeg").innerHTML=T.patterns.map(p=>`<button type="button" data-pat="${p}" aria-pressed="${p===state.pattern}">${PATS[p]}</button>`).join("");
+  const patBtn=p=>`<button type="button" data-pat="${esc(p)}" aria-pressed="${p===state.pattern}">${esc(patLabel(p))}</button>`;
+  $("#patSeg").innerHTML=T.patterns.map(patBtn).join("");
+  /* Every other pattern sits under More patterns, which opens itself when the pattern in use is one of them (AC-56). */
+  const extra=extraPatterns(T.patterns);
+  /* Own photos are listed below with their Delete buttons, so the row of buttons holds the others. */
+  $("#patMore").innerHTML=extra.filter(p=>!isOwnPattern(p)).map(patBtn).join("");
+  renderOwnPats();
+  $("#patCredits").textContent=`Photos: ${Object.keys(PHOTO_PATS).map(k=>`${PHOTO_PATS[k].label} (${PHOTO_PATS[k].credit})`).join(", ")}.`;
+  if(extra.includes(state.pattern))$("#morePats").open=true;
   $("#recipe").innerHTML=`<span class="label">${T.custom?`Mix (${esc(T.label)}, your technique)`:`Mix (${esc(T.src)})`}</span><p class="pre">${esc(T.recipe)}</p>${T.note?`<p class="hint">${esc(T.note)}</p>`:""}`;
 }
 function renderShelfHead(){
@@ -1310,87 +1437,15 @@ function renderShelf(){
 }
 $("#shelfFold").addEventListener("toggle",renderShelfHead);
 
-/* ---------- disc drawing ---------- */
-function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
-function drawPattern(ctx,cols,W,c,r,pattern){
-  const n=cols.length,TAU=Math.PI*2,rnd=seeded(11);
-  /* A canvas too small to draw on gives r <= 0; without this guard the ring loop never ends. */
-  if(!(r>1))return;
-  const rings=(cx,cy,max)=>{let rad=r*.06,i=0;
-    while(rad<max){const w=r*(.035+rnd()*.07),ph=rnd()*TAU;ctx.beginPath();
-      for(let a=0;a<=TAU+.001;a+=.04){const rr=rad+Math.sin(a*3+ph)*w*.3+Math.sin(a*7+ph*2)*w*.12;const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;a===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-      ctx.closePath();ctx.lineWidth=w;ctx.strokeStyle=cols[i%n];ctx.stroke();rad+=w*(.7+rnd()*.9);i++;}};
-  const wave=(off,down)=>{ctx.beginPath();ctx.moveTo(0,down?W:0);for(let x=0;x<=W;x+=4)ctx.lineTo(x,c+off+Math.sin(x/W*TAU*1.5)*r*.05);ctx.lineTo(W,down?W:0);ctx.closePath();};
-  switch(pattern){
-    case"spin":rings(c,c,r*1.04);break;
-    case"offcenter":rings(c+r*.3,c-r*.2,r*1.7);break;
-    case"lollipop":for(let i=0,rad=r*.05;rad<r*1.05;i++,rad+=r*.075){ctx.beginPath();ctx.arc(c,c,rad,0,TAU);ctx.lineWidth=r*.065;ctx.strokeStyle=cols[i%n];ctx.stroke();}break;
-    case"starburst":{
-      const N=20;
-      for(let k=0;k<N;k++){const a=k/N*TAU+rnd()*.12,d=.07+rnd()*.05,len=r*(.85+rnd()*.3);
-        ctx.beginPath();ctx.moveTo(c,c);ctx.lineTo(c+Math.cos(a-d)*len,c+Math.sin(a-d)*len);ctx.lineTo(c+Math.cos(a+d)*len,c+Math.sin(a+d)*len);ctx.closePath();
-        ctx.fillStyle=cols[k%n];ctx.fill();}
-      ctx.beginPath();ctx.arc(c,c,r*.14,0,TAU);ctx.fillStyle=cols[0];ctx.fill();break;}
-    case"cells":{
-      const cells=[];
-      for(let t=0;t<600&&cells.length<46;t++){const rr=r*(.035+rnd()*.13),a=rnd()*TAU,dd=Math.sqrt(rnd())*r*.98,x=c+Math.cos(a)*dd,y=c+Math.sin(a)*dd;
-        if(cells.every(q=>Math.hypot(q.x-x,q.y-y)>q.r+rr+2))cells.push({x,y,r:rr});}
-      ctx.beginPath();ctx.rect(0,0,W,W);cells.forEach(q=>{ctx.moveTo(q.x+q.r,q.y);ctx.arc(q.x,q.y,q.r,0,TAU);});ctx.fillStyle=cols[0];ctx.fill("evenodd");
-      cells.forEach((q,i)=>{ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,TAU);if(n>1){ctx.fillStyle=cols[1+i%(n-1)];ctx.fill();}ctx.lineWidth=2.5;ctx.strokeStyle=cols[(i+1)%n];ctx.stroke();});
-      break;}
-    case"swirl":{
-      const arms=Math.max(2,n*2);ctx.lineCap="round";
-      for(let j=0;j<arms;j++){const off=j/arms*TAU;ctx.beginPath();
-        for(let th=0;th<=3.2*Math.PI;th+=.05){const rad=r*1.08*th/(3.2*Math.PI),x=c+Math.cos(th+off)*rad,y=c+Math.sin(th+off)*rad;th===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-        ctx.lineWidth=r*.12;ctx.strokeStyle=cols[j%n];ctx.stroke();}
-      break;}
-    case"river":{
-      ctx.save();ctx.translate(c,c);ctx.rotate(-.45);ctx.translate(-c,-c);
-      for(let i=-4;i<14;i++){const y0=i*r*.19;ctx.beginPath();
-        for(let x=-W*.5;x<=W*1.5;x+=5){const y=y0+Math.sin(x/W*Math.PI*2.4+i*.8)*r*.13+Math.sin(x/W*Math.PI*6+i)*r*.03;x===-W*.5?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-        ctx.lineWidth=r*(.06+rnd()*.08);ctx.strokeStyle=cols[((i%n)+n)%n];ctx.stroke();}
-      ctx.restore();break;}
-    case"full":ctx.fillStyle=cols[0];ctx.fillRect(0,0,W,W);break;
-    case"doubledip":
-      wave(-r*.12,true);ctx.fillStyle=cols[0];ctx.fill();
-      if(cols[1]){wave(r*.12,false);ctx.fillStyle=cols[1];ctx.fill();}
-      if(cols[2]){ctx.beginPath();ctx.arc(c,c,r*.95,0,TAU);ctx.lineWidth=r*.1;ctx.strokeStyle=cols[2];ctx.stroke();}
-      break;
-    case"dipfade":{
-      const g=ctx.createLinearGradient(0,c+r,0,c-r);g.addColorStop(0,cols[0]);
-      if(n===2)g.addColorStop(.45,cols[1]);
-      if(n===3){g.addColorStop(.35,cols[1]);g.addColorStop(.65,cols[2]);}
-      g.addColorStop(1,"#ffffff");ctx.fillStyle=g;ctx.fillRect(0,0,W,W);break;}
-    case"stencil":{
-      ctx.beginPath();ctx.rect(0,0,W,W);
-      for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr=k%2?r*.2:r*.46,x=c+Math.cos(a)*rr,y=c+Math.sin(a)*rr;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
-      ctx.closePath();ctx.fillStyle=cols[0];ctx.fill("evenodd");
-      if(cols[1]){ctx.beginPath();ctx.arc(c,c,r*.96,0,TAU);ctx.lineWidth=r*.08;ctx.strokeStyle=cols[1];ctx.stroke();}
-      break;}
-  }
-}
+/* ---------- disc drawing: seeded, drawPattern and drawDiscOn live in preview.js ---------- */
 function drawDisc(){
   const cols=state.sel.map(id=>state.byId[id]).filter(Boolean).map(x=>rgb2hex(x.eff));
   drawDiscOn($("#disc"),280,state.base,cols,state.pattern,state.blend);
 }
-function drawDiscOn(cv,fallbackW,base,cols,pattern,blend){
-  const ctx=cv.getContext("2d"),dpr=window.devicePixelRatio||1,W=cv.clientWidth||fallbackW;
-  cv.width=W*dpr;cv.height=W*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  const c=W/2,r=W/2-Math.max(3,W*.03),TAU=Math.PI*2;
-  ctx.clearRect(0,0,W,W);
-  ctx.beginPath();ctx.arc(c,c+Math.max(2,W*.014),r,0,TAU);ctx.fillStyle="rgba(0,0,0,.10)";ctx.fill();
-  ctx.save();ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.clip();
-  ctx.fillStyle=base;ctx.fillRect(0,0,W,W);
-  if(cols.length){ctx.globalCompositeOperation=blend;drawPattern(ctx,cols,W,c,r,pattern);ctx.globalCompositeOperation="source-over";}
-  let g=ctx.createRadialGradient(c,c,r*.78,c,c,r);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.22)");
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,W);
-  ctx.beginPath();ctx.arc(c,c,r*.83,0,TAU);ctx.lineWidth=1.5;ctx.strokeStyle="rgba(0,0,0,.12)";ctx.stroke();
-  ctx.beginPath();ctx.arc(c,c,r*.83+2,0,TAU);ctx.strokeStyle="rgba(255,255,255,.18)";ctx.stroke();
-  g=ctx.createRadialGradient(c-r*.35,c-r*.45,0,c-r*.35,c-r*.45,r*.95);g.addColorStop(0,"rgba(255,255,255,.28)");g.addColorStop(1,"rgba(255,255,255,0)");
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,W);
-  ctx.restore();
-  ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.lineWidth=1;ctx.strokeStyle="rgba(0,0,0,.3)";ctx.stroke();
-}
+/* Redraws every picture on screen: after a photo pattern's photo loads (its touch pairs change the
+   combos too) and when the graphics chip comes back after being lost. */
+function redrawPictures(){render();if(!$("#tab-notes").hidden)drawThumbs();}
+DiscPreview.onChange=redrawPictures;
 
 /* ---------- color wheel, dial, pick on a wheel ---------- */
 const WHEEL_C=170,WHEEL_R=158;
@@ -1529,7 +1584,7 @@ function render(){
   state.results=state.dyes.map(d=>classify(d,state.setup));
   state.byId={};state.results.forEach(r=>state.byId[r.dye.id]=r);
   state.sel=state.sel.filter(id=>state.byId[id]);
-  state.combos=buildCombos(poolResults(),state.setup);
+  state.combos=combosFor(poolResults(),state.setup);
   /* A combo type's options can reshuffle on any input change; reset "Next" back to option 1 only for
      the types whose actual option set changed, so an unrelated type doesn't lose the user's place. */
   state.combos.forEach(t=>{
@@ -1544,7 +1599,9 @@ function render(){
 }
 
 /* ---------- remembered setup + custom dyes (this browser only) ---------- */
-function saveSetup(){try{localStorage.setItem("discdye.setup",JSON.stringify({base:state.base,baseName:state.baseName,brand:state.brand,plastic:state.plastic,translucent:state.translucent,tech:state.tech,pattern:state.pattern,blend:state.blend,depth:state.depth,pool:state.pool,sel:state.sel}));}catch(e){}}
+/* Every render calls this; an unchanged setup is not written again, so a redraw alone (e.g. the disc drawing becoming ready) never schedules a folder save.
+   A technique or own photo pattern still waiting for its collection (pendingTech, pendingPat) is saved as asked for, not as the stand-in shown meanwhile. */
+function saveSetup(){try{const s=JSON.stringify({base:state.base,baseName:state.baseName,brand:state.brand,plastic:state.plastic,translucent:state.translucent,tech:pendingTech?pendingTech.tech:state.tech,pattern:pendingTech?pendingTech.pattern:pendingPat||state.pattern,blend:state.blend,depth:state.depth,pool:state.pool,perCombo:state.perCombo,sel:state.sel});if(localStorage.getItem("discdye.setup")!==s)localStorage.setItem("discdye.setup",s);}catch(e){}}
 function loadSetup(){try{return JSON.parse(localStorage.getItem("discdye.setup")||"null");}catch(e){return null;}}
 function saveCustom(){try{localStorage.setItem("discdye.custom",JSON.stringify(state.dyes.filter(d=>d.fam==="c").map(d=>({id:d.id,code:d.code,name:d.name,hex:d.hex,recipe:d.recipe||null}))));}catch(e){}}
 const cleanRecipe=r=>Array.isArray(r)?r.filter(p=>p&&typeof p.name==="string").map(p=>({id:String(p.id||""),code:String(p.code||""),name:p.name,parts:Math.max(1,Math.min(10,+p.parts||1))})).slice(0,2):null;
@@ -1579,32 +1636,46 @@ function addCustomDye(name,hex,code,recipe){
   return id;
 }
 const recipeText=r=>r&&r.length?r.map(p=>`${p.parts} ${p.name}${p.code?" ("+p.code+")":""}`).join(" + "):"";
-function addToDisc(id){state.sel=state.sel.filter(x=>x!==id);state.sel.push(id);if(state.sel.length>3)state.sel.shift();return state.sel.indexOf(id)+1;}
+function addToDisc(id){state.sel=state.sel.filter(x=>x!==id);state.sel.push(id);if(state.sel.length>MAX_DYES)state.sel.shift();return state.sel.indexOf(id)+1;}
+/* A pattern from a saved or logged setup: any known pattern is kept on any bed (AC-58). An own photo
+   pattern asked for before the patterns collection is read waits in pendingPat; one that was deleted
+   falls back to the bed's first usual pattern and says so (AC-29). Returns that message or "". */
+const deletedPatText=()=>`That photo pattern was deleted, so DIPS used ${patLabel(state.pattern)}.`;
+function takePattern(p,usual){
+  if(patKnown(p)){state.pattern=p;return"";}
+  state.pattern=usual[0];
+  if(!isOwnPattern(p))return"";
+  if(!patsLoaded){pendingPat=p;return"";}
+  return deletedPatText();
+}
 /* Apply a saved or logged setup: only values this page recognises are taken.
-   Returns true when its technique no longer exists and the Planner fell back to Floetrol bed. */
+   Returns a plain message when something it used no longer exists (a technique: the Planner fell back
+   to Floetrol bed; an own photo pattern: the bed's first usual pattern), otherwise "". */
 function applySetup(s){
-  if(!s)return false;
-  let fellBack=false;
-  pendingTech=null;
+  if(!s)return"";
+  let msg="";
+  pendingTech=null;pendingPat=null;
   if(PLASTICS.some(p=>p.brand===s.brand&&p.name===s.plastic)){state.brand=s.brand;state.plastic=s.plastic;}
   if(typeof s.translucent==="boolean")state.translucent=s.translucent;
   const ti=techInfo(s.tech);
-  if(ti){state.tech=s.tech;state.pattern=ti.patterns.includes(s.pattern)?s.pattern:ti.patterns[0];}
+  if(ti){state.tech=s.tech;msg=takePattern(s.pattern,ti.patterns);}
   /* User techniques load a moment after the page; remember the choice and apply it when they arrive. */
   else if(typeof s.tech==="string"&&s.tech.startsWith("my:")&&!techLoaded)pendingTech={tech:s.tech,pattern:s.pattern};
-  else if(s.tech){state.tech="floetrol";state.pattern=TECH.floetrol.patterns[0];fellBack=true;}
+  else if(s.tech){state.tech="floetrol";state.pattern=TECH.floetrol.patterns[0];msg=`That technique was deleted, so DIPS used ${TECH.floetrol.label}.`;}
   if(s.blend==="multiply"||s.blend==="darken")state.blend=s.blend;
   if(typeof s.depth==="number"&&s.depth>=.3&&s.depth<=1)state.depth=s.depth;
   if(s.pool==="all"||s.pool==="owned")state.pool=s.pool;
-  if(Array.isArray(s.sel))state.sel=s.sel.filter(id=>state.dyes.some(d=>d.id===id)).slice(0,3);
-  $("#brand").value=state.brand;fillPlastics();$("#transl").checked=state.translucent;$("#depth").value=Math.round(state.depth*100);
+  /* Only a saved setup carries Dyes per combo; a missing or damaged value is "As now" (AC-45). */
+  if(Object.prototype.hasOwnProperty.call(s,"perCombo"))state.perCombo=Number.isInteger(s.perCombo)&&s.perCombo>=MIN_PER_COMBO&&s.perCombo<=MAX_DYES?s.perCombo:0;
+  if(Array.isArray(s.sel))state.sel=s.sel.filter(id=>state.dyes.some(d=>d.id===id)).slice(0,MAX_DYES);
+  $("#brand").value=state.brand;fillPlastics();$("#transl").checked=state.translucent;$("#depth").value=Math.round(state.depth*100);$("#perCombo").value=String(state.perCombo);
   document.querySelectorAll("#blendSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.blend===state.blend)));
   document.querySelectorAll("#poolSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.pool===state.pool)));
   renderTech();renderRoles();
   const hex=/^#[0-9a-f]{6}$/i.test(s.base||"")?s.base:state.base;
   const preset=DISCS.find(([,h])=>h===hex.toLowerCase());
   setBase(hex,s.baseName&&preset?preset[0]:null);
-  return fellBack;
+  return msg;
 }
 
 /* ---------- mix two jars ---------- */
@@ -1675,11 +1746,14 @@ $("#brand").addEventListener("change",e=>{state.brand=e.target.value;state.plast
 $("#plastic").addEventListener("change",e=>{state.plastic=e.target.value;render();});
 $("#transl").addEventListener("change",e=>{state.translucent=e.target.checked;render();});
 
-function pickTech(key){pendingTech=null;state.tech=key;state.pattern=techOr(key).patterns[0];renderTech();renderRoles();render();}
+function pickTech(key){pendingTech=null;pendingPat=null;state.tech=key;state.pattern=techOr(key).patterns[0];$("#morePats").open=false;renderTech();renderRoles();render();}
 $("#techSeg").addEventListener("click",e=>{const b=e.target.closest("[data-tech]");if(b)pickTech(b.dataset.tech);});
 $("#myTechPick").addEventListener("change",e=>{if(e.target.value)pickTech(e.target.value);});
-$("#patSeg").addEventListener("click",e=>{const b=e.target.closest("[data-pat]");if(!b)return;state.pattern=b.dataset.pat;renderTech();renderRoles();render();});
-/* Drag a color tag to reorder colors 1-3. Pointer events, so it works with a mouse and a finger alike. */
+/* One listener for the usual pattern buttons and the ones under More patterns. */
+const pickPattern=e=>{const b=e.target.closest("[data-pat]");if(!b)return;pendingPat=null;state.pattern=b.dataset.pat;renderTech();renderRoles();render();};
+$("#patSeg").addEventListener("click",pickPattern);$("#patMore").addEventListener("click",pickPattern);$("#ownPats").addEventListener("click",pickPattern);
+$("#perCombo").addEventListener("change",e=>{state.perCombo=+e.target.value||0;render();});
+/* Drag a color tag to reorder the colors. Pointer events, so it works with a mouse and a finger alike. */
 let drag=null;
 $("#onDisc").addEventListener("pointerdown",e=>{
   const tag=e.target.closest(".tag");if(!tag||e.target.closest("button")||e.button>0)return;
@@ -1726,11 +1800,14 @@ $("#poolSeg").addEventListener("click",e=>{const b=e.target.closest("[data-pool]
   document.querySelectorAll("#poolSeg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));render();});
 $("#depth").addEventListener("input",e=>{state.depth=e.target.value/100;render();});
 
-function toggleDye(id){const i=state.sel.indexOf(id);if(i>=0)state.sel.splice(i,1);else{state.sel.push(id);if(state.sel.length>3)state.sel.shift();}render();}
+function toggleDye(id){const i=state.sel.indexOf(id);if(i>=0)state.sel.splice(i,1);else{state.sel.push(id);if(state.sel.length>MAX_DYES)state.sel.shift();}render();}
 document.querySelector(".main").addEventListener("click",e=>{
   const d=e.target.closest(".dye");if(d){toggleDye(d.dataset.dye);return;}
   const nx=e.target.closest("[data-next]");if(nx){const t=state.combos.find(x=>x.key===nx.dataset.next);if(t){comboIdx[t.key]=(comboOption(t)[0]+1)%t.options.length;renderCombos();}return;}
-  const c=e.target.closest("[data-combo]");if(c){const t=state.combos.find(x=>x.key===c.dataset.combo);if(t){state.sel=comboOption(t)[1].map(r=>r.dye.id);render();}return;}
+  const c=e.target.closest("[data-combo]");if(c){const t=state.combos.find(x=>x.key===c.dataset.combo);if(t){state.sel=comboOption(t)[1].map(r=>r.dye.id).slice(0,MAX_DYES);render();}}
+});
+/* The shelf sits above the setup panels, outside .main, so its jars and custom-dye × have their own listener. */
+$("#shelfFold").addEventListener("click",e=>{
   const rm=e.target.closest("[data-rmjar]");
   if(rm){const id=rm.dataset.rmjar;
     if(rmArm!==id){rmArm=id;renderShelf();return;}
@@ -1743,7 +1820,8 @@ $("#cdAdd").addEventListener("click",()=>{
   $("#cdName").value="";addToDisc(addCustomDye(name,hex,"Custom"));render();
 });
 function drawStage(){previewView==="disc"?drawDisc():drawWheel();}
-window.addEventListener("resize",drawStage);
+/* Pictures redraw at the new size and screen density after a resize or a phone turn (AC-9). */
+window.addEventListener("resize",()=>{drawStage();if(!$("#tab-notes").hidden)drawThumbs();if(!$("#lineup").hidden)lineDraw();});
 
 function showTab(t){
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
@@ -1767,7 +1845,7 @@ async function initLog(){
   if(!db){noLog();return;}
   try{userCap=await c.use("user");}catch(e){userCap=null;}
   try{assets=await c.use("assets");}catch(e){assets=null;}
-  initTechniques();
+  initTechniques();initPatterns();
   db.collection("tests").orderBy("createdAt","desc").onSnapshot(
     s=>{logDocs=s.docs;logReady=true;renderLog();},
     ()=>setLogStatus("The log stopped updating. Reload the page to reconnect."));
@@ -1785,7 +1863,7 @@ function entryFromPlanner(){
   const p=curPlastic();
   return{date:new Date().toISOString().slice(0,10),disc:{hex:state.base,name:baseLabel()},
     plastic:{brand:p.brand,name:p.name,rating:p.r,translucent:state.translucent},
-    tech:state.tech,pattern:state.pattern,depth:state.depth,
+    tech:state.tech,pattern:state.pattern,patternName:patLabel(state.pattern)||"",depth:state.depth,
     dyes:state.sel.map(id=>state.dyes.find(d=>d.id===id)).filter(Boolean).map(dyeRecord),
     techName:techOr(state.tech).label,
     mix:techOr(state.tech).custom?(techOr(state.tech).recipe.startsWith("No mix recorded")?"":techOr(state.tech).recipe):TECH[state.tech].recipe.replace(/\s*ProChem gives no [^.]*\./,""),
@@ -1829,7 +1907,18 @@ function fmtDate(e){const d=new Date(e.date?e.date+"T12:00:00":e.createdAt);retu
 /* ----- edit form ----- */
 const opt=(v,l,sel)=>`<option value="${esc(v)}"${sel?" selected":""}>${esc(l)}</option>`;
 function plasticOptions(brand,name){return PLASTICS.filter(p=>p.brand===brand).map(p=>opt(p.name,`${p.name} (${RATING[p.r].label})`,p.name===name)).join("");}
-function patternOptions(tech,pat){return techOr(tech).patterns.map(p=>opt(p,PATS[p],p===pat)).join("");}
+/* The bed's usual patterns first, then every other one; a pattern that no longer exists (a deleted own
+   photo) shows as "name (as logged)" and stays selected, so saving never changes it (AC-59). */
+function patternOptions(tech,pat,loggedName){
+  return patOptions(techOr(tech).patterns.filter(patKnown),pat)+(pat&&!patKnown(pat)?opt(pat,`${loggedName||"Deleted pattern"} (as logged)`,true):"");
+}
+/* A pattern select's options: the usual ones first, then every other pattern under "Other patterns" (AC-59, AC-61). */
+function patOptions(usual,cur){
+  const o=p=>opt(p,patLabel(p),p===cur);
+  return usual.map(o).join("")+`<optgroup label="Other patterns">${extraPatterns(usual).map(o).join("")}</optgroup>`;
+}
+/* A pattern's name for a log entry: today's name, else the name it was logged with. */
+const patNameOf=e=>patLabel(e.pattern)||(typeof e.patternName==="string"&&e.patternName)||(isPhotoPattern(e.pattern)?"Deleted photo":String(e.pattern||""));
 function techOptions(cur,curName){
   const mine=myTechDocs.filter(s=>techInfo("my:"+s.id)).map(s=>["my:"+s.id,(s.data().name||"Untitled")+" (mine)"]).sort((a,b)=>a[1].localeCompare(b[1]));
   const known=TECH[cur]||mine.some(([k])=>k===cur);
@@ -1841,6 +1930,10 @@ function dyeOptions(e,i){
   return opt("","None",!cur)+(cur&&!inState?opt("entry:"+i,`${cur.name} (as logged)`,true):"")
     +state.dyes.map(d=>opt(d.id,d.fam==="c"?d.name:`${d.name} (${d.code})`,inState&&cur.id===d.id)).join("");
 }
+/* One color slot per dye the entry has, plus one empty slot while it has fewer than MAX_DYES; an entry
+   with more (restored from elsewhere) keeps a slot for every dye, so Save never drops one (AC-41). */
+const dyeSlots=n=>Math.max(1,n+(n<MAX_DYES?1:0));
+const dyeSlotHtml=(e,i)=>`<label><span class="label">Color ${i+1}</span><select name="dye${i}" data-dyeslot>${dyeOptions(e,i)}</select></label>`;
 function formHtml(id,e){
   const pl=e.plastic||{},brand=PLASTICS.some(p=>p.brand===pl.brand)?pl.brand:"Innova";
   return`<form class="eform" data-form="${esc(id)}">
@@ -1851,11 +1944,11 @@ function formHtml(id,e){
       <label><span class="label">Plastic</span><select name="plastic">${plasticOptions(brand,pl.name)}</select></label>
       <label class="check"><input type="checkbox" name="translucent"${pl.translucent?" checked":""}> Translucent plastic</label>
       <label><span class="label">Technique</span><select name="tech" data-ef="tech">${techOptions(e.tech,e.techName)}</select></label>
-      <label><span class="label">Pattern</span><select name="pattern">${patternOptions(e.tech,e.pattern)}</select></label>
+      <label><span class="label">Pattern</span><select name="pattern">${patternOptions(e.tech,e.pattern,patNameOf(e))}</select></label>
       <label><span class="label">Color depth %</span><input type="number" name="depth" min="30" max="100" value="${Math.round((e.depth||.8)*100)}"></label>
-      ${[0,1,2].map(i=>`<label><span class="label">Color ${i+1}</span><select name="dye${i}">${dyeOptions(e,i)}</select></label>`).join("")}
+      ${Array.from({length:dyeSlots(dyesOf(e).length)},(_,i)=>dyeSlotHtml(e,i)).join("")}
       <label class="wide"><span class="label">Mix used</span><input type="text" name="mix" value="${esc(e.mix||"")}" placeholder="e.g. ½ tsp dye + 1 tsp hot water + 4 oz Floetrol"></label>
-      <label><span class="label">Set time</span><input type="text" name="setTime" value="${esc(e.setTime||"")}" placeholder="e.g. 3 hr, heat lamp"></label>
+      <label><span class="label">Set time</span><input type="text" name="setTime" value="${esc(e.setTime||"")}" placeholder="e.g. 3 hr under a heat lamp"></label>
       <label><span class="label">Closer prediction</span><select name="closer">${[["","Not decided"],["multiply","Multiply"],["darken","Darken"],["neither","Neither"]].map(([k,l])=>opt(k,l,k===(e.closer||""))).join("")}</select></label>
       <label class="wide"><span class="label">Notes</span><textarea name="notes" rows="3">${esc(e.notes||"")}</textarea></label>
     </div>
@@ -1874,15 +1967,17 @@ function readForm(f,orig){
   const v=n=>f.elements[n].value,brand=v("brand"),pl=PLASTICS.find(p=>p.brand===brand&&p.name===v("plastic"))||PLASTICS.find(p=>p.brand===brand);
   /* A technique deleted since logging keeps its logged key and name. */
   const picked=v("tech"),keep=picked===orig.tech&&!techInfo(picked);
-  const tech=keep||techInfo(picked)?picked:"floetrol",pats=keep?Object.keys(PATS):techOr(tech).patterns;
-  const pat=pats.includes(v("pattern"))?v("pattern"):pats[0];
+  const tech=keep||techInfo(picked)?picked:"floetrol";
+  /* Any pattern is kept on any bed; one that no longer exists is kept as logged, with its logged name. */
+  const pat=patKnown(v("pattern"))||(v("pattern")&&v("pattern")===orig.pattern)?v("pattern"):techOr(tech).patterns[0];
+  const patternName=patLabel(pat)||(pat===orig.pattern&&typeof orig.patternName==="string"?orig.patternName:"");
   const techName=keep?orig.techName:techOr(tech).label;
-  const dyes=[0,1,2].map(i=>{const x=v("dye"+i);if(!x)return null;if(x.startsWith("entry:"))return dyesOf(orig)[+x.slice(6)]||null;const d=state.dyes.find(y=>y.id===x);return d?dyeRecord(d):null;}).filter(Boolean);
+  const dyes=[...f.querySelectorAll("select[data-dyeslot]")].map(el=>{const x=el.value;if(!x)return null;if(x.startsWith("entry:"))return dyesOf(orig)[+x.slice(6)]||null;const d=state.dyes.find(y=>y.id===x);return d?dyeRecord(d):null;}).filter(Boolean);
   const hex=/^#[0-9a-f]{6}$/i.test(v("discHex"))?v("discHex").toLowerCase():"#ffffff";
   return{date:/^\d{4}-\d{2}-\d{2}$/.test(v("date"))?v("date"):new Date().toISOString().slice(0,10),
     disc:{hex,name:v("discName").trim().slice(0,60)||discNameFor(hex)},
     plastic:{brand:pl.brand,name:pl.name,rating:pl.r,translucent:f.elements.translucent.checked},
-    tech,techName,pattern:pat,depth:Math.min(100,Math.max(30,Math.round(+v("depth")||80)))/100,dyes,
+    tech,techName,pattern:pat,patternName,depth:Math.min(100,Math.max(30,Math.round(+v("depth")||80)))/100,dyes,
     mix:v("mix").slice(0,300),setTime:v("setTime").slice(0,100),notes:v("notes").slice(0,2000),closer:v("closer")};
 }
 
@@ -1904,7 +1999,7 @@ function viewHtml(d){
       <div class="ephoto">${photo}${up}</div>
     </div>
     <div class="efields">
-      <label><span class="label">Set time</span><input type="text" data-f="setTime" value="${esc(d.setTime||"")}" placeholder="e.g. 3 hr, heat lamp"></label>
+      <label><span class="label">Set time</span><input type="text" data-f="setTime" value="${esc(d.setTime||"")}" placeholder="e.g. 3 hr under a heat lamp"></label>
       <label><span class="label">Notes</span><textarea data-f="notes" rows="2" placeholder="Mix, temperature, what you'd change">${esc(d.notes||"")}</textarea></label>
     </div>
     <div class="efoot">
@@ -1923,14 +2018,15 @@ function renderLog(force){
   fillFilterOptions(all);
   const rows=sortLog(all.filter(d=>tryOr(()=>passesFilter(d),!filterIsActive())));
   const active=filterIsActive();
-  $("#lfCount").textContent=all.length?(active?`Filters on (${activeFilterText()}): showing ${rows.length} of ${all.length} entries. The tally counts only these.`:`${all.length} entries`):"";
+  const ents=`${all.length} ${all.length===1?"entry":"entries"}`;
+  $("#lfCount").textContent=all.length?(active?`Filters on (${activeFilterText()}): showing ${rows.length} of ${ents}. The tally counts only these.`:ents):"";
   $("#lfCount").classList.toggle("lfon",active);
   const nOn=Object.keys(LF_DEFAULT).filter(k=>k!=="sort"&&lf[k]!==LF_DEFAULT[k]).length;
   $("#lfBadge").textContent=nOn?`${nOn} on`:"";$("#lfClear").hidden=!nOn;
   const cnt=k=>rows.filter(r=>r.closer===k).length;
   $("#tally").innerHTML=[[rows.length,active?"Discs shown":"Discs logged"],[cnt("multiply"),"Multiply closer"],[cnt("darken"),"Darken closer"],[cnt("neither"),"Neither close"]]
     .map(([n,l])=>`<div class="t"><b>${n}</b><span>${l}</span></div>`).join("");
-  const head=d=>`<div class="ehead"><h3>${esc(techLabelOf(d))}: ${esc(PATS[d.pattern]||d.pattern||"")}</h3><span class="emeta">${fmtDate(d)} ${d.by?`<span data-by="${esc(d.by)}" data-lead="· logged by"></span>`:""}</span></div>`;
+  const head=d=>`<div class="ehead"><h3>${esc(techLabelOf(d))}: ${esc(patNameOf(d))}</h3><span class="emeta">${fmtDate(d)} ${d.by?`<span data-by="${esc(d.by)}" data-lead="· logged by"></span>`:""}</span></div>`;
   /* An entry that can't be drawn shows as a small card that can still be deleted. */
   const badCard=id=>`<article class="entry" data-id="${esc(id)}"><p class="empty">This entry couldn't be shown.</p><div class="row"><button type="button" class="btn danger" data-del>${delArm===id?"Tap again to delete":"Delete"}</button></div></article>`;
   const cards=rows.map(d=>tryOr(()=>`<article class="entry${d.id===freshId?" fresh":""}" data-id="${esc(d.id)}">${head(d)}${editId===d.id?formHtml(d.id,editDraft||d):viewHtml(d)}</article>`,badCard(d.id)));
@@ -1981,7 +2077,7 @@ function passesFilter(d){
   if(lf.to&&dt>lf.to)return false;
   if(lf.photo&&!d.photo)return false;
   if(lf.q){
-    const hay=[d.notes,d.mix,d.setTime,d.disc?.name,plasticKey(d),techLabelOf(d),PATS[d.pattern],
+    const hay=[d.notes,d.mix,d.setTime,d.disc?.name,plasticKey(d),techLabelOf(d),patNameOf(d),
       ...dyesOf(d).flatMap(y=>[y.name,y.code,recipeText(y.recipe)])].join(" ").toLowerCase();
     if(!lf.q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w)))return false;
   }
@@ -2042,7 +2138,12 @@ $("#logList").addEventListener("change",async e=>{
   const form=t.closest(".eform");
   if(form){
     if(t.dataset.ef==="brand")form.elements.plastic.innerHTML=plasticOptions(t.value,"");
-    if(t.dataset.ef==="tech")form.elements.pattern.innerHTML=patternOptions(t.value,"");
+    /* A new technique reorders the pattern list but keeps the current pick, including one kept as logged. */
+    if(t.dataset.ef==="tech"){const p=form.elements.pattern,o=p.selectedOptions[0];
+      p.innerHTML=patternOptions(t.value,p.value,o?o.textContent.replace(/ \(as logged\)$/,""):"");}
+    /* Choosing a dye in the last slot opens one more, up to MAX_DYES colors. */
+    if(t.matches("[data-dyeslot]")){const slots=[...form.querySelectorAll("select[data-dyeslot]")];
+      if(t===slots.at(-1)&&t.value&&slots.length<MAX_DYES)t.closest("label").insertAdjacentHTML("afterend",dyeSlotHtml({},slots.length));}
     return;
   }
   if(t.dataset.f){updateEntry(id,{[t.dataset.f]:t.value.slice(0,2000)});return;}
@@ -2100,14 +2201,15 @@ function sheetText(prefill){
       "Technique:  "+techs.slice(0,3).map(([k,l])=>`${box(p&&p.tech===k)} ${l}`).join("   "),
       "            "+techs.slice(3).map(([k,l])=>`${box(p&&p.tech===k)} ${l}`).join("   "),
       `            ${box(p&&!TECH[p.tech])} My technique: ${f(p&&!TECH[p.tech]&&p.techName,30)}`,
-      `Pattern: ${f(p&&PATS[p.pattern],20)}  Color depth: ${p?Math.round(p.depth*100)+"%":"light / medium / strong"}`,
+      `Pattern: ${f(p&&patNameOf(p),40)}`,
+      `Color depth: ${p?Math.round(p.depth*100)+"%":"light / medium / strong"}`,
       "","Colors, in order     Jar code     Mix recipe (parts), if it's a mix");
-    for(let i=0;i<3;i++){const d=p&&p.dyes[i];L.push(` ${i+1}. ${f(d&&d.name,16)} ${f(d&&d.code,11)}  ${f(d&&recipeText(d.recipe),36)}`);}
+    for(let i=0;i<MAX_DYES;i++){const d=p&&p.dyes[i];L.push(` ${i+1}. ${f(d&&d.name,16)} ${f(d&&d.code,11)}  ${f(d&&recipeText(d.recipe),36)}`);}
     L.push("","Mix used (dye + water + medium):");
     if(p&&p.mix)wrapText(p.mix,W-2).forEach(x=>L.push("  "+x));else L.push(rule);
-    L.push(`Set time: ${"_".repeat(22)}   Heat / temp (goes in Notes): ${"_".repeat(10)}`,
+    L.push(`Set time: ${"_".repeat(18)}   Heat / temp (goes in Notes): ${"_".repeat(10)}`,
       "Notes (what worked, what you'd change):",rule,rule,rule,
-      "Closer prediction:  [ ] Multiply   [ ] Darken   [ ] Neither   [ ] Not sure yet",
+      "Closer prediction: [ ] Multiply [ ] Darken [ ] Neither [ ] Not sure yet",
       "Photo taken:  [ ] yes            Entered in the Test log:  [ ] yes");
   }
   return L.join("\r\n")+"\r\n";
@@ -2138,13 +2240,14 @@ function loadEntry(d){
     const same=state.dyes.find(x=>x.fam==="c"&&x.name===y.name&&x.hex===y.hex);
     return same?same.id:(/^#[0-9a-f]{6}$/i.test(y.hex)?addCustomDye(String(y.name),y.hex,y.code==="Mix"?"Mix":"Custom",y.recipe):null);
   }).filter(Boolean);
-  const fellBack=applySetup({base:d.disc?.hex,baseName:null,brand:d.plastic?.brand,plastic:d.plastic?.name,translucent:!!d.plastic?.translucent,tech:d.tech,pattern:d.pattern,depth:d.depth,sel:ids});
+  const msg=applySetup({base:d.disc?.hex,baseName:null,brand:d.plastic?.brand,plastic:d.plastic?.name,translucent:!!d.plastic?.translucent,tech:d.tech,pattern:d.pattern,depth:d.depth,sel:ids});
   showTab("planner");window.scrollTo({top:0});
-  if(fellBack)$("#logBtnHint").textContent=`That technique was deleted, so DIPS used ${TECH.floetrol.label}.`;
+  if(msg)$("#logBtnHint").textContent=msg;
 }
-/* Cliff Notes thumbnails: sample ProChem colors (Caribbean, Neon Hot Orange, Dandelion) on a white disc. */
-function drawThumbs(){
-  document.querySelectorAll(".thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
+/* Cliff Notes and My techniques pictures: sample ProChem colors (Caribbean, Neon Hot Orange, Dandelion) on a
+   white disc. Only canvases: a technique's photo is an <img class="thumb"> and is not drawn here. */
+function drawThumbs(root){
+  (root||document).querySelectorAll("canvas.thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
 }
 const DOT_LABEL={pc:"Source: ProChem",sc:"Source: published guides",ai:"Source: AI chat, unconfirmed"};
 document.querySelectorAll("#tab-notes .dot").forEach(d=>{const k=["pc","sc","ai"].find(c=>d.classList.contains(c));d.setAttribute("role","img");d.setAttribute("aria-label",DOT_LABEL[k]);d.title=DOT_LABEL[k];});
@@ -2157,6 +2260,8 @@ let myTechDocs=[],techEdit=null,techDraft=null,techDelArm=null,techPending=false
 const TECH_FIELDS=[["base","Base"],["plastics","Plastics"],["dyes","Dyes"],["how","How"],["mix","Mix"],["heat","Heat"],["setTime","Set"],["notes","Notes"]];
 const baseLabel2=k=>k?(TECH[k]?.label||"Other"):"";
 const tagsOf=t=>Array.isArray(t.tags)?t.tags.filter(x=>typeof x==="string"&&x):[];
+/* A technique's preview pattern by name (techniques keep no logged name, so a deleted own photo reads "Deleted photo"). */
+const techPatName=p=>patNameOf({pattern:p});
 /* Search, sort and filter for My techniques. Only the sort order is remembered. */
 const TF_DEFAULT={q:"",sort:"name",base:"",pat:"",tag:""};
 const tf={...TF_DEFAULT};
@@ -2165,7 +2270,7 @@ function techPasses(t){
   if(tf.base&&(t.base||"other")!==tf.base)return false;
   if(tf.pat&&t.pattern!==tf.pat)return false;
   if(tf.tag&&!tagsOf(t).some(x=>x.toLowerCase()===tf.tag))return false;
-  if(tf.q){const hay=[t.name,t.looks,t.description,baseLabel2(t.base),t.plastics,t.dyes,t.how,t.mix,t.heat,t.setTime,t.notes,PATS[t.pattern],...tagsOf(t)].join(" ").toLowerCase();
+  if(tf.q){const hay=[t.name,t.looks,t.description,baseLabel2(t.base),t.plastics,t.dyes,t.how,t.mix,t.heat,t.setTime,t.notes,techPatName(t.pattern),...tagsOf(t)].join(" ").toLowerCase();
     if(!tf.q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w)))return false;}
   return true;
 }
@@ -2179,7 +2284,7 @@ function fillTechFilters(all){
   /* A technique that can't be read adds nothing to the lists. */
   const each=f=>all.flatMap(t=>tryOr(()=>f(t),[]));
   fillSel($("#tfBase"),uniqPairs(each(t=>[[String(t.base||"other"),baseLabel2(t.base)||"Other"]])),tf.base,"Any base");
-  fillSel($("#tfPat"),uniqPairs(each(t=>[[t.pattern&&String(t.pattern),String(PATS[t.pattern]||t.pattern)]])),tf.pat,"Any style");
+  fillSel($("#tfPat"),uniqPairs(each(t=>[[t.pattern&&String(t.pattern),techPatName(t.pattern)]])),tf.pat,"Any style");
   fillSel($("#tfTag"),uniqPairs(each(t=>tagsOf(t).map(x=>[x.toLowerCase(),x]))),tf.tag,"Any tag");
   $("#tfQ").value=tf.q;$("#tfSort").value=tf.sort;$("#tfQ").classList.toggle("on",!!tf.q);
 }
@@ -2198,8 +2303,10 @@ function initTechniques(){
       myTechDocs=s.docs;renderMyTech();
       /* Keep the Planner in step: apply a remembered user technique once it has loaded, and refresh the picker.
          One that is not among the loaded techniques was deleted, so it is dropped and renderTech falls back to the default. */
-      if(pendingTech&&techInfo(pendingTech.tech)){state.tech=pendingTech.tech;const ps=techOr(state.tech).patterns;state.pattern=ps.includes(pendingTech.pattern)?pendingTech.pattern:ps[0];}
+      let msg="";
+      if(pendingTech&&techInfo(pendingTech.tech)){state.tech=pendingTech.tech;msg=takePattern(pendingTech.pattern,techOr(state.tech).patterns);}
       techLoaded=true;pendingTech=null;
+      if(msg)$("#logBtnHint").textContent=msg;
       renderTech();renderRoles();render();
       if(!$("#tab-log").hidden)renderLog();
     },
@@ -2208,8 +2315,11 @@ function initTechniques(){
 const blankTech=()=>({name:"",looks:"",description:"",base:"",plastics:"",dyes:"",tags:[],how:"",mix:"",heat:"",setTime:"",notes:"",pattern:"swirl",photo:null});
 function techThumb(t){
   return t.photo&&/^[0-9a-f]{32}$/i.test(t.photo)?`<img class="thumb" data-blob="${t.photo}" alt="">`
-    :`<canvas class="thumb" data-pattern="${esc(PATS[t.pattern]?t.pattern:"swirl")}" width="140" height="140" aria-hidden="true"></canvas>`;
+    :`<canvas class="thumb" data-pattern="${esc(patKnown(t.pattern)?t.pattern:"swirl")}" width="140" height="140" aria-hidden="true"></canvas>`;
 }
+/* Every pattern for a technique's preview: its base's usual ones first, then the rest (AC-61). A pattern
+   that no longer exists shows Swirl selected, which is what the picture draws. */
+const techPatternOptions=t=>patOptions(TECH[t.base]?TECH[t.base].patterns:BUILTIN_PATS,patKnown(t.pattern)?t.pattern:"swirl");
 function techFormHtml(id,t){
   const photo=t.photo&&/^[0-9a-f]{32}$/i.test(t.photo);
   return`<div class="tcard tform" data-tform="${esc(id)}"><form class="eform" data-techform="${esc(id)}">
@@ -2217,7 +2327,7 @@ function techFormHtml(id,t){
     <div class="fgrid">
       <label><span class="label">Name (required)</span><input type="text" name="name" maxlength="60" required value="${esc(t.name)}" placeholder="e.g. Lazy wave"></label>
       <label><span class="label">Looks like</span><input type="text" name="looks" maxlength="80" value="${esc(t.looks)}" placeholder="e.g. Soft waves, cells"></label>
-      <label><span class="label">Preview pattern (if no photo)</span><select name="pattern">${Object.entries(PATS).map(([k,l])=>opt(k,l,k===t.pattern)).join("")}</select></label>
+      <label><span class="label">Preview pattern (if no photo)</span><select name="pattern">${techPatternOptions(t)}</select></label>
       <label><span class="label">Base</span><select name="base">${opt("","Not set",!t.base)}${Object.entries(TECH).map(([k,v])=>opt(k,v.label,k===t.base)).join("")}${opt("other","Other",t.base==="other")}</select></label>
       <label><span class="label">Plastics used on</span><input type="text" name="plastics" maxlength="200" value="${esc(t.plastics)}" placeholder="e.g. Star, ESP, Neutron"></label>
       <label><span class="label">Tags (comma separated)</span><input type="text" name="tags" maxlength="200" value="${esc(tagsOf(t).join(", "))}" placeholder="e.g. favorite, neon, gift"></label>
@@ -2225,7 +2335,7 @@ function techFormHtml(id,t){
       <label class="wide"><span class="label">Description</span><textarea name="description" rows="2" maxlength="400">${esc(t.description)}</textarea></label>
       <label class="wide"><span class="label">How</span><textarea name="how" rows="3" maxlength="2000">${esc(t.how)}</textarea></label>
       <label class="wide"><span class="label">Mix</span><textarea name="mix" rows="2" maxlength="1000" placeholder="e.g. ½ tsp dye + 1 tsp hot water + 4 oz Floetrol">${esc(t.mix)}</textarea></label>
-      <label class="half"><span class="label">Heat</span><textarea name="heat" rows="2" maxlength="300" placeholder="e.g. Heat lamp, under 120°F">${esc(t.heat)}</textarea></label>
+      <label class="half"><span class="label">Heat</span><textarea name="heat" rows="2" maxlength="300" placeholder="e.g. Heat lamp 12-18 in, disc at 120°F">${esc(t.heat)}</textarea></label>
       <label class="half"><span class="label">Set time</span><textarea name="setTime" rows="2" maxlength="300" placeholder="e.g. 3 hr">${esc(t.setTime)}</textarea></label>
       <label class="wide"><span class="label">Notes</span><textarea name="notes" rows="3" maxlength="2000">${esc(t.notes)}</textarea></label>
       <div class="wide"><span class="label">Photo</span>
@@ -2255,14 +2365,15 @@ function renderMyTech(force){
   const on=Object.keys(TF_DEFAULT).some(k=>k!=="sort"&&tf[k]!==TF_DEFAULT[k]);
   const rows=techSort(all.filter(t=>t.id===techEdit||tryOr(()=>techPasses(t),!on)));
   $("#techTools").hidden=all.length<2&&!on;
-  $("#tfCount").textContent=on?`Filters on: showing ${rows.length} of ${all.length} techniques.`:`${all.length} techniques`;
+  const cnt=`${all.length} ${all.length===1?"technique":"techniques"}`;
+  $("#tfCount").textContent=on?`Filters on: showing ${rows.length} of ${cnt}.`:cnt;
   $("#tfCount").classList.toggle("lfon",on);$("#tfClear").hidden=!on;
   /* A technique that can't be drawn shows as a small card that can still be deleted. */
   const badCard=id=>`<div class="tcard"><p class="empty">This technique couldn't be shown.</p><div class="row"><button type="button" class="btn danger" data-tdel="${esc(id)}">${techDelArm===id?"Tap again to delete":"Delete"}</button></div></div>`;
   const cards=rows.map(t=>tryOr(()=>techInfo("my:"+t.id)?(techEdit===t.id?techFormHtml(t.id,techDraft||t):techViewHtml(t,openIds.has("mt-"+t.id))):badCard(t.id),badCard(t.id)));
   if(techEdit==="new")cards.unshift(techFormHtml("new",techDraft));
   $("#myTechList").innerHTML=cards.join("")||(all.length?`<p class="empty">No techniques match these filters.</p>`:`<p class="empty">No techniques of your own yet.</p>`);
-  document.querySelectorAll("#myTechList canvas.thumb").forEach(cv=>drawDiscOn(cv,84,"#f5f5f1",["#03a4c1","#e75001","#fded01"],cv.dataset.pattern,"multiply"));
+  drawThumbs($("#myTechList"));
   const f=$("#myTechList .tform");if(f)f.scrollIntoView({block:"nearest"});
   fillNames();
 }
@@ -2273,7 +2384,7 @@ function readTechForm(f){
     base:TECH[base]||base==="other"?base:"",plastics:v("plastics").slice(0,200),dyes:v("dyes").slice(0,300),
     tags:[...new Set(v("tags").split(",").map(x=>x.trim().slice(0,30)).filter(Boolean))].slice(0,12),how:v("how").slice(0,2000),
     mix:v("mix").slice(0,1000),heat:v("heat").slice(0,300),setTime:v("setTime").slice(0,300),notes:v("notes").slice(0,2000),
-    pattern:PATS[f.elements.pattern.value]?f.elements.pattern.value:"swirl",photo:techDraft.photo||null};
+    pattern:patKnown(f.elements.pattern.value)?f.elements.pattern.value:"swirl",photo:techDraft.photo||null};
 }
 function startTechEdit(id,draft){techEdit=id;techDraft=draft;techUploads=[];techDelArm=null;renderMyTech(true);}
 /* Photos uploaded during an edit that didn't end up saved are deleted, so storage doesn't fill with orphans. */
@@ -2337,6 +2448,134 @@ $("#myTechList").addEventListener("submit",async e=>{
     endTechEdit(data.photo);
   }catch(err){techStatus(saveErr(err));btn.disabled=false;}
 });
+/* ---------- My own photo patterns (db collection "patterns"; photos in assets) ---------- */
+const ownMsg=t=>{$("#ownMsg").textContent=t||"";};
+function renderOwnPats(){
+  const rows=ownPatDocs.map(s=>({id:s.id,key:ownKey(s.id),name:patLabel(ownKey(s.id))})).sort((a,b)=>a.name.localeCompare(b.name));
+  $("#ownPats").innerHTML=rows.map(r=>`<div class="ownrow"><span class="seg"><button type="button" data-pat="${esc(r.key)}" aria-pressed="${r.key===state.pattern}">${esc(r.name)}</button></span><span class="hint">Your photo</span><button type="button" class="btn danger" data-owndel="${esc(r.id)}">${ownDelArm===r.id?"Tap again to delete":"Delete"}</button></div>`).join("");
+}
+let patSeq=0;
+function initPatterns(){
+  if(!db)return;
+  $("#ownAdd").hidden=!assets;
+  db.collection("patterns").orderBy("name").onSnapshot(
+    async s=>{
+      /* Each photo's address is found before its pattern is listed or drawn; only the newest snapshot is applied. */
+      const seq=++patSeq;
+      await Promise.all(s.docs.filter(d=>!ownPatUrls.has(d.id)).map(async d=>{
+        let u="";try{u=assets?await assets.url(d.data().photo):"";}catch(_){}
+        ownPatUrls.set(d.id,u);
+      }));
+      if(seq!==patSeq)return;
+      ownPatDocs=s.docs;patsLoaded=true;
+      /* An own photo pattern the Planner waited for is applied now; one in use that was deleted (here or in
+         another window) falls back to the bed's first usual pattern, and the Planner says so (AC-29). */
+      let msg="";
+      if(pendingPat){const p=pendingPat;pendingPat=null;msg=takePattern(p,techOr(state.tech).patterns);}
+      else if(isOwnPattern(state.pattern)&&!patKnown(state.pattern)){state.pattern=techOr(state.tech).patterns[0];msg=deletedPatText();}
+      if(msg)$("#logBtnHint").textContent=msg;
+      renderTech();renderRoles();render();renderMyTech();
+      if(!$("#tab-log").hidden)renderLog();
+    },
+    ()=>ownMsg("Your photo patterns stopped updating. Reload the page to reconnect."));
+}
+$("#ownPats").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-owndel]");if(!b||!db)return;
+  const id=b.dataset.owndel;
+  if(ownDelArm!==id){ownDelArm=id;renderOwnPats();return;}
+  ownDelArm=null;
+  const photo=ownPatDocs.find(x=>x.id===id)?.data().photo;
+  try{await db.doc("patterns/"+id).delete();}
+  catch(err){ownMsg("Couldn't delete that photo pattern. Try again.");renderOwnPats();return;}
+  try{if(photo&&assets)await assets.delete(photo);ownMsg("Photo pattern deleted.");}
+  catch(err){ownMsg("The photo pattern was deleted, but its photo couldn't be removed from this device.");}
+});
+/* A default name no own photo already has: "My photo", then "My photo 2", 3... */
+function freePatName(){
+  const names=new Set(ownPatDocs.map(s=>patLabel(ownKey(s.id))));
+  let name="My photo",n=1;
+  while(names.has(name))name=`My photo ${++n}`;
+  return name;
+}
+/* Line-up: the photo (a working copy no bigger than 1600 px, Doctrine Part 5) moves and zooms under a fixed
+   circle. zoom 1 = the circle fits the photo's short side (the start, centered); up to 8. cx, cy: the
+   photo point under the circle's center. Nothing is saved until "Use this". */
+const LINE={img:null,zoom:1,cx:0,cy:0,ptrs:new Map(),pinch:null};
+const lineGeom=W=>{const R=W*.42;return{R,s:LINE.zoom*2*R/Math.min(LINE.img.width,LINE.img.height)};};
+function lineClamp(W){
+  LINE.zoom=Math.min(8,Math.max(1,LINE.zoom));
+  const{R,s}=lineGeom(W),r=R/s,w=LINE.img.width,h=LINE.img.height;
+  LINE.cx=Math.min(w-r,Math.max(r,LINE.cx));LINE.cy=Math.min(h-r,Math.max(r,LINE.cy));
+}
+function lineDraw(){
+  if(!LINE.img)return;
+  const cv=$("#lineCv"),W=cv.clientWidth||300,dpr=window.devicePixelRatio||1,S=Math.max(1,Math.round(W*dpr));
+  if(cv.width!==S){cv.width=S;cv.height=S;}
+  lineClamp(W);
+  const ctx=cv.getContext("2d"),{R,s}=lineGeom(W),TAU=Math.PI*2;
+  ctx.setTransform(S/W,0,0,S/W,0,0);ctx.clearRect(0,0,W,W);
+  ctx.drawImage(LINE.img,W/2-LINE.cx*s,W/2-LINE.cy*s,LINE.img.width*s,LINE.img.height*s);
+  ctx.beginPath();ctx.rect(0,0,W,W);ctx.arc(W/2,W/2,R,0,TAU);ctx.fillStyle="rgba(0,0,0,.55)";ctx.fill("evenodd");
+  ctx.beginPath();ctx.arc(W/2,W/2,R,0,TAU);ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.stroke();
+}
+function lineClose(){LINE.img=null;LINE.ptrs.clear();LINE.pinch=null;$("#lineup").hidden=true;}
+const lineZoom=f=>{if(!LINE.img)return;LINE.zoom*=f;lineDraw();};
+$("#ownIn").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  ownMsg("");lineClose();
+  if(f.size>50*1024*1024){ownMsg(uploadErr({}));return;}
+  let bmp;
+  try{bmp=await createImageBitmap(f);}catch(_){ownMsg(uploadErr({code:"unsupported_type"}));return;}
+  const k=Math.min(1,1600/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
+  Object.assign(LINE,{img:c,zoom:1,cx:c.width/2,cy:c.height/2});
+  $("#ownName").value=freePatName();
+  $("#lineup").hidden=false;lineDraw();
+  $("#lineup").scrollIntoView({block:"nearest"});
+});
+/* One finger or the mouse moves the photo; two fingers pinch to zoom; the mouse wheel and the buttons zoom too. */
+const lineCv=$("#lineCv");
+lineCv.addEventListener("pointerdown",e=>{if(!LINE.img)return;e.preventDefault();lineCv.setPointerCapture(e.pointerId);LINE.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});LINE.pinch=null;});
+lineCv.addEventListener("pointermove",e=>{
+  const p=LINE.ptrs.get(e.pointerId);if(!p||!LINE.img)return;
+  if(LINE.ptrs.size===1){const{s}=lineGeom(lineCv.clientWidth||300);LINE.cx-=(e.clientX-p.x)/s;LINE.cy-=(e.clientY-p.y)/s;}
+  p.x=e.clientX;p.y=e.clientY;
+  if(LINE.ptrs.size>=2){const[a,b]=[...LINE.ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(LINE.pinch&&d)LINE.zoom*=d/LINE.pinch;LINE.pinch=d;}
+  lineDraw();
+});
+["pointerup","pointercancel"].forEach(t=>lineCv.addEventListener(t,e=>{LINE.ptrs.delete(e.pointerId);LINE.pinch=null;}));
+lineCv.addEventListener("wheel",e=>{if(!LINE.img)return;e.preventDefault();lineZoom(e.deltaY<0?1.15:1/1.15);},{passive:false});
+$("#lineIn").addEventListener("click",()=>lineZoom(1.25));
+$("#lineOut").addEventListener("click",()=>lineZoom(1/1.25));
+$("#lineCancel").addEventListener("click",()=>{lineClose();ownMsg("");});
+/* Use this: the circle's square is cut from the working copy, saved like any photo, then the pattern is
+   saved. If the pattern can't be saved, its photo is removed again, so nothing is left behind (AC-27). */
+$("#lineUse").addEventListener("click",async()=>{
+  if(!LINE.img||!db||!assets)return;
+  const btn=$("#lineUse"),W=lineCv.clientWidth||300;lineClamp(W);
+  const{R,s}=lineGeom(W),side=2*R/s,out=Math.max(1,Math.min(1600,Math.round(side)));
+  const name=$("#ownName").value.trim().slice(0,40)||freePatName();
+  const c=document.createElement("canvas");c.width=c.height=out;
+  c.getContext("2d").drawImage(LINE.img,LINE.cx-side/2,LINE.cy-side/2,side,side,0,0,out,out);
+  btn.disabled=true;ownMsg("Saving your photo…");
+  let photo=null;
+  try{
+    const blob=await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej({code:"unsupported_type"}),"image/jpeg",.9));
+    photo=(await assets.upload(blob)).id;
+    let by=null;try{by=userCap?await userCap.id():null;}catch(_){}
+    const ref=await db.collection("patterns").add({name,photo,by,createdAt:new Date().toISOString()});
+    photo=null;lineClose();
+    /* The new pattern goes on the disc once its photo is ready to draw. */
+    const key=ownKey(ref.id);
+    if(patKnown(key)){pendingPat=null;state.pattern=key;renderTech();renderRoles();render();}else pendingPat=key;
+    ownMsg(`Added "${name}". It's on the disc now, and under More patterns on every bed.`);
+  }catch(err){
+    ownMsg(photo?saveErr(err):uploadErr(err));
+    if(photo)assets.delete(photo).catch(()=>{});
+  }finally{btn.disabled=false;}
+});
+
 /* "Make my version" on each built-in technique card */
 document.querySelectorAll('#tab-notes details.tcard[id^="t-"] .tbody').forEach(b=>{
   b.insertAdjacentHTML("beforeend",`<div class="row"><button type="button" class="btn small" data-copytech="${b.parentElement.id}">Make my version</button></div>`);
@@ -2348,6 +2587,8 @@ $("#expandAll").addEventListener("click",e=>{
 });
 $(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)showTab(b.dataset.tab);});
 loadCustom();fillMixers();
+$("#selHint").textContent=`Tap dye cards to add up to ${MAX_DYES} colors, in order. Drag a color to reorder it, or use ← and ×.`;
+$("#perCombo").innerHTML=opt("0","As now",true)+Array.from({length:MAX_DYES-MIN_PER_COMBO+1},(_,i)=>opt(String(i+MIN_PER_COMBO),String(i+MIN_PER_COMBO),false)).join("");
 fillPlastics();renderTech();renderRoles();
 const savedSetup=loadSetup();
 if(savedSetup)applySetup(savedSetup);else setBase("#f2dc3c","Yellow");

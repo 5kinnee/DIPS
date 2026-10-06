@@ -6,6 +6,8 @@ const { test, assert, DEVICES, openApp, tapAt, tapEl, boxOf, tokenRgb, contrast,
 
 /* Point on the wheel as a fraction of its box (0.5, 0.5 is the center). */
 async function tapWheel(page, device, fx, fy) {
+  /* With the dye shelf at the top of the Planner (0.5.0) the wheel starts below a phone screen; bring it into view as a person would. */
+  await page.locator("#pickRing").evaluate(el => el.scrollIntoView({ block: "center" }));
   const box = await page.locator("#pickRing").boundingBox();
   const x = box.x + box.width * fx, y = box.y + box.height * fy;
   if (device === "phone") await page.touchscreen.tap(x, y);
@@ -39,24 +41,35 @@ for (const device of Object.keys(DEVICES)) {
 }
 
 /* ---------- 0.3.0: dye shelf, chip buttons, wheel filter, tap color ---------- */
+/* Where the shelf sits (Story 0.5.0 AC-69): the first block of the Planner tab, above the Disc color /
+   Plastic / Technique panels, as wide as the tab. Runs in the page. */
+function shelfPlace() {
+  const f = document.querySelector("#shelfFold"), tab = document.querySelector("#tab-planner"), setup = tab.querySelector(".setup");
+  const fb = f.getBoundingClientRect(), tb = tab.getBoundingClientRect(), sb = setup.getBoundingClientRect(), nav = document.querySelector(".tabs").getBoundingClientRect();
+  return { first: tab.firstElementChild === f, inMain: !!f.closest(".main"), aboveSetup: fb.bottom <= sb.top + 0.5, belowTabs: fb.top >= nav.bottom - 0.5,
+    widthGap: Math.abs(fb.width - tb.width), left: Math.abs(fb.left - tb.left) };
+}
+function assertShelfOnTop(s) {
+  assert.ok(s.first && !s.inMain, "the shelf should be the first thing in the Planner tab, not in the right column");
+  assert.ok(s.belowTabs && s.aboveSetup, "the shelf should sit under the page tabs and above Disc color");
+  assert.ok(s.widthGap <= 1 && s.left <= 1, `the shelf should be full width (off by ${s.widthGap}px)`);
+}
 for (const device of ["computer", "phone"]) {
   test(`S3 (${device}): the dye shelf opens closed every visit and turns amber with no dyes`, async () => {
     const { context, page, errors } = await openApp(device);
     try {
       const warnBg = await tokenRgb(page, "--warn-bg"), surface = await tokenRgb(page, "--surface"), tap = await tokenRgb(page, "--tap");
-      const read = () => page.evaluate(() => {
+      const read = async () => ({ ...(await page.evaluate(() => {
         const f = document.querySelector("#shelfFold"), n = document.querySelector("#shelfNote");
         return {
           open: f.open, unmarked: f.classList.contains("unmarked"), bg: getComputedStyle(f).backgroundColor,
-          title: document.querySelector("#shelfTitle").textContent, note: n.textContent, noteColor: getComputedStyle(n).color,
-          afterBanner: !!(document.querySelector("#banner").compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING),
-          beforePool: !!(f.compareDocumentPosition(document.querySelector("#poolSeg")) & Node.DOCUMENT_POSITION_FOLLOWING)
+          title: document.querySelector("#shelfTitle").textContent, note: n.textContent, noteColor: getComputedStyle(n).color
         };
-      });
+      })), ...(await page.evaluate(shelfPlace)) });
 
       let s = await read();
       assert.strictEqual(s.open, false, "the shelf should be closed when the app opens");
-      assert.ok(s.afterBanner && s.beforePool, "the shelf should sit under the disc-color banner and above Suggest from");
+      assertShelfOnTop(s);
       assert.strictEqual(s.title, "My dye shelf (0)");
       assert.ok(s.unmarked, "with no dyes marked the shelf bar should be in the amber state");
       assert.strictEqual(s.bg, warnBg, "the amber state should use the reminder background");
@@ -330,3 +343,96 @@ test("S9 (laptop): the Log button can be reached in the middle of the dye cards 
     await context.close();
   }
 });
+
+/* ---------- 0.5.0: up to 8 dyes (Story 0.5.0 AC-38, AC-39) ---------- */
+const pickEight = async (page, device) => {
+  await clearPicked(page, device);
+  const ids = await page.$$eval(".dye", els => els.slice(0, 8).map(e => e.dataset.dye));
+  for (const id of ids) { await tapEl(page, device, `.dye[data-dye="${id}"]`); await page.waitForFunction(id => state.sel.includes(id), id); }
+  assert.strictEqual((await stateSel(page)).length, 8, "8 dyes should fit on the disc");
+  return ids;
+};
+
+test("S4b (phone360): 8 color chips wrap with no sideways scrolling and keep their fingertip-sized ← and × buttons", async () => {
+  const { context, page, errors } = await openApp("phone360");
+  try {
+    await pickEight(page, "phone360");
+    const r = await page.evaluate(() => ({
+      rows: new Set([...document.querySelectorAll("#onDisc .tag")].map(t => Math.round(t.getBoundingClientRect().top))).size,
+      page: document.documentElement.scrollWidth <= innerWidth,
+      chips: document.querySelector("#onDisc").scrollWidth <= document.querySelector("#onDisc").clientWidth
+    }));
+    assert.ok(r.rows >= 2, "8 chips should wrap onto more than one row");
+    assert.ok(r.page && r.chips, "the chips row scrolls sideways");
+    for (const i of [1, 7]) {
+      const sel = `#onDisc .tag[data-idx="${i}"] [data-left]`, b = await boxOf(page, sel), a = await hitArea(page, sel);
+      assert.ok(Math.abs(b.height - 30) <= 1, `chip ${i + 1}: the ← circle should be 30px tall, was ${b.height}`);
+      assert.ok(Math.abs((a.b - a.t) - 44) <= 1, `chip ${i + 1}: the tap area should be about 44px tall`);
+    }
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally {
+    await context.close();
+  }
+});
+
+test("S4c (360px window, mouse): dragging a chip across wrapped rows reorders the 8 colors", async () => {
+  const { context, page } = await openApp("computer", { context: { viewport: { width: 360, height: 800 } } });
+  try {
+    await pickEight(page, "computer");
+    const before = await stateSel(page);
+    await boxOf(page, "#onDisc");
+    const t0 = await page.locator('#onDisc .tag[data-idx="0"]').boundingBox(), t7 = await page.locator('#onDisc .tag[data-idx="7"]').boundingBox();
+    assert.ok(t7.y > t0.y + 5, "the last chip should be on a lower row");
+    await page.mouse.move(t0.x + 8, t0.y + t0.height / 2); await page.mouse.down();
+    await page.mouse.move(t7.x + t7.width - 4, t7.y + t7.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForFunction(b => state.sel[7] === b[0], before);
+    assert.deepStrictEqual(await stateSel(page), [...before.slice(1), before[0]], "color 1 should move to the end");
+  } finally {
+    await context.close();
+  }
+});
+
+test("S5b: with 8 colors picked, the wheel's Picked colors shows all 8 numbered, and the dial can start from color 8", async () => {
+  const { context, page, errors } = await openApp("computer");
+  try {
+    await pickEight(page, "computer");
+    await showWheel(page, "computer");
+    await tapEl(page, "computer", '#wheelShow [data-show="picked"]');
+    await page.waitForFunction(() => document.querySelectorAll("#wheelSvg circle.dot").length === 16);
+    const nums = await page.$$eval("#wheelSvg text", ts => ts.map(t => t.textContent).sort((a, b) => a - b));
+    assert.deepStrictEqual(nums, ["1", "2", "3", "4", "5", "6", "7", "8"]);
+    await tapEl(page, "computer", "#dialFold > summary");
+    await page.waitForFunction(() => document.querySelector("#dialFold").open);
+    assert.ok(await page.$$eval("#dialFrom option", os => os.some(o => /^Starting from: color 8, /.test(o.textContent))), "the dial cannot start from color 8");
+    assert.deepStrictEqual(errors, [], "the page reported script errors");
+  } finally {
+    await context.close();
+  }
+});
+
+/* ---------- 0.5.0: the shelf at the top of the Planner (Story 0.5.0 AC-69..AC-71) ---------- */
+for (const device of ["laptop", "phone360"]) {
+  test(`S3b (${device}): the dye shelf is the first block under the tabs, full width, above Disc color, and its jars and Mix still work`, async () => {
+    const { context, page, errors } = await openApp(device);
+    try {
+      assertShelfOnTop(await page.evaluate(shelfPlace));
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "the page scrolls sideways");
+      await openShelf(page, device);
+      await tapEl(page, device, "#shelf .jar");
+      await page.waitForFunction(() => document.querySelector("#shelfTitle").textContent === "My dye shelf (1)");
+      const n = await page.evaluate(() => state.dyes.length);
+      await tapEl(page, device, "#mixAdd");
+      await page.waitForFunction(k => state.dyes.length === k + 1, n);
+      await page.locator(".jarx").first().waitFor({ state: "visible" });
+      await tapEl(page, device, ".jarx");
+      await page.waitForFunction(() => document.querySelector(".jarx.armed")?.textContent === "Remove?");
+      await tapEl(page, device, ".jarx.armed");
+      await page.waitForFunction(k => state.dyes.length === k, n);
+      assert.ok(await page.evaluate(() => document.querySelector("#tab-planner").firstElementChild.id === "shelfFold" && document.querySelector("#tab-notes").querySelector("#shelfFold") === null), "Planner tab only");
+      assert.deepStrictEqual(errors, [], "the page reported script errors");
+    } finally {
+      await context.close();
+    }
+  });
+}

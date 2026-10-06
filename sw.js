@@ -1,12 +1,16 @@
 /* DIPS service worker. Bump VERSION on every release: the browser only installs a new
    worker when this file changes byte for byte, and the version names the cache. */
-const VERSION = "0.4.1";
+const VERSION = "0.5.0";
 const CACHE = `dips-${VERSION}`;
 const FILES = [
   "./",
   "index.html",
   "combos.js",
+  "preview.js",
   "local.js",
+  "photos/cells.jpg",
+  "photos/flames.jpg",
+  "photos/spoked-starburst.jpg",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
